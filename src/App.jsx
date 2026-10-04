@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
+import BackToTop from './components/BackToTop';
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Movies from './pages/Movies';
@@ -29,6 +30,7 @@ function App() {
               />
             </Routes>
           </main>
+          <BackToTop />
           <footer className="footer">
             <div className="footer-content">
               <div className="footer-brand">
