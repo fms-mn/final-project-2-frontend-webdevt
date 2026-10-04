@@ -67,7 +67,7 @@
   --text-muted: #647084;
   --accent-primary: #b72b4d;
   --accent-secondary: #a52647;
-  --accent-gradient: linear-gradient(135deg, #b72b4d 0%, #c73e57 55%, #cf6247 100%);
+  --accent-gradient: linear-gradient(135deg, #b72b4d 0%, #c73e57 100%);
   --accent-glow: 0 0 25px rgba(183, 43, 77, 0.16);
   --gold: #8f5900;
   --border-color: rgba(32, 38, 54, 0.14);
@@ -1645,13 +1645,41 @@ input, select {
 }
 
 :root[data-theme='light'] .hero {
+  min-height: clamp(480px, 70svh, 680px);
+  padding-block: clamp(3rem, 5vw, 5rem);
   background: #10121b;
   color: #fff;
 }
 
 :root[data-theme='light'] .hero::before {
-  background: linear-gradient(90deg, rgba(10, 10, 15, 0.98) 0%, rgba(10, 10, 15, 0.8) 42%, rgba(10, 10, 15, 0.25) 100%),
-    linear-gradient(0deg, rgba(10, 10, 15, 0.88), transparent 35%);
+  background: linear-gradient(90deg, rgba(10, 10, 15, 0.92) 0%, rgba(10, 10, 15, 0.72) 28%, rgba(10, 10, 15, 0.14) 58%, transparent 78%);
+}
+
+:root[data-theme='light'] .hero::after {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 72px;
+  background: linear-gradient(transparent, #f4f4f1);
+  pointer-events: none;
+}
+
+:root[data-theme='light'] .hero-content {
+  max-width: 570px;
+}
+
+:root[data-theme='light'] .hero h1 {
+  font-size: clamp(2.55rem, 4.6vw, 4.25rem);
+  margin-bottom: 1.1rem;
+}
+
+:root[data-theme='light'] .hero p {
+  max-width: 520px;
+  margin-bottom: 1.5rem;
+  font-size: clamp(0.98rem, 1.45vw, 1.08rem);
 }
 
 :root[data-theme='light'] .hero p,
@@ -1673,6 +1701,28 @@ input, select {
   background: rgba(255, 255, 255, 0.23);
 }
 
+:root[data-theme='light'] .hero .btn-primary {
+  background: #bf3153;
+  box-shadow: 0 8px 25px rgba(121, 19, 46, 0.28);
+}
+
+:root[data-theme='light'] .home-movie-section:not(.home-coming-soon) {
+  background: #f4f4f1;
+  padding-top: 1.75rem;
+}
+
+:root[data-theme='light'] .home-movie-section .home-section-header {
+  margin-bottom: 1.5rem;
+}
+
+:root[data-theme='light'] .movie-card-price {
+  color: var(--text-primary);
+}
+
+:root[data-theme='light'] .badge-coming {
+  background: #596579;
+}
+
 :root[data-theme='light'] .movie-card-showtimes span {
   background: var(--surface-tint);
 }
@@ -1683,7 +1733,15 @@ input, select {
 
 @media (max-width: 768px) {
   :root[data-theme='light'] .hero::before {
-    background: linear-gradient(0deg, rgba(10, 10, 15, 0.98) 0%, rgba(10, 10, 15, 0.8) 52%, rgba(10, 10, 15, 0.4) 100%);
+    background: linear-gradient(0deg, rgba(10, 10, 15, 0.9) 0%, rgba(10, 10, 15, 0.7) 35%, rgba(10, 10, 15, 0.08) 80%);
+  }
+
+  :root[data-theme='light'] .hero::after {
+    height: 36px;
+  }
+
+  :root[data-theme='light'] .hero-content {
+    max-width: 100%;
   }
 }
 
