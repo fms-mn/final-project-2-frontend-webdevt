@@ -51,7 +51,7 @@ export default function Home() {
             <span className="gradient-text">Movie Adventure</span>
           </h1>
           <p>
-            Experience the magic of cinema with CineMax. Browse the latest blockbusters,
+            Experience the magic of cinema with FILME. Browse the latest blockbusters,
             pick your perfect seats, and enjoy an unforgettable movie night.
           </p>
           <div className="hero-buttons">
@@ -94,7 +94,7 @@ export default function Home() {
       {/* Features Section */}
       <section className="section">
         <div className="section-header">
-          <h2>Why CineMax?</h2>
+          <h2>Why FILME?</h2>
           <p>Your premium movie booking destination</p>
         </div>
 

@@ -18,7 +18,7 @@ export default function Navbar() {
   return (
     <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
       <Link to="/" className="nav-brand">
-        🎬 CineMax
+        🎬 FILME
       </Link>
 
       <div className="nav-links">
