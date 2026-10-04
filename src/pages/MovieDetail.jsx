@@ -119,7 +119,7 @@ export default function MovieDetail() {
               </div>
               <div className="stat">
                 <span className="stat-label">Price</span>
-                <span className="stat-value" style={{ color: 'var(--gold)' }}>₱{movie.price}</span>
+                <span className="stat-value stat-price">₱{movie.price}</span>
               </div>
             </div>
           </div>

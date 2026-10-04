@@ -739,7 +739,7 @@ input, select {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, var(--bg-primary) 0%, rgba(10, 10, 15, 0.6) 50%, rgba(10, 10, 15, 0.3) 100%);
+  background: linear-gradient(to top, rgba(10, 10, 15, 0.98) 0%, rgba(10, 10, 15, 0.75) 50%, rgba(10, 10, 15, 0.35) 100%);
 }
 
 .movie-detail-info {
@@ -769,6 +769,7 @@ input, select {
   font-weight: 800;
   letter-spacing: -1px;
   margin-bottom: 0.75rem;
+  color: #fff;
 }
 
 .movie-detail-tags {
@@ -788,8 +789,14 @@ input, select {
   border: 1px solid var(--border-color);
 }
 
+.movie-detail-hero .tag {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #f5f6fa;
+}
+
 .movie-detail-text p {
-  color: var(--text-secondary);
+  color: #e3e6ed;
   font-size: 0.95rem;
   line-height: 1.7;
   max-width: 600px;
@@ -819,6 +826,18 @@ input, select {
   font-size: 1rem;
   font-weight: 700;
   color: var(--text-primary);
+}
+
+.movie-detail-hero .stat-label {
+  color: #c6ccd8;
+}
+
+.movie-detail-hero .stat-value {
+  color: #fff;
+}
+
+.movie-detail-hero .stat-price {
+  color: #f0c040;
 }
 
 /* ============================
