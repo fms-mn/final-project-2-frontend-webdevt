@@ -1,21 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
 export default function MyBookings() {
-  const { user, API_URL } = useAuth();
-  const navigate = useNavigate();
+  const { API_URL } = useAuth();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
     fetchBookings();
-  }, [user]);
+  }, [API_URL]);
 
   const fetchBookings = async () => {
     try {

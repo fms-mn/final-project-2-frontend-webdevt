@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
+import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Movies from './pages/Movies';
 import MovieDetail from './pages/MovieDetail';
@@ -22,7 +23,10 @@ function App() {
               <Route path="/movie/:id" element={<MovieDetail />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/my-bookings" element={<MyBookings />} />
+              <Route
+                path="/my-bookings"
+                element={<ProtectedRoute><MyBookings /></ProtectedRoute>}
+              />
             </Routes>
           </main>
           <footer className="footer">
