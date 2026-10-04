@@ -1,36 +1,24 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { cancelDemoBooking, getDemoBookings } from '../data/demoBookings';
 
 export default function MyBookings() {
-  const { API_URL } = useAuth();
+  const { user } = useAuth();
   const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchBookings();
-  }, [API_URL]);
+    setBookings(user ? getDemoBookings(user.id) : []);
+  }, [user]);
 
-  const fetchBookings = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/bookings/my`);
-      setBookings(res.data);
-    } catch (error) {
-      console.error('Error fetching bookings:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const cancelBooking = async (bookingId) => {
+  const cancelBooking = (bookingId) => {
     if (!window.confirm('Are you sure you want to cancel this booking?')) return;
 
     try {
-      await axios.patch(`${API_URL}/bookings/${bookingId}/cancel`);
-      fetchBookings();
+      cancelDemoBooking(bookingId, user.id);
+      setBookings(getDemoBookings(user.id));
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to cancel booking');
+      alert(error.message || 'Failed to cancel booking');
     }
   };
 
@@ -42,14 +30,6 @@ export default function MyBookings() {
       day: 'numeric',
     });
   };
-
-  if (loading) {
-    return (
-      <div className="loading" style={{ minHeight: '60vh' }}>
-        <div className="spinner" />
-      </div>
-    );
-  }
 
   return (
     <div className="bookings-page fade-in">

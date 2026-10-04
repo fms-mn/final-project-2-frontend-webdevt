@@ -26,7 +26,7 @@ export default function Register() {
       await register(name, email, password);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
+      setError(err.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
@@ -37,7 +37,7 @@ export default function Register() {
       <div className="auth-container">
         <div className="auth-card">
           <h1>Create account</h1>
-          <p className="subtitle">Join FILME and start booking tickets</p>
+          <p className="subtitle">Create a demo account saved in this browser</p>
 
           {error && <div className="error-message">{error}</div>}
 

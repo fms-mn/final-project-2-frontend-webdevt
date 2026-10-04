@@ -1,42 +1,11 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
 import MovieCard from '../components/MovieCard';
+import { listMovies } from '../data/catalog';
 
 export default function Home() {
-  const { API_URL } = useAuth();
-  const [movies, setMovies] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
-
-  useEffect(() => {
-    let active = true;
-
-    axios.get(`${API_URL}/movies`)
-      .then((res) => {
-        if (active) setMovies(res.data);
-      })
-      .catch(() => {
-        if (active) setError(true);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => { active = false; };
-  }, [API_URL, reloadKey]);
-
-  const nowShowing = movies.filter((movie) => movie.status === 'now_showing');
-  const comingSoon = movies.filter((movie) => movie.status === 'coming_soon');
+  const nowShowing = listMovies({ status: 'now_showing' });
+  const comingSoon = listMovies({ status: 'coming_soon' });
   const featuredMovie = nowShowing[0] || comingSoon[0];
-
-  const retry = () => {
-    setError(false);
-    setLoading(true);
-    setReloadKey((key) => key + 1);
-  };
 
   return (
     <div className="fade-in">
@@ -76,15 +45,7 @@ export default function Home() {
         </div>
       </section>
 
-      {error ? (
-        <section className="section home-movies-error" aria-live="polite">
-          <h2>Movies are unavailable right now</h2>
-          <p>Check your connection and try again.</p>
-          <button type="button" className="btn btn-primary" onClick={retry}>Try Again</button>
-        </section>
-      ) : (
-        <>
-          <section className="section home-movie-section" aria-labelledby="now-showing-title">
+      <section className="section home-movie-section" aria-labelledby="now-showing-title">
             <div className="home-section-header">
               <div>
                 <span className="home-section-eyebrow">On the big screen</span>
@@ -93,9 +54,7 @@ export default function Home() {
               </div>
               <Link to="/movies?status=now_showing" className="home-section-link">View all movies →</Link>
             </div>
-            {loading ? (
-              <div className="loading"><div className="spinner" /></div>
-            ) : nowShowing.length > 0 ? (
+            {nowShowing.length > 0 ? (
               <div className="movies-grid">
                 {nowShowing.slice(0, 4).map((movie) => (
                   <MovieCard key={movie._id} movie={movie} showShowtimes />
@@ -104,9 +63,9 @@ export default function Home() {
             ) : (
               <p className="home-empty">No movies are showing right now. Check back soon.</p>
             )}
-          </section>
+      </section>
 
-          <section className="section home-movie-section home-coming-soon" aria-labelledby="coming-soon-title">
+      <section className="section home-movie-section home-coming-soon" aria-labelledby="coming-soon-title">
             <div className="home-section-header">
               <div>
                 <span className="home-section-eyebrow">Worth the wait</span>
@@ -115,9 +74,7 @@ export default function Home() {
               </div>
               <Link to="/movies?status=coming_soon" className="home-section-link">Explore upcoming →</Link>
             </div>
-            {loading ? (
-              <div className="loading"><div className="spinner" /></div>
-            ) : comingSoon.length > 0 ? (
+            {comingSoon.length > 0 ? (
               <div className="movies-grid">
                 {comingSoon.slice(0, 4).map((movie) => (
                   <MovieCard key={movie._id} movie={movie} />
@@ -126,9 +83,7 @@ export default function Home() {
             ) : (
               <p className="home-empty">Upcoming movies will appear here soon.</p>
             )}
-          </section>
-        </>
-      )}
+      </section>
 
       <section className="section">
         <div className="section-header">

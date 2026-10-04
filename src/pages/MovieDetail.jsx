@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { SHOWTIMES } from '../constants/showtimes';
+import { getMovieById } from '../data/catalog';
+import { createDemoBooking, getBookedSeats } from '../data/demoBookings';
 
 const ROWS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 const SEATS_PER_ROW = 10;
@@ -19,16 +20,18 @@ function getNextDays(count) {
 }
 
 function formatDate(date) {
-  return date.toISOString().split('T')[0];
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 export default function MovieDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, API_URL } = useAuth();
+  const { user } = useAuth();
 
-  const [movie, setMovie] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const movie = getMovieById(id);
   const [selectedDate, setSelectedDate] = useState(formatDate(new Date()));
   const [selectedTime, setSelectedTime] = useState(SHOWTIMES[0]);
   const [selectedSeats, setSelectedSeats] = useState([]);
@@ -39,34 +42,8 @@ export default function MovieDetail() {
   const dates = getNextDays(7);
 
   useEffect(() => {
-    fetchMovie();
-  }, [id]);
-
-  useEffect(() => {
-    if (movie) fetchBookedSeats();
-  }, [selectedDate, selectedTime, movie]);
-
-  const fetchMovie = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/movies/${id}`);
-      setMovie(res.data);
-    } catch (error) {
-      console.error('Error fetching movie:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchBookedSeats = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/bookings/seats/${id}`, {
-        params: { showDate: selectedDate, showTime: selectedTime },
-      });
-      setBookedSeats(res.data.bookedSeats);
-    } catch (error) {
-      console.error('Error fetching seats:', error);
-    }
-  };
+    setBookedSeats(movie ? getBookedSeats(id, selectedDate, selectedTime) : []);
+  }, [id, selectedDate, selectedTime, movie]);
 
   const toggleSeat = (seatId) => {
     if (bookedSeats.includes(seatId)) return;
@@ -75,7 +52,7 @@ export default function MovieDetail() {
     );
   };
 
-  const handleBooking = async () => {
+  const handleBooking = () => {
     if (!user) {
       navigate('/login');
       return;
@@ -85,29 +62,22 @@ export default function MovieDetail() {
 
     setBooking(true);
     try {
-      const res = await axios.post(`${API_URL}/bookings`, {
+      const result = createDemoBooking({
+        userId: user.id,
         movieId: id,
         seats: selectedSeats,
         showDate: selectedDate,
         showTime: selectedTime,
       });
-      setBookingSuccess(res.data);
+      setBookingSuccess(result);
       setSelectedSeats([]);
-      fetchBookedSeats();
+      setBookedSeats(getBookedSeats(id, selectedDate, selectedTime));
     } catch (error) {
-      alert(error.response?.data?.message || 'Booking failed');
+      alert(error.message || 'Booking failed');
     } finally {
       setBooking(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="loading" style={{ minHeight: '60vh' }}>
-        <div className="spinner" />
-      </div>
-    );
-  }
 
   if (!movie) {
     return (
@@ -290,7 +260,7 @@ export default function MovieDetail() {
               </div>
               <div className="summary-row">
                 <span className="label">Seats</span>
-                <span className="value">{selectedSeats.sort().join(', ')}</span>
+                <span className="value">{[...selectedSeats].sort().join(', ')}</span>
               </div>
               <div className="summary-row">
                 <span className="label">Price per seat</span>

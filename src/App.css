@@ -1672,14 +1672,12 @@ input, select {
 }
 
 :root[data-theme='light'] .hero h1 {
-  font-size: clamp(2.55rem, 4.6vw, 4.25rem);
   margin-bottom: 1.1rem;
 }
 
 :root[data-theme='light'] .hero p {
   max-width: 520px;
   margin-bottom: 1.5rem;
-  font-size: clamp(0.98rem, 1.45vw, 1.08rem);
 }
 
 :root[data-theme='light'] .hero p,

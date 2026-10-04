@@ -1,39 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
 import MovieCard from '../components/MovieCard';
 import { FiSearch } from 'react-icons/fi';
+import { listMovies } from '../data/catalog';
 
 export default function Movies() {
-  const { API_URL } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [movies, setMovies] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const requestedStatus = searchParams.get('status');
   const filter = ['now_showing', 'coming_soon'].includes(requestedStatus)
     ? requestedStatus
     : 'all';
 
-  useEffect(() => {
-    fetchMovies();
-  }, [filter, search]);
-
-  const fetchMovies = async () => {
-    try {
-      const params = {};
-      if (filter !== 'all') params.status = filter;
-      if (search) params.search = search;
-
-      const res = await axios.get(`${API_URL}/movies`, { params });
-      setMovies(res.data);
-    } catch (error) {
-      console.error('Error fetching movies:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const movies = listMovies({ status: filter === 'all' ? undefined : filter, search });
 
   return (
     <div className="movies-page fade-in">
@@ -66,11 +45,7 @@ export default function Movies() {
         ))}
       </div>
 
-      {loading ? (
-        <div className="loading">
-          <div className="spinner" />
-        </div>
-      ) : movies.length === 0 ? (
+      {movies.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state-icon">🎬</div>
           <h3>No movies found</h3>
