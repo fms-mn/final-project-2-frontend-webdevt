@@ -149,7 +149,7 @@ export default function MovieDetail() {
               </div>
               <div className="stat">
                 <span className="stat-label">Price</span>
-                <span className="stat-value" style={{ color: '#f0c040' }}>₱{movie.price}</span>
+                <span className="stat-value" style={{ color: 'var(--gold)' }}>₱{movie.price}</span>
               </div>
             </div>
           </div>
@@ -166,7 +166,7 @@ export default function MovieDetail() {
           marginBottom: '2rem',
           textAlign: 'center',
         }}>
-          <h3 style={{ color: '#4ade80', marginBottom: '0.5rem' }}>🎉 Booking Confirmed!</h3>
+          <h3 style={{ color: 'var(--success-text)', marginBottom: '0.5rem' }}>🎉 Booking Confirmed!</h3>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
             Seats: {bookingSuccess.seats.join(', ')} · Total: ₱{bookingSuccess.totalPrice}
           </p>
