@@ -37,7 +37,7 @@ export default function Register() {
       <div className="auth-container">
         <div className="auth-card">
           <h1>Create account</h1>
-          <p className="subtitle">Join CineMax and start booking tickets</p>
+          <p className="subtitle">Join FILME and start booking tickets</p>
 
           {error && <div className="error-message">{error}</div>}
 
