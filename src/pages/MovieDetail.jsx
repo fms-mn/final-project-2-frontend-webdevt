@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { SHOWTIMES } from '../constants/showtimes';
 
-const SHOWTIMES = ['10:00', '13:00', '16:00', '19:00', '21:30'];
 const ROWS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 const SEATS_PER_ROW = 10;
 

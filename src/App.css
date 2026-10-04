@@ -220,53 +220,37 @@ input, select {
    ============================ */
 .hero {
   position: relative;
-  min-height: 90vh;
+  min-height: clamp(540px, 78vh, 780px);
   display: flex;
   align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 6rem 2rem 4rem;
+  padding: clamp(4rem, 8vw, 8rem) clamp(1.25rem, 7vw, 7rem);
   overflow: hidden;
+  background: radial-gradient(circle at 75% 35%, rgba(233, 69, 96, 0.16), transparent 45%), var(--bg-primary);
 }
 
 .hero::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 30% 20%, rgba(233, 69, 96, 0.12) 0%, transparent 50%),
-    radial-gradient(ellipse at 70% 80%, rgba(124, 58, 237, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0) 0%, var(--bg-primary) 70%);
-  z-index: 0;
+  background: linear-gradient(90deg, rgba(10, 10, 15, 0.98) 0%, rgba(10, 10, 15, 0.82) 42%, rgba(10, 10, 15, 0.2) 100%),
+    linear-gradient(0deg, var(--bg-primary), transparent 35%);
+  z-index: 1;
 }
 
-.hero-particles {
+.hero-backdrop {
   position: absolute;
   inset: 0;
-  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 35%;
   z-index: 0;
-}
-
-.particle {
-  position: absolute;
-  width: 2px;
-  height: 2px;
-  background: var(--accent-primary);
-  border-radius: 50%;
-  opacity: 0.3;
-  animation: float-particle 15s infinite ease-in-out;
-}
-
-@keyframes float-particle {
-  0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
-  10% { opacity: 0.4; }
-  50% { transform: translateY(-40vh) translateX(20px); opacity: 0.2; }
-  90% { opacity: 0.4; }
 }
 
 .hero-content {
   position: relative;
-  z-index: 1;
-  max-width: 800px;
+  z-index: 2;
+  max-width: 680px;
 }
 
 .hero-badge {
@@ -275,7 +259,7 @@ input, select {
   gap: 0.5rem;
   padding: 0.5rem 1.25rem;
   border-radius: var(--radius-full);
-  background: var(--bg-glass);
+  background: rgba(233, 69, 96, 0.14);
   border: 1px solid var(--border-glow);
   font-size: 0.85rem;
   font-weight: 500;
@@ -285,33 +269,42 @@ input, select {
 }
 
 .hero h1 {
-  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-size: clamp(2.8rem, 6vw, 5.5rem);
   font-weight: 900;
-  line-height: 1.1;
-  margin-bottom: 1.25rem;
-  letter-spacing: -2px;
+  line-height: 1.04;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.045em;
   animation: fadeInUp 0.8s ease 0.1s both;
 }
 
-.hero h1 .gradient-text {
-  background: var(--accent-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.hero-meta span + span::before {
+  content: '·';
+  margin-right: 0.75rem;
+  color: var(--accent-primary);
 }
 
 .hero p {
   font-size: clamp(1rem, 2vw, 1.2rem);
   color: var(--text-secondary);
-  max-width: 600px;
-  margin: 0 auto 2.5rem;
+  max-width: 580px;
+  margin: 0 0 2rem;
   animation: fadeInUp 0.8s ease 0.2s both;
 }
 
 .hero-buttons {
   display: flex;
   gap: 1rem;
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: wrap;
   animation: fadeInUp 0.8s ease 0.3s both;
 }
@@ -394,6 +387,77 @@ input, select {
   color: var(--text-secondary);
   max-width: 500px;
   margin: 0 auto;
+}
+
+.home-movie-section {
+  padding-top: 4.5rem;
+  padding-bottom: 4.5rem;
+}
+
+.home-coming-soon {
+  background: var(--bg-secondary);
+  border-block: 1px solid var(--border-color);
+}
+
+.home-section-header {
+  max-width: 1400px;
+  margin: 0 auto 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 1.5rem;
+}
+
+.home-section-eyebrow {
+  display: block;
+  margin-bottom: 0.4rem;
+  color: var(--accent-secondary);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.home-section-header h2 {
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+}
+
+.home-section-header p,
+.home-empty,
+.home-movies-error p {
+  color: var(--text-secondary);
+}
+
+.home-section-header p {
+  margin-top: 0.5rem;
+}
+
+.home-section-link {
+  flex: none;
+  color: var(--accent-secondary);
+  font-weight: 700;
+}
+
+.home-section-link:hover {
+  color: var(--text-primary);
+}
+
+.home-empty {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+}
+
+.home-movies-error {
+  text-align: center;
+}
+
+.home-movies-error p {
+  margin: 0.5rem 0 1.25rem;
 }
 
 /* ============================
@@ -517,6 +581,31 @@ input, select {
   font-size: 1rem;
   font-weight: 700;
   color: var(--gold);
+}
+
+.movie-card-release {
+  margin-top: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.movie-card-showtimes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.movie-card-showtimes span {
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
 }
 
 /* ============================
@@ -1385,6 +1474,27 @@ input, select {
    Responsive
    ============================ */
 @media (max-width: 768px) {
+  .hero {
+    min-height: 590px;
+  }
+
+  .hero::before {
+    background: linear-gradient(0deg, var(--bg-primary) 0%, rgba(10, 10, 15, 0.82) 52%, rgba(10, 10, 15, 0.45) 100%);
+  }
+
+  .hero-backdrop {
+    object-position: center top;
+  }
+
+  .hero-content {
+    align-self: end;
+  }
+
+  .home-section-header {
+    align-items: start;
+    flex-direction: column;
+  }
+
   .movie-detail-info {
     flex-direction: column;
     align-items: center;

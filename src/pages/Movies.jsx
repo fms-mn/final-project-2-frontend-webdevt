@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import MovieCard from '../components/MovieCard';
@@ -6,10 +7,14 @@ import { FiSearch } from 'react-icons/fi';
 
 export default function Movies() {
   const { API_URL } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const requestedStatus = searchParams.get('status');
+  const filter = ['now_showing', 'coming_soon'].includes(requestedStatus)
+    ? requestedStatus
+    : 'all';
 
   useEffect(() => {
     fetchMovies();
@@ -54,7 +59,7 @@ export default function Movies() {
           <button
             key={f.key}
             className={`filter-btn ${filter === f.key ? 'active' : ''}`}
-            onClick={() => setFilter(f.key)}
+            onClick={() => setSearchParams(f.key === 'all' ? {} : { status: f.key })}
           >
             {f.label}
           </button>
