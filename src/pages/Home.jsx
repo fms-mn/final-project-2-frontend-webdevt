@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom';
 import MovieCard from '../components/MovieCard';
-import { listMovies } from '../data/catalog';
+import { useMovies } from '../hooks/useMovies';
 
 export default function Home() {
-  const nowShowing = listMovies({ status: 'now_showing' });
-  const comingSoon = listMovies({ status: 'coming_soon' });
+  const { movies, loading, error, reload } = useMovies();
+  const nowShowing = movies.filter((movie) => movie.status === 'now_showing');
+  const comingSoon = movies.filter((movie) => movie.status === 'coming_soon');
   const featuredMovie = nowShowing[0] || comingSoon[0];
 
   return (
@@ -54,7 +55,15 @@ export default function Home() {
               </div>
               <Link to="/movies?status=now_showing" className="home-section-link">View all movies →</Link>
             </div>
-            {nowShowing.length > 0 ? (
+            {loading ? (
+              <div className="loading"><div className="spinner" /></div>
+            ) : error ? (
+              <div className="empty-state">
+                <h3>We couldn&apos;t load the movies</h3>
+                <p>{error}</p>
+                <button type="button" className="btn btn-primary" onClick={reload}>Try again</button>
+              </div>
+            ) : nowShowing.length > 0 ? (
               <div className="movies-grid">
                 {nowShowing.slice(0, 4).map((movie) => (
                   <MovieCard key={movie._id} movie={movie} showShowtimes />
@@ -74,7 +83,7 @@ export default function Home() {
               </div>
               <Link to="/movies?status=coming_soon" className="home-section-link">Explore upcoming →</Link>
             </div>
-            {comingSoon.length > 0 ? (
+            {loading || error ? null : comingSoon.length > 0 ? (
               <div className="movies-grid">
                 {comingSoon.slice(0, 4).map((movie) => (
                   <MovieCard key={movie._id} movie={movie} />

@@ -1,5 +1,6 @@
-import { getMovieById } from './catalog';
 import { SHOWTIMES } from '../constants/showtimes';
+
+// DEMO ONLY: bookings are kept in this browser until the booking API is connected.
 
 const BOOKINGS_KEY = 'filme_demo_bookings';
 const SEAT_PATTERN = /^[A-H](10|[1-9])$/;
@@ -24,9 +25,9 @@ export function getBookedSeats(movieId, showDate, showTime) {
     .flatMap((booking) => booking.seats);
 }
 
-export function createDemoBooking({ userId, movieId, seats, showDate, showTime }) {
-  const movie = getMovieById(movieId);
-  if (!userId || !movie || movie.status !== 'now_showing') {
+export function createDemoBooking({ userId, movie, seats, showDate, showTime }) {
+  const movieId = movie?._id;
+  if (!userId || !movieId || movie.status !== 'now_showing') {
     throw new Error('This movie is not available for booking');
   }
   if (!Array.isArray(seats) || seats.length === 0 ||
@@ -50,6 +51,8 @@ export function createDemoBooking({ userId, movieId, seats, showDate, showTime }
     showDate,
     showTime,
     totalPrice: seats.length * movie.price,
+    // A snapshot, so My Bookings can show the movie without loading it again.
+    movie: { _id: movieId, title: movie.title, posterUrl: movie.posterUrl },
     status: 'confirmed',
     createdAt: new Date().toISOString(),
   };
@@ -60,8 +63,7 @@ export function createDemoBooking({ userId, movieId, seats, showDate, showTime }
 export function getDemoBookings(userId) {
   return readBookings()
     .filter((booking) => booking.userId === userId)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    .map((booking) => ({ ...booking, movie: getMovieById(booking.movieId) }));
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
 export function cancelDemoBooking(bookingId, userId) {

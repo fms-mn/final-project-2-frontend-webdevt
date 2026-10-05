@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { SHOWTIMES } from '../constants/showtimes';
-import { getMovieById } from '../data/catalog';
+import { useMovie } from '../hooks/useMovies';
 import { createDemoBooking, getBookedSeats } from '../data/demoBookings';
 
 const ROWS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
@@ -31,7 +31,7 @@ export default function MovieDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const movie = getMovieById(id);
+  const { movie, loading, notFound, error, reload } = useMovie(id);
   const [selectedDate, setSelectedDate] = useState(formatDate(new Date()));
   const [selectedTime, setSelectedTime] = useState(SHOWTIMES[0]);
   const [selectedSeats, setSelectedSeats] = useState([]);
@@ -64,7 +64,7 @@ export default function MovieDetail() {
     try {
       const result = createDemoBooking({
         userId: user.id,
-        movieId: id,
+        movie,
         seats: selectedSeats,
         showDate: selectedDate,
         showTime: selectedTime,
@@ -79,7 +79,26 @@ export default function MovieDetail() {
     }
   };
 
-  if (!movie) {
+  if (loading) {
+    return (
+      <div className="loading" style={{ minHeight: '60vh' }}>
+        <div className="spinner" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="empty-state" style={{ minHeight: '60vh' }}>
+        <div className="empty-state-icon">🎬</div>
+        <h3>We couldn&apos;t load this movie</h3>
+        <p>{error}</p>
+        <button type="button" className="btn btn-primary" onClick={reload}>Try again</button>
+      </div>
+    );
+  }
+
+  if (notFound || !movie) {
     return (
       <div className="empty-state" style={{ minHeight: '60vh' }}>
         <div className="empty-state-icon">🎬</div>
@@ -113,10 +132,12 @@ export default function MovieDetail() {
                 <span className="stat-label">Duration</span>
                 <span className="stat-value">{movie.duration} min</span>
               </div>
-              <div className="stat">
-                <span className="stat-label">Director</span>
-                <span className="stat-value">{movie.director}</span>
-              </div>
+              {movie.director && (
+                <div className="stat">
+                  <span className="stat-label">Director</span>
+                  <span className="stat-value">{movie.director}</span>
+                </div>
+              )}
               <div className="stat">
                 <span className="stat-label">Price</span>
                 <span className="stat-value stat-price">₱{movie.price}</span>
@@ -154,6 +175,10 @@ export default function MovieDetail() {
       {movie.status === 'now_showing' && (
         <div className="booking-section">
           <h2>🎟 Book Tickets</h2>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+            Demo booking: showtimes, prices and seats are placeholders saved in this browser only
+            until the booking system is connected.
+          </p>
 
           {/* Date Selection */}
           <h3 style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>

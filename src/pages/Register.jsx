@@ -15,8 +15,8 @@ export default function Register() {
     e.preventDefault();
     setError('');
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters');
       return;
     }
 
@@ -37,7 +37,7 @@ export default function Register() {
       <div className="auth-container">
         <div className="auth-card">
           <h1>Create account</h1>
-          <p className="subtitle">Create a demo account saved in this browser</p>
+          <p className="subtitle">Join FILME to book your seats</p>
 
           {error && <div className="error-message">{error}</div>}
 
@@ -69,11 +69,11 @@ export default function Register() {
               <input
                 id="password"
                 type="password"
-                placeholder="Min 6 characters"
+                placeholder="Min 8 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={8}
               />
             </div>
             <button type="submit" className="btn btn-primary" disabled={loading}>

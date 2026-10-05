@@ -34,7 +34,7 @@ export default function Login() {
       <div className="auth-container">
         <div className="auth-card">
           <h1>Welcome back</h1>
-          <p className="subtitle">Sign in to your FILME demo account on this browser</p>
+          <p className="subtitle">Sign in to your FILME account</p>
 
           {error && <div className="error-message">{error}</div>}
 

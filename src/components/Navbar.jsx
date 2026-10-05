@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { FiMoon, FiSun } from 'react-icons/fi';
 
 export default function Navbar() {
-  const { user, logout } = useAuth();
+  const { user, loading, logout } = useAuth();
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [theme, setTheme] = useState(() =>
@@ -63,7 +63,7 @@ export default function Navbar() {
           {theme === 'dark' ? <FiSun aria-hidden="true" /> : <FiMoon aria-hidden="true" />}
           <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span>
         </button>
-        {user ? (
+        {loading ? null : user ? (
           <>
             <span className="nav-user-name">Hi, {user.name}</span>
             <button className="nav-logout" onClick={logout}>

@@ -35,6 +35,9 @@ export default function MyBookings() {
     <div className="bookings-page fade-in">
       <h1>My Bookings</h1>
       <p>View and manage your movie bookings</p>
+      <p className="demo-note" style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+        Demo mode: bookings are saved in this browser only until the booking system is connected.
+      </p>
 
       {bookings.length === 0 ? (
         <div className="empty-state">

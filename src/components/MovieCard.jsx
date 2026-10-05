@@ -21,7 +21,7 @@ export default function MovieCard({ movie, showShowtimes = false }) {
         <h3>{movie.title}</h3>
         <div className="movie-card-meta">
           <span>⏱ {movie.duration}min</span>
-          <span>🎬 {movie.genre[0]}</span>
+          {movie.genre[0] && <span>🎬 {movie.genre[0]}</span>}
           <span>{movie.rating}</span>
         </div>
         {isShowing ? (

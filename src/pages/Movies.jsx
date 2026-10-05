@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import MovieCard from '../components/MovieCard';
 import { FiSearch } from 'react-icons/fi';
-import { listMovies } from '../data/catalog';
+import { useMovies } from '../hooks/useMovies';
 
 export default function Movies() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -12,7 +12,12 @@ export default function Movies() {
     ? requestedStatus
     : 'all';
 
-  const movies = listMovies({ status: filter === 'all' ? undefined : filter, search });
+  const { movies: allMovies, loading, error, reload } = useMovies();
+  const query = search.trim().toLowerCase();
+  const movies = allMovies.filter((movie) =>
+    (filter === 'all' || movie.status === filter) &&
+    (!query || movie.title.toLowerCase().includes(query))
+  );
 
   return (
     <div className="movies-page fade-in">
@@ -45,7 +50,16 @@ export default function Movies() {
         ))}
       </div>
 
-      {movies.length === 0 ? (
+      {loading ? (
+        <div className="loading"><div className="spinner" /></div>
+      ) : error ? (
+        <div className="empty-state">
+          <div className="empty-state-icon">🎬</div>
+          <h3>We couldn&apos;t load the movies</h3>
+          <p>{error}</p>
+          <button type="button" className="btn btn-primary" onClick={reload}>Try again</button>
+        </div>
+      ) : movies.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state-icon">🎬</div>
           <h3>No movies found</h3>
