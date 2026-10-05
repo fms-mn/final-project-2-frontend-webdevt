@@ -17,9 +17,11 @@ export default function Login() {
     setLoading(true);
 
     try {
-      await login(email, password);
+      const signedInUser = await login(email, password);
       const destination = location.state?.from;
-      navigate(destination ? `${destination.pathname}${destination.search}${destination.hash}` : '/', {
+      navigate(destination && (signedInUser.role === 'admin' ? destination.pathname.startsWith('/admin') : !destination.pathname.startsWith('/admin'))
+        ? `${destination.pathname}${destination.search}${destination.hash}`
+        : signedInUser.role === 'admin' ? '/admin' : '/', {
         replace: true,
       });
     } catch (err) {

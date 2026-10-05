@@ -1,12 +1,13 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useState, useEffect } from 'react';
-import { FiMoon, FiSun } from 'react-icons/fi';
+import { FiMenu, FiMoon, FiSun, FiX } from 'react-icons/fi';
 
 export default function Navbar() {
   const { user, loading, logout } = useAuth();
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [theme, setTheme] = useState(() =>
     document.documentElement.dataset.theme === 'light' ? 'light' : 'dark'
   );
@@ -16,6 +17,15 @@ export default function Navbar() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => { setMenuOpen(false); }, [location.pathname]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const closeOnEscape = (event) => { if (event.key === 'Escape') setMenuOpen(false); };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [menuOpen]);
 
   const isActive = (path) => location.pathname === path;
   const toggleTheme = () => {
@@ -35,21 +45,26 @@ export default function Navbar() {
         🎬 FILME
       </Link>
 
-      <div className="nav-links">
-        <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}>
+      <div id="primary-navigation" className={`nav-links ${menuOpen ? 'is-open' : ''}`}>
+        <Link to="/" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/') ? 'active' : ''}`}>
           Home
         </Link>
-        <Link to="/movies" className={`nav-link ${isActive('/movies') ? 'active' : ''}`}>
+        <Link to="/movies" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/movies') ? 'active' : ''}`}>
           Movies
         </Link>
-        {user && (
-          <Link
-            to="/my-bookings"
-            className={`nav-link ${isActive('/my-bookings') ? 'active' : ''}`}
-          >
-            My Bookings
-          </Link>
+        {user?.role === 'user' && (
+          <>
+            <Link to="/my-bookings" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/my-bookings') ? 'active' : ''}`}>My Bookings</Link>
+            <Link to="/profile" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/profile') ? 'active' : ''}`}>Profile</Link>
+          </>
         )}
+        {user?.role === 'admin' && <Link to="/admin" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/admin') ? 'active' : ''}`}>Dashboard</Link>}
+        <div className="nav-mobile-account">
+          {loading ? null : user ? <>
+            <span className="nav-mobile-name">Hi, {user.name}</span>
+            <button type="button" className="nav-logout" onClick={() => { setMenuOpen(false); logout(); }}>Logout</button>
+          </> : <Link to="/login" className="nav-link" onClick={() => setMenuOpen(false)}>Sign In</Link>}
+        </div>
       </div>
 
       <div className="nav-user">
@@ -76,6 +91,9 @@ export default function Navbar() {
           </Link>
         )}
       </div>
+      <button type="button" className="nav-menu-toggle" aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'} aria-expanded={menuOpen} aria-controls="primary-navigation" onClick={() => setMenuOpen((open) => !open)}>
+        {menuOpen ? <FiX aria-hidden="true" /> : <FiMenu aria-hidden="true" />}
+      </button>
     </nav>
   );
 }
