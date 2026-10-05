@@ -72,6 +72,14 @@ export function getDemoBookings(userId) {
     .map((booking) => ({ ...booking, movie: getMovieById(booking.movieId) || booking.movieSnapshot }));
 }
 
+export function getDemoBookingReference(booking) {
+  return `FM-${booking._id.replaceAll('-', '').slice(0, 12).toUpperCase()}`;
+}
+
+export function isUpcomingDemoBooking(booking) {
+  return booking.status === 'confirmed' && new Date(`${booking.showDate}T${booking.showTime}:00`).getTime() > Date.now();
+}
+
 export function cancelDemoBooking(bookingId, userId) {
   const bookings = listDemoBookings();
   const booking = bookings.find((item) => item._id === bookingId && item.userId === userId);
@@ -85,5 +93,5 @@ export function cancelDemoBooking(bookingId, userId) {
 }
 
 export function canCancelDemoBooking(booking) {
-  return booking.status === 'confirmed' && new Date(`${booking.showDate}T${booking.showTime}:00`).getTime() > Date.now();
+  return isUpcomingDemoBooking(booking);
 }

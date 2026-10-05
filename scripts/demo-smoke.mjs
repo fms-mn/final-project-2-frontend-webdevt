@@ -20,6 +20,7 @@ try {
   const { default: Admin } = await server.ssrLoadModule('/src/pages/Admin.jsx');
   const { default: Login } = await server.ssrLoadModule('/src/pages/Login.jsx');
   const { default: Profile } = await server.ssrLoadModule('/src/pages/Profile.jsx');
+  const { default: MyBookings } = await server.ssrLoadModule('/src/pages/MyBookings.jsx');
   const { AuthProvider } = await server.ssrLoadModule('/src/context/AuthContext.jsx');
 
   await assert.rejects(auth.loginDemoUser('customer@filme.example', 'wrong'));
@@ -92,7 +93,66 @@ try {
   assert.match(profileHtml, /09171234567/);
   assert.match(profileHtml, /customer@filme\.example/);
   assert.doesNotMatch(profileHtml, /type="email"/);
-  console.log('PASS demo auth, profile save and reload, catalog, schedule, booking, cancellation, and user management');
+
+  const upcomingBooking = bookings.createDemoBooking({ userId: customer.id, movieId: movie._id, seats: ['B1'], showDate: date, showTime: slot.time });
+  const pastDate = new Date();
+  pastDate.setDate(pastDate.getDate() - 1);
+  const yesterday = `${pastDate.getFullYear()}-${String(pastDate.getMonth() + 1).padStart(2, '0')}-${String(pastDate.getDate()).padStart(2, '0')}`;
+  const pastBooking = { ...upcomingBooking, _id: 'past-customer-booking', seats: ['C1'], showDate: yesterday, status: 'confirmed' };
+  localStorage.setItem('filme_demo_bookings', JSON.stringify([...bookings.listDemoBookings(), pastBooking]));
+  const otherCustomer = auth.saveDemoUser({ name: 'Taylor Lim', email: 'taylor@example.com', role: 'customer', password: 'secret123' });
+  const otherBooking = bookings.createDemoBooking({ userId: otherCustomer.id, movieId: movie._id, seats: ['D1'], showDate: date, showTime: slot.time });
+  assert.equal(bookings.getDemoBookings(customer.id).length, 3);
+  assert.equal(bookings.getDemoBookings(otherCustomer.id).length, 1);
+  assert.throws(() => bookings.cancelDemoBooking(otherBooking._id, customer.id), /Booking not found/);
+  assert.equal(bookings.isUpcomingDemoBooking(upcomingBooking), true);
+  assert.equal(bookings.isUpcomingDemoBooking(pastBooking), false);
+  assert.equal(bookings.isUpcomingDemoBooking(bookings.getDemoBookings(customer.id).find((item) => item._id === booking._id)), false);
+  assert.throws(() => bookings.cancelDemoBooking(pastBooking._id, customer.id), /Only future bookings/);
+  assert.throws(() => bookings.cancelDemoBooking(booking._id, customer.id), /already cancelled/);
+  assert.deepEqual(bookings.getBookedSeats(movie._id, date, slot.time).sort(), ['B1', 'D1']);
+
+  const customerHtml = renderToString(React.createElement(AuthProvider, null, React.createElement(MemoryRouter, null, React.createElement(MyBookings)))).replaceAll('<!-- -->', '');
+  const upcomingHtml = customerHtml.match(/<section class="bookings-group" aria-labelledby="upcoming-bookings-title">([\s\S]*?)<\/section>/)?.[1];
+  const historyHtml = customerHtml.match(/<section class="bookings-group" aria-labelledby="booking-history-title">([\s\S]*?)<\/section>/)?.[1];
+  assert.ok(upcomingHtml && historyHtml);
+  assert.match(upcomingHtml, new RegExp(bookings.getDemoBookingReference(upcomingBooking)));
+  assert.match(upcomingHtml, /Cancel Booking/);
+  assert.match(historyHtml, new RegExp(bookings.getDemoBookingReference(pastBooking)));
+  assert.match(historyHtml, new RegExp(bookings.getDemoBookingReference(booking)));
+  assert.doesNotMatch(historyHtml, /Cancel Booking/);
+  assert.doesNotMatch(customerHtml, new RegExp(bookings.getDemoBookingReference(otherBooking)));
+  assert.match(customerHtml, /Total amount/);
+  assert.match(customerHtml, /Seats/);
+  assert.match(customerHtml, /Show time/);
+  assert.match(customerHtml, /confirmed/);
+  assert.match(customerHtml, /cancelled/);
+
+  bookings.cancelDemoBooking(upcomingBooking._id, customer.id);
+  assert.deepEqual(bookings.getBookedSeats(movie._id, date, slot.time), ['D1']);
+  const afterCancellationHtml = renderToString(React.createElement(AuthProvider, null, React.createElement(MemoryRouter, null, React.createElement(MyBookings))));
+  assert.match(afterCancellationHtml, /No upcoming bookings/);
+  assert.match(afterCancellationHtml, new RegExp(bookings.getDemoBookingReference(upcomingBooking)));
+  assert.equal(bookings.getDemoBookings(customer.id).find((item) => item._id === upcomingBooking._id).status, 'cancelled');
+
+  auth.logoutDemoUser();
+  await auth.loginDemoUser('taylor@example.com', 'secret123');
+  const otherHtml = renderToString(React.createElement(AuthProvider, null, React.createElement(MemoryRouter, null, React.createElement(MyBookings))));
+  assert.match(otherHtml, new RegExp(bookings.getDemoBookingReference(otherBooking)));
+  assert.doesNotMatch(otherHtml, new RegExp(bookings.getDemoBookingReference(upcomingBooking)));
+  auth.logoutDemoUser();
+  await auth.loginDemoUser('admin@filme.example', 'nigga123');
+  assert.equal(bookings.getDemoBookings(auth.getCurrentUser().id).length, 0);
+  auth.logoutDemoUser();
+  await auth.loginDemoUser('customer@filme.example', 'nigga123');
+  assert.equal(bookings.getDemoBookings(customer.id).length, 3); // persists through account switches and a fresh storage read
+  const emptyCustomer = auth.saveDemoUser({ name: 'New Viewer', email: 'new.viewer@example.com', role: 'customer', password: 'secret123' });
+  auth.logoutDemoUser();
+  await auth.loginDemoUser(emptyCustomer.email, 'secret123');
+  const emptyHtml = renderToString(React.createElement(AuthProvider, null, React.createElement(MemoryRouter, null, React.createElement(MyBookings))));
+  assert.match(emptyHtml, /No upcoming bookings/);
+  assert.match(emptyHtml, /No booking history yet/);
+  console.log('PASS demo auth, profile, catalog, schedule, upcoming/history bookings, account isolation, cancellation, and persistence');
 } finally {
   await server.close();
 }
