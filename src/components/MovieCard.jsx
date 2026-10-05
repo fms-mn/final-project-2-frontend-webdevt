@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { SHOWTIMES } from '../constants/showtimes';
+import { listShowtimes } from '../data/demoSchedule';
 
 export default function MovieCard({ movie, showShowtimes = false }) {
   const isShowing = movie.status === 'now_showing';
@@ -35,7 +35,7 @@ export default function MovieCard({ movie, showShowtimes = false }) {
         )}
         {showShowtimes && isShowing && (
           <div className="movie-card-showtimes" aria-label="Daily showtimes">
-            {SHOWTIMES.map((time) => <span key={time}>{time}</span>)}
+            {listShowtimes(movie._id).map((slot) => <span key={slot.id}>{slot.time}</span>)}
           </div>
         )}
       </div>

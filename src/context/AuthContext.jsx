@@ -57,8 +57,16 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  // Saves the signed-in user's own name and phone (PATCH /api/users/me).
+  const updateProfile = async (changes) => {
+    const data = await api('/users/me', { method: 'PATCH', body: changes });
+    const updatedUser = toUser(data.user);
+    setUser(updatedUser);
+    return updatedUser;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );
