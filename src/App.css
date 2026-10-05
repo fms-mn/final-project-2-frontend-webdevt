@@ -1883,8 +1883,6 @@ input, select {
   }
 }
 
-.demo-account-actions { display: flex; flex-wrap: wrap; gap: .65rem; margin: 1.25rem 0; }
-.demo-account-actions .btn { flex: 1; justify-content: center; white-space: nowrap; }
 .profile-container { max-width: 520px; }
 .profile-label { display: block; font-size: .8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: .5rem; text-transform: uppercase; letter-spacing: .5px; }
 .profile-optional { font-weight: 400; text-transform: none; letter-spacing: 0; }

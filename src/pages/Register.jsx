@@ -37,7 +37,7 @@ export default function Register() {
       <div className="auth-container">
         <div className="auth-card">
           <h1>Create account</h1>
-          <p className="subtitle">Create a demo account saved in this browser</p>
+          <p className="subtitle">Create an account saved in this browser</p>
 
           {error && <div className="error-message">{error}</div>}
 

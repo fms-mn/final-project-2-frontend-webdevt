@@ -47,7 +47,7 @@ export default function Admin() {
             <div className="admin-stat" key={label}><strong>{value}</strong><span>{label}</span></div>
           )}
         </div>
-        <div className="admin-panel"><h2>Recent bookings</h2>{bookings.length ? bookings.slice(0, 5).map((booking) => <p key={booking._id}>{listMovies().find((movie) => movie._id === booking.movieId)?.title || 'Removed movie'} · {booking.showDate} {booking.showTime} · {booking.status}</p>) : <p>No bookings yet. Use the customer account to place one.</p>}</div>
+        <div className="admin-panel"><h2>Recent bookings</h2>{bookings.length ? bookings.slice(0, 5).map((booking) => <p key={booking._id}>{listMovies().find((movie) => movie._id === booking.movieId)?.title || 'Removed movie'} · {booking.showDate} {booking.showTime} · {booking.status}</p>) : <p>No bookings yet.</p>}</div>
       </>}
 
       {tab === 'movies' && <>
@@ -93,10 +93,10 @@ export default function Admin() {
           <label>Name<input required value={userDraft.name} onChange={(e) => setUserDraft({ ...userDraft, name: e.target.value })} /></label>
           <label>Email<input required type="email" value={userDraft.email} onChange={(e) => setUserDraft({ ...userDraft, email: e.target.value })} /></label>
           <label>Role<select value={userDraft.role} onChange={(e) => setUserDraft({ ...userDraft, role: e.target.value })}><option value="customer">Customer</option><option value="admin">Admin</option></select></label>
-          {!userDraft.id && <label>Demo password<input required type="password" minLength="6" value={userDraft.password} onChange={(e) => setUserDraft({ ...userDraft, password: e.target.value })} /></label>}
+          {!userDraft.id && <label>Password<input required type="password" minLength="6" value={userDraft.password} onChange={(e) => setUserDraft({ ...userDraft, password: e.target.value })} /></label>}
           <div className="admin-actions"><button className="btn btn-primary btn-small">Save user</button>{userDraft.id && <button type="button" className="btn btn-secondary btn-small" onClick={() => setUserDraft({ name: '', email: '', role: 'customer', password: '' })}>Cancel edit</button>}</div>
         </form>
-        <div className="admin-list">{users.map((user) => <div className="admin-row" key={user.id}><div><strong>{user.name}</strong><small>{user.email} · {user.role} · {user.active ? 'active' : 'inactive'}</small></div>{!user.id.startsWith('demo-') && <div className="admin-actions"><button className="btn btn-secondary btn-small" onClick={() => setUserDraft(user)}>Edit</button><button className="btn btn-secondary btn-small" onClick={() => act(() => setDemoUserActive(user.id, !user.active))}>{user.active ? 'Disable' : 'Enable'}</button></div>}</div>)}</div>
+        <div className="admin-list">{users.map((user) => <div className="admin-row" key={user.id}><div><strong>{user.name}</strong><small>{user.email} · {user.role} · {user.active ? 'active' : 'inactive'}</small></div><div className="admin-actions"><button className="btn btn-secondary btn-small" onClick={() => setUserDraft(user)}>Edit</button><button className="btn btn-secondary btn-small" onClick={() => act(() => setDemoUserActive(user.id, !user.active))}>{user.active ? 'Disable' : 'Enable'}</button></div></div>)}</div>
       </>}
 
       {tab === 'bookings' && <div className="admin-list">{bookings.length === 0 && <div className="admin-panel">No bookings yet.</div>}{bookings.map((booking) => <div className="admin-row" key={booking._id}><div><strong>{movies.find((movie) => movie._id === booking.movieId)?.title || 'Removed movie'}</strong><small>{users.find((user) => user.id === booking.userId)?.email || 'Unknown user'} · {booking.showDate} {booking.showTime} · Seats {booking.seats.join(', ')} · ₱{booking.totalPrice} · {booking.status}</small></div>{canCancelDemoBooking(booking) && <button className="btn btn-danger btn-small" onClick={() => act(() => cancelDemoBooking(booking._id, booking.userId), 'Booking cancelled')}>Cancel</button>}</div>)}</div>}

@@ -27,7 +27,7 @@ export default function Profile() {
       <div className="auth-container profile-container">
         <div className="auth-card">
           <h1>My Profile</h1>
-          <p className="subtitle">Your details for this FILME demo account</p>
+          <p className="subtitle">Your FILME account details</p>
           {error && <div className="error-message" role="alert">{error}</div>}
           {saved && <div className="profile-success" role="status">Profile saved in this browser.</div>}
           <form onSubmit={handleSubmit} noValidate>
@@ -43,7 +43,7 @@ export default function Profile() {
             <div className="form-group">
               <span className="profile-label">Email</span>
               <div className="profile-email">{user.email}</div>
-              <p className="profile-help">Email cannot be changed in this demo.</p>
+              <p className="profile-help">Email cannot be changed here.</p>
             </div>
             <button type="submit" className="btn btn-primary">Save Profile</button>
           </form>

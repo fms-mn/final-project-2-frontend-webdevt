@@ -2,18 +2,9 @@
 // Replace this module with Express API calls and server authorization later.
 const USERS_KEY = 'filme_demo_users';
 const SESSION_KEY = 'filme_demo_session';
-const PROFILES_KEY = 'filme_demo_profiles';
-export const DEMO_ACCOUNTS = [
-  { id: 'demo-customer', name: 'Alex Rivera', email: 'customer@filme.example', role: 'customer', password: 'nigga123' },
-  { id: 'demo-admin', name: 'Morgan Santos', email: 'admin@filme.example', role: 'admin', password: 'nigga123' },
-];
 function readUsers() {
   try { const users = JSON.parse(localStorage.getItem(USERS_KEY) || '[]'); return Array.isArray(users) ? users : []; }
   catch { return []; }
-}
-function readProfiles() {
-  try { const profiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || '{}'); return profiles && typeof profiles === 'object' && !Array.isArray(profiles) ? profiles : {}; }
-  catch { return {}; }
 }
 function publicUser({ id, name, email, role, active = true, phone = '' }) { return { id, name, email, role: role === 'user' ? 'customer' : role, active, phone }; }
 async function matchesLegacyPassword(password, user) {
@@ -22,12 +13,7 @@ async function matchesLegacyPassword(password, user) {
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('') === user.passwordHash;
 }
 export function listDemoUsers() {
-  const profiles = readProfiles();
-  return [...DEMO_ACCOUNTS, ...readUsers()].map((user) => publicUser({
-    ...user,
-    name: profiles[user.id]?.name ?? user.name,
-    phone: profiles[user.id]?.phone ?? user.phone,
-  }));
+  return readUsers().map(publicUser);
 }
 export function getCurrentUser() {
   try { return listDemoUsers().find((user) => user.id === localStorage.getItem(SESSION_KEY) && user.active) || null; }
@@ -44,7 +30,7 @@ export async function registerDemoUser(name, email, password) {
   return publicUser(user);
 }
 export async function loginDemoUser(email, password) {
-  const user = [...DEMO_ACCOUNTS, ...readUsers()].find((item) => item.email === email.trim().toLowerCase());
+  const user = readUsers().find((item) => item.email === email.trim().toLowerCase());
   if (!user || user.active === false || (user.password !== password && !await matchesLegacyPassword(password, user))) throw new Error('Invalid credentials or inactive account');
   localStorage.setItem(SESSION_KEY, user.id);
   return listDemoUsers().find((candidate) => candidate.id === user.id);
@@ -63,17 +49,11 @@ export function updateDemoCustomerProfile(userId, changes) {
   const phone = typeof changes.phone === 'string' ? changes.phone.trim() : '';
   const users = readUsers();
   const index = users.findIndex((user) => user.id === userId);
-  if (index >= 0) {
-    users[index] = { ...users[index], name, phone };
-    localStorage.setItem(USERS_KEY, JSON.stringify(users));
-  } else {
-    const profiles = readProfiles();
-    localStorage.setItem(PROFILES_KEY, JSON.stringify({ ...profiles, [userId]: { name, phone } }));
-  }
+  users[index] = { ...users[index], name, phone };
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
   return getDemoCustomerProfile(userId);
 }
 export function setDemoUserActive(id, active) {
-  if (DEMO_ACCOUNTS.some((user) => user.id === id)) throw new Error('Demo accounts cannot be disabled');
   const users = readUsers();
   const user = users.find((item) => item.id === id);
   if (!user) throw new Error('User not found');
@@ -81,7 +61,6 @@ export function setDemoUserActive(id, active) {
   localStorage.setItem(USERS_KEY, JSON.stringify(users));
 }
 export function saveDemoUser(draft) {
-  if (DEMO_ACCOUNTS.some((user) => user.id === draft.id)) throw new Error('Demo accounts cannot be edited');
   const name = draft.name?.trim();
   const email = draft.email?.trim().toLowerCase();
   if (!name || !email || !/^\S+@\S+\.\S+$/.test(email)) throw new Error('Enter a name and valid email');

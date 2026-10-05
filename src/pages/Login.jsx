@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { DEMO_ACCOUNTS } from '../data/demoAuth';
 
 export default function Login() {
   const { login } = useAuth();
@@ -37,19 +36,9 @@ export default function Login() {
       <div className="auth-container">
         <div className="auth-card">
           <h1>Welcome back</h1>
-          <p className="subtitle">Sign in to your FILME demo account on this browser</p>
+          <p className="subtitle">Sign in to your FILME account</p>
 
           {error && <div className="error-message">{error}</div>}
-
-          <div className="demo-account-actions">
-            {DEMO_ACCOUNTS.map((account) => (
-              <button key={account.id} type="button" className="btn btn-secondary btn-small" onClick={() => {
-                setEmail(account.email); setPassword(account.password); setError('');
-              }}>
-                Use demo {account.role}
-              </button>
-            ))}
-          </div>
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">
