@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { listAuditoriums, listShowtimes } from '../data/demoSchedule';
@@ -7,6 +7,17 @@ import { createDemoBooking, getBookedSeats } from '../data/demoBookings';
 
 const ROWS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 const SEATS_PER_ROW = 10;
+
+function ChairShape({ label }) {
+  return <><span className="chair-backrest"><span className="chair-label">{label}</span></span><span className="chair-cushion" /></>;
+}
+
+export function toggleSeatSelection(selectedSeats, seatId, bookedSeats) {
+  if (bookedSeats.includes(seatId)) return selectedSeats;
+  return selectedSeats.includes(seatId)
+    ? selectedSeats.filter((seat) => seat !== seatId)
+    : [...selectedSeats, seatId];
+}
 
 function getNextDays(count) {
   const days = [];
@@ -43,7 +54,6 @@ export default function MovieDetail() {
   const [selectedDate, setSelectedDate] = useState(() => initialSelection(id).date);
   const [selectedTime, setSelectedTime] = useState(() => initialSelection(id).time);
   const [selectedSeats, setSelectedSeats] = useState([]);
-  const [bookedSeats, setBookedSeats] = useState([]);
   const [booking, setBooking] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(null);
 
@@ -51,16 +61,15 @@ export default function MovieDetail() {
   const showtimes = listShowtimes(id);
   const selectedSlot = showtimes.find((slot) => slot.time === selectedTime);
   const auditorium = listAuditoriums().find((item) => item.id === selectedSlot?.auditoriumId);
-
-  useEffect(() => {
-    setBookedSeats(movie ? getBookedSeats(id, selectedDate, selectedTime) : []);
-  }, [id, selectedDate, selectedTime]);
+  const bookedSeats = movie ? getBookedSeats(id, selectedDate, selectedTime) : [];
+  const seatCapacity = auditorium?.capacity ?? ROWS.length * SEATS_PER_ROW;
+  const visibleRows = ROWS.slice(0, Math.ceil(seatCapacity / SEATS_PER_ROW));
+  const aisleAfter = SEATS_PER_ROW >= 6 && SEATS_PER_ROW % 2 === 0 ? SEATS_PER_ROW / 2 - 1 : -1;
+  const showtimeUnavailable = !selectedSlot || new Date(`${selectedDate}T${selectedTime}:00`).getTime() <= Date.now();
 
   const toggleSeat = (seatId) => {
-    if (bookedSeats.includes(seatId) || !selectedSlot || new Date(`${selectedDate}T${selectedTime}:00`).getTime() <= Date.now()) return;
-    setSelectedSeats((prev) =>
-      prev.includes(seatId) ? prev.filter((s) => s !== seatId) : [...prev, seatId]
-    );
+    if (showtimeUnavailable) return;
+    setSelectedSeats((prev) => toggleSeatSelection(prev, seatId, bookedSeats));
   };
 
   const handleBooking = () => {
@@ -82,7 +91,6 @@ export default function MovieDetail() {
       });
       setBookingSuccess(result);
       setSelectedSeats([]);
-      setBookedSeats(getBookedSeats(id, selectedDate, selectedTime));
     } catch (error) {
       alert(error.message || 'Booking failed');
     } finally {
@@ -207,51 +215,59 @@ export default function MovieDetail() {
             ))}
           </div>
 
-          {/* Screen */}
-          <div className="screen-indicator">
-            <div className="screen-line" />
-            <span className="screen-label">Screen</span>
-          </div>
-
-          {/* Seats */}
-          <div className="seats-grid">
-            {ROWS.map((row) => (
-              <div key={row} className="seat-row">
-                <span className="seat-row-label">{row}</span>
-                {Array.from({ length: SEATS_PER_ROW }).map((_, i) => {
-                  const seatId = `${row}${i + 1}`;
-                  const isBooked = bookedSeats.includes(seatId);
-                  const isUnavailable = !selectedSlot || (ROWS.indexOf(row) * 10 + i + 1 > (auditorium?.capacity || 80));
-                  const isSelected = selectedSeats.includes(seatId);
+          <div className="seat-map-scroll" role="region" aria-label="Cinema seat map; scroll horizontally to see all seats" tabIndex={0}>
+            <div className="seat-map">
+              <div className="screen-indicator">
+                <div className="screen-line" aria-hidden="true" />
+                <span className="screen-label">SCREEN</span>
+              </div>
+              <div className="seats-grid">
+                {visibleRows.map((row, rowIndex) => {
+                  const seatsInRow = Math.min(SEATS_PER_ROW, seatCapacity - rowIndex * SEATS_PER_ROW);
                   return (
-                    <button
-                      key={seatId}
-                      className={`seat ${isBooked ? 'seat-booked' : ''} ${isSelected ? 'seat-selected' : ''}`}
-                      onClick={() => toggleSeat(seatId)}
-                      disabled={isBooked || isUnavailable || new Date(`${selectedDate}T${selectedTime}:00`).getTime() <= Date.now()}
-                      title={seatId}
-                    >
-                      {i + 1}
-                    </button>
+                    <div key={row} className="seat-row">
+                      <span className="seat-row-label">{row}</span>
+                      {Array.from({ length: seatsInRow }).map((_, i) => {
+                        const seatId = `${row}${i + 1}`;
+                        const isBooked = bookedSeats.includes(seatId);
+                        const isSelected = selectedSeats.includes(seatId);
+                        const status = isBooked ? 'booked' : showtimeUnavailable ? 'unavailable' : isSelected ? 'selected' : 'available';
+                        return (
+                          <button
+                            key={seatId}
+                            type="button"
+                            className={`seat ${isBooked ? 'seat-booked' : ''} ${isSelected ? 'seat-selected' : ''} ${i === aisleAfter && seatsInRow > i + 1 ? 'seat-aisle' : ''}`}
+                            onClick={() => toggleSeat(seatId)}
+                            disabled={isBooked || showtimeUnavailable}
+                            aria-label={`Seat ${seatId}, ${status}`}
+                            aria-pressed={isSelected}
+                            title={`Seat ${seatId}: ${status}`}
+                          >
+                            <ChairShape label={seatId} />
+                          </button>
+                        );
+                      })}
+                      <span className="seat-row-label">{row}</span>
+                    </div>
                   );
                 })}
-                <span className="seat-row-label">{row}</span>
               </div>
-            ))}
+            </div>
           </div>
+          <p className="seat-scroll-hint">Swipe sideways to see all seats.</p>
 
           {/* Legend */}
           <div className="seat-legend">
             <div className="seat-legend-item">
-              <div className="legend-box legend-available" />
+              <span className="seat legend-chair" aria-hidden="true"><ChairShape /></span>
               <span>Available</span>
             </div>
             <div className="seat-legend-item">
-              <div className="legend-box legend-selected" />
+              <span className="seat seat-selected legend-chair" aria-hidden="true"><ChairShape /></span>
               <span>Selected</span>
             </div>
             <div className="seat-legend-item">
-              <div className="legend-box legend-booked" />
+              <span className="seat seat-booked legend-chair" aria-hidden="true"><ChairShape /></span>
               <span>Booked</span>
             </div>
           </div>

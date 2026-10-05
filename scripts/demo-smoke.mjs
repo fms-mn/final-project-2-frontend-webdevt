@@ -21,6 +21,7 @@ try {
   const { default: Login } = await server.ssrLoadModule('/src/pages/Login.jsx');
   const { default: Profile } = await server.ssrLoadModule('/src/pages/Profile.jsx');
   const { default: MyBookings } = await server.ssrLoadModule('/src/pages/MyBookings.jsx');
+  const { default: MovieDetail, toggleSeatSelection } = await server.ssrLoadModule('/src/pages/MovieDetail.jsx');
   const { AuthProvider } = await server.ssrLoadModule('/src/context/AuthContext.jsx');
 
   await assert.rejects(auth.loginDemoUser('customer@filme.example', 'wrong'));
@@ -152,7 +153,33 @@ try {
   const emptyHtml = renderToString(React.createElement(AuthProvider, null, React.createElement(MemoryRouter, null, React.createElement(MyBookings))));
   assert.match(emptyHtml, /No upcoming bookings/);
   assert.match(emptyHtml, /No booking history yet/);
-  console.log('PASS demo auth, profile, catalog, schedule, upcoming/history bookings, account isolation, cancellation, and persistence');
+  assert.deepEqual(toggleSeatSelection([], 'A1', []), ['A1']);
+  assert.deepEqual(toggleSeatSelection(['A1'], 'A1', []), []);
+  assert.deepEqual(toggleSeatSelection([], 'A1', ['A1']), []);
+  const today = new Date();
+  const todayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const bookedChairFixtures = [todayString, date].flatMap((showDate) => schedule.listShowtimes(movie._id).map((showtime) => ({
+    _id: `chair-${showDate}-${showtime.id}`, userId: customer.id, movieId: movie._id, seats: ['A1'], showDate,
+    showTime: showtime.time, status: 'confirmed', createdAt: new Date().toISOString(), totalPrice: movie.price,
+  })));
+  localStorage.setItem('filme_demo_bookings', JSON.stringify([...bookings.listDemoBookings(), ...bookedChairFixtures]));
+  const detailHtml = renderToString(React.createElement(AuthProvider, null,
+    React.createElement(MemoryRouter, { initialEntries: [`/movie/${movie._id}`] },
+      React.createElement(Routes, null, React.createElement(Route, { path: '/movie/:id', element: React.createElement(MovieDetail) }))
+    )
+  ));
+  assert.match(detailHtml, /Cinema seat map; scroll horizontally/);
+  assert.match(detailHtml, /SCREEN/);
+  assert.match(detailHtml, /chair-backrest/);
+  assert.match(detailHtml, /chair-cushion/);
+  assert.match(detailHtml, /seat-aisle/);
+  assert.match(detailHtml, /aria-label="Seat A1, booked"/);
+  assert.match(detailHtml, /<button[^>]*disabled=""[^>]*aria-label="Seat A1, booked"/);
+  assert.match(detailHtml, /aria-label="Seat A2, available"/);
+  assert.match(detailHtml, /A1<\/span>/);
+  assert.match(detailHtml, /H10<\/span>/);
+  assert.equal((detailHtml.match(/aria-label="Seat [A-H](?:10|[1-9]),/g) || []).length, auditorium.capacity);
+  console.log('PASS demo auth, profile, catalog, schedule, bookings, seat selection, booked chairs, and persistence');
 } finally {
   await server.close();
 }
