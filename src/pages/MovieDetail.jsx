@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useMovie } from '../hooks/useMovies';
 import { listAuditoriums, listShowtimes } from '../data/demoSchedule';
@@ -66,6 +66,7 @@ export default function MovieDetail() {
   const visibleRows = ROWS.slice(0, Math.ceil(seatCapacity / SEATS_PER_ROW));
   const aisleAfter = SEATS_PER_ROW >= 6 && SEATS_PER_ROW % 2 === 0 ? SEATS_PER_ROW / 2 - 1 : -1;
   const showtimeUnavailable = !selectedSlot || new Date(`${selectedDate}T${selectedTime}:00`).getTime() <= Date.now();
+  const isBookable = movie?.status === 'now_showing' && user?.role !== 'admin';
 
   const toggleSeat = (seatId) => {
     if (showtimeUnavailable) return;
@@ -127,8 +128,17 @@ export default function MovieDetail() {
   }
 
   return (
-    <div className="movie-detail fade-in">
-      {/* Hero Banner */}
+    <div className="movie-detail booking-experience fade-in">
+      {isBookable && (
+        <nav className="booking-progress" aria-label="Booking progress">
+          <Link to="/movies"><span>01</span> Choose a movie</Link>
+          <span className="current" aria-current="step"><span>02</span> Choose seats</span>
+          <span><span>03</span> Review booking</span>
+          <span><span>04</span> Complete</span>
+        </nav>
+      )}
+      <div className={`booking-layout ${isBookable ? '' : 'booking-layout-single'}`}>
+      <aside className="booking-film-panel">
       <div className="movie-detail-hero">
         <div className="movie-detail-backdrop">
           <img src={movie.backdropUrl || movie.posterUrl} alt={movie.title} />
@@ -165,24 +175,17 @@ export default function MovieDetail() {
           </div>
         </div>
       </div>
+      </aside>
 
-      {/* Booking Success Message */}
+      <div className="booking-main">
       {bookingSuccess && (
-        <div style={{
-          background: 'rgba(34, 197, 94, 0.1)',
-          border: '1px solid rgba(34, 197, 94, 0.2)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '1.5rem',
-          marginBottom: '2rem',
-          textAlign: 'center',
-        }}>
-          <h3 style={{ color: 'var(--success-text)', marginBottom: '0.5rem' }}>🎉 Booking Confirmed!</h3>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+        <div className="booking-confirmation" role="status">
+          <h3>Booking confirmed!</h3>
+          <p>
             Seats: {bookingSuccess.seats.join(', ')} · Total: ₱{bookingSuccess.totalPrice}
           </p>
           <button
             className="btn btn-secondary btn-small"
-            style={{ marginTop: '0.75rem' }}
             onClick={() => navigate('/my-bookings')}
           >
             View My Bookings
@@ -190,16 +193,23 @@ export default function MovieDetail() {
         </div>
       )}
 
-      {/* Booking Section */}
-      {movie.status === 'now_showing' && user?.role !== 'admin' && (
+      {isBookable && (
         <div className="booking-section">
-          <h2>🎟 Book Tickets</h2>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+          <div className="booking-heading">
+            <div>
+              <span className="booking-eyebrow">Your cinema experience</span>
+              <h2>Choose your seats</h2>
+              <p>Pick a showtime, then choose your favorite seats below.</p>
+            </div>
+            <span className="booking-price">₱{movie.price} <small>/ seat</small></span>
+          </div>
+          <p className="booking-demo-note" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
             Demo booking: showtimes, prices and seats are placeholders saved in this browser only
             until the booking system is connected.
           </p>
 
-          {/* Date Selection */}
+          <div className="booking-schedule">
+          <div>
           <h3 style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
             Select Date
           </h3>
@@ -222,7 +232,8 @@ export default function MovieDetail() {
             })}
           </div>
 
-          {/* Time Selection */}
+          </div>
+          <div>
           <h3 style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
             Select Showtime
           </h3>
@@ -239,7 +250,14 @@ export default function MovieDetail() {
               </button>
             ))}
           </div>
+          </div>
+          </div>
 
+          <div className="booking-seat-panel">
+          <div className="booking-seat-heading">
+            <div><span className="booking-eyebrow">{auditorium?.name || 'Cinema'}</span><h3>Select seats</h3></div>
+            <span>{selectedSeats.length} selected</span>
+          </div>
           <div className="seat-map-scroll" role="region" aria-label="Cinema seat map; scroll horizontally to see all seats" tabIndex={0}>
             <div className="seat-map">
               <div className="screen-indicator">
@@ -296,6 +314,7 @@ export default function MovieDetail() {
               <span>Booked</span>
             </div>
           </div>
+          </div>
 
           {/* Booking Summary */}
           {selectedSeats.length > 0 && selectedSlot && (
@@ -337,6 +356,8 @@ export default function MovieDetail() {
           )}
         </div>
       )}
+      </div>
+      </div>
 
       {/* Cast */}
       {movie.cast && movie.cast.length > 0 && (
