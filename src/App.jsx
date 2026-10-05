@@ -9,6 +9,7 @@ import MovieDetail from './pages/MovieDetail';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import MyBookings from './pages/MyBookings';
+import Admin from './pages/Admin';
 import './App.css';
 
 function App() {
@@ -26,8 +27,9 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route
                 path="/my-bookings"
-                element={<ProtectedRoute><MyBookings /></ProtectedRoute>}
+                element={<ProtectedRoute role="customer"><MyBookings /></ProtectedRoute>}
               />
+              <Route path="/admin" element={<ProtectedRoute role="admin"><Admin /></ProtectedRoute>} />
             </Routes>
           </main>
           <BackToTop />

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { cancelDemoBooking, getDemoBookings } from '../data/demoBookings';
+import { canCancelDemoBooking, cancelDemoBooking, getDemoBookings } from '../data/demoBookings';
 
 export default function MyBookings() {
   const { user } = useAuth();
@@ -79,7 +79,7 @@ export default function MyBookings() {
 
               <div className="booking-card-footer">
                 <span className="booking-total">₱{booking.totalPrice}</span>
-                {booking.status === 'confirmed' && (
+                {canCancelDemoBooking(booking) && (
                   <button
                     className="btn btn-danger btn-small"
                     onClick={() => cancelBooking(booking._id)}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { SHOWTIMES } from '../constants/showtimes';
+import { listAuditoriums, listShowtimes } from '../data/demoSchedule';
 import { getMovieById } from '../data/catalog';
 import { createDemoBooking, getBookedSeats } from '../data/demoBookings';
 
@@ -26,35 +26,46 @@ function formatDate(date) {
   return `${year}-${month}-${day}`;
 }
 
+function initialSelection(movieId) {
+  const slots = listShowtimes(movieId);
+  const firstFuture = slots.find((slot) => new Date(`${formatDate(new Date())}T${slot.time}:00`).getTime() > Date.now());
+  const date = new Date();
+  if (!firstFuture) date.setDate(date.getDate() + 1);
+  return { date: formatDate(date), time: (firstFuture || slots[0])?.time || '' };
+}
+
 export default function MovieDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
 
   const movie = getMovieById(id);
-  const [selectedDate, setSelectedDate] = useState(formatDate(new Date()));
-  const [selectedTime, setSelectedTime] = useState(SHOWTIMES[0]);
+  const [selectedDate, setSelectedDate] = useState(() => initialSelection(id).date);
+  const [selectedTime, setSelectedTime] = useState(() => initialSelection(id).time);
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [bookedSeats, setBookedSeats] = useState([]);
   const [booking, setBooking] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(null);
 
   const dates = getNextDays(7);
+  const showtimes = listShowtimes(id);
+  const selectedSlot = showtimes.find((slot) => slot.time === selectedTime);
+  const auditorium = listAuditoriums().find((item) => item.id === selectedSlot?.auditoriumId);
 
   useEffect(() => {
     setBookedSeats(movie ? getBookedSeats(id, selectedDate, selectedTime) : []);
-  }, [id, selectedDate, selectedTime, movie]);
+  }, [id, selectedDate, selectedTime]);
 
   const toggleSeat = (seatId) => {
-    if (bookedSeats.includes(seatId)) return;
+    if (bookedSeats.includes(seatId) || !selectedSlot || new Date(`${selectedDate}T${selectedTime}:00`).getTime() <= Date.now()) return;
     setSelectedSeats((prev) =>
       prev.includes(seatId) ? prev.filter((s) => s !== seatId) : [...prev, seatId]
     );
   };
 
   const handleBooking = () => {
-    if (!user) {
-      navigate('/login');
+    if (!user || user.role !== 'customer') {
+      navigate(user?.role === 'admin' ? '/admin' : '/login', { state: { from: { pathname: `/movie/${id}`, search: '', hash: '' } } });
       return;
     }
 
@@ -151,7 +162,7 @@ export default function MovieDetail() {
       )}
 
       {/* Booking Section */}
-      {movie.status === 'now_showing' && (
+      {movie.status === 'now_showing' && user?.role !== 'admin' && (
         <div className="booking-section">
           <h2>🎟 Book Tickets</h2>
 
@@ -183,13 +194,15 @@ export default function MovieDetail() {
             Select Showtime
           </h3>
           <div className="showtime-selector">
-            {SHOWTIMES.map((time) => (
+            {showtimes.length === 0 && <p>No showtimes are scheduled for this movie.</p>}
+            {showtimes.map((slot) => (
               <button
-                key={time}
-                className={`showtime-btn ${selectedTime === time ? 'active' : ''}`}
-                onClick={() => { setSelectedTime(time); setSelectedSeats([]); }}
+                key={slot.id}
+                className={`showtime-btn ${selectedTime === slot.time ? 'active' : ''}`}
+                onClick={() => { setSelectedTime(slot.time); setSelectedSeats([]); }}
+                disabled={new Date(`${selectedDate}T${slot.time}:00`).getTime() <= Date.now()}
               >
-                {time}
+                {slot.time} · {listAuditoriums().find((item) => item.id === slot.auditoriumId)?.name || 'Cinema'}
               </button>
             ))}
           </div>
@@ -208,13 +221,14 @@ export default function MovieDetail() {
                 {Array.from({ length: SEATS_PER_ROW }).map((_, i) => {
                   const seatId = `${row}${i + 1}`;
                   const isBooked = bookedSeats.includes(seatId);
+                  const isUnavailable = !selectedSlot || (ROWS.indexOf(row) * 10 + i + 1 > (auditorium?.capacity || 80));
                   const isSelected = selectedSeats.includes(seatId);
                   return (
                     <button
                       key={seatId}
                       className={`seat ${isBooked ? 'seat-booked' : ''} ${isSelected ? 'seat-selected' : ''}`}
                       onClick={() => toggleSeat(seatId)}
-                      disabled={isBooked}
+                      disabled={isBooked || isUnavailable || new Date(`${selectedDate}T${selectedTime}:00`).getTime() <= Date.now()}
                       title={seatId}
                     >
                       {i + 1}
@@ -243,7 +257,7 @@ export default function MovieDetail() {
           </div>
 
           {/* Booking Summary */}
-          {selectedSeats.length > 0 && (
+          {selectedSeats.length > 0 && selectedSlot && (
             <div className="booking-summary">
               <h3>Booking Summary</h3>
               <div className="summary-row">

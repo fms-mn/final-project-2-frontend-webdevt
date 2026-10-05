@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { DEMO_ACCOUNTS } from '../data/demoAuth';
 
 export default function Login() {
   const { login } = useAuth();
@@ -17,9 +18,11 @@ export default function Login() {
     setLoading(true);
 
     try {
-      await login(email, password);
+      const signedInUser = await login(email, password);
       const destination = location.state?.from;
-      navigate(destination ? `${destination.pathname}${destination.search}${destination.hash}` : '/', {
+      navigate(destination && (signedInUser.role === 'admin' ? destination.pathname.startsWith('/admin') : !destination.pathname.startsWith('/admin'))
+        ? `${destination.pathname}${destination.search}${destination.hash}`
+        : signedInUser.role === 'admin' ? '/admin' : '/', {
         replace: true,
       });
     } catch (err) {
@@ -37,6 +40,16 @@ export default function Login() {
           <p className="subtitle">Sign in to your FILME demo account on this browser</p>
 
           {error && <div className="error-message">{error}</div>}
+
+          <div className="demo-account-actions">
+            {DEMO_ACCOUNTS.map((account) => (
+              <button key={account.id} type="button" className="btn btn-secondary btn-small" onClick={() => {
+                setEmail(account.email); setPassword(account.password); setError('');
+              }}>
+                Use demo {account.role}
+              </button>
+            ))}
+          </div>
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">

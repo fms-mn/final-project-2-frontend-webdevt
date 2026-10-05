@@ -42,7 +42,7 @@ export default function Navbar() {
         <Link to="/movies" className={`nav-link ${isActive('/movies') ? 'active' : ''}`}>
           Movies
         </Link>
-        {user && (
+        {user?.role === 'customer' && (
           <Link
             to="/my-bookings"
             className={`nav-link ${isActive('/my-bookings') ? 'active' : ''}`}
@@ -50,6 +50,7 @@ export default function Navbar() {
             My Bookings
           </Link>
         )}
+        {user?.role === 'admin' && <Link to="/admin" className={`nav-link ${isActive('/admin') ? 'active' : ''}`}>Dashboard</Link>}
       </div>
 
       <div className="nav-user">
