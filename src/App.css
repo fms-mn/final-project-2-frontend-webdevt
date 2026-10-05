@@ -1822,4 +1822,22 @@ input, select {
 .admin-row small { margin-top: .25rem; }
 .admin-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
 .admin-notice { padding: .75rem 1rem; margin-bottom: 1rem; border: 1px solid rgba(34,197,94,.3); color: var(--success-text); border-radius: var(--radius-md); }
-@media (max-width: 768px) { .nav-links { display: flex; overflow-x: auto; order: 3; width: 100%; } .navbar { flex-wrap: wrap; height: auto; min-height: 72px; padding-block: .5rem; } .main-content { margin-top: 112px; } .admin-row, .admin-heading { align-items: flex-start; flex-direction: column; } }
+.nav-menu-toggle, .nav-mobile-account { display: none; }
+@media (max-width: 980px) {
+  .navbar { height: 72px; flex-wrap: nowrap; gap: .5rem; }
+  .nav-brand { flex: none; white-space: nowrap; }
+  .nav-user { margin-left: auto; }
+  .nav-user > .nav-user-name, .nav-user > .nav-logout, .nav-user > .nav-btn { display: none; }
+  .theme-toggle { width: 40px; padding: 0; }
+  .theme-toggle span { display: none; }
+  .nav-menu-toggle { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 40px; height: 40px; border: 1px solid var(--border-color); border-radius: var(--radius-full); background: var(--surface-tint); color: var(--text-primary); font-size: 1.2rem; }
+  .nav-menu-toggle:focus-visible { outline: 3px solid var(--accent-primary); outline-offset: 3px; }
+  .nav-links { display: none; position: absolute; top: 100%; left: 0; right: 0; width: auto; padding: .75rem clamp(1rem, 4vw, 3rem) 1rem; background: var(--nav-bg-scrolled); border-bottom: 1px solid var(--border-color); box-shadow: var(--shadow-md); flex-direction: column; align-items: stretch; gap: .25rem; }
+  .nav-links.is-open { display: flex; }
+  .nav-links .nav-link { display: block; width: 100%; }
+  .nav-mobile-account { display: flex; flex-direction: column; align-items: stretch; gap: .5rem; margin-top: .5rem; padding-top: .75rem; border-top: 1px solid var(--border-color); }
+  .nav-mobile-name { color: var(--text-secondary); font-size: .85rem; overflow-wrap: anywhere; padding: .35rem 1rem; }
+  .nav-mobile-account .nav-logout { align-self: flex-start; margin-left: 1rem; }
+  .main-content { margin-top: 72px; }
+}
+@media (max-width: 768px) { .admin-row, .admin-heading { align-items: flex-start; flex-direction: column; } }
