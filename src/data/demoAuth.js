@@ -2,6 +2,7 @@
 // Replace this module with Express API calls and server authorization later.
 const USERS_KEY = 'filme_demo_users';
 const SESSION_KEY = 'filme_demo_session';
+const PROFILES_KEY = 'filme_demo_profiles';
 export const DEMO_ACCOUNTS = [
   { id: 'demo-customer', name: 'Alex Rivera', email: 'customer@filme.example', role: 'customer', password: 'nigga123' },
   { id: 'demo-admin', name: 'Morgan Santos', email: 'admin@filme.example', role: 'admin', password: 'nigga123' },
@@ -10,13 +11,24 @@ function readUsers() {
   try { const users = JSON.parse(localStorage.getItem(USERS_KEY) || '[]'); return Array.isArray(users) ? users : []; }
   catch { return []; }
 }
-function publicUser({ id, name, email, role, active = true }) { return { id, name, email, role: role === 'user' ? 'customer' : role, active }; }
+function readProfiles() {
+  try { const profiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || '{}'); return profiles && typeof profiles === 'object' && !Array.isArray(profiles) ? profiles : {}; }
+  catch { return {}; }
+}
+function publicUser({ id, name, email, role, active = true, phone = '' }) { return { id, name, email, role: role === 'user' ? 'customer' : role, active, phone }; }
 async function matchesLegacyPassword(password, user) {
   if (!user.salt || !user.passwordHash) return false;
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${user.salt}:${password}`));
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('') === user.passwordHash;
 }
-export function listDemoUsers() { return [...DEMO_ACCOUNTS, ...readUsers()].map(publicUser); }
+export function listDemoUsers() {
+  const profiles = readProfiles();
+  return [...DEMO_ACCOUNTS, ...readUsers()].map((user) => publicUser({
+    ...user,
+    name: profiles[user.id]?.name ?? user.name,
+    phone: profiles[user.id]?.phone ?? user.phone,
+  }));
+}
 export function getCurrentUser() {
   try { return listDemoUsers().find((user) => user.id === localStorage.getItem(SESSION_KEY) && user.active) || null; }
   catch { return null; }
@@ -35,7 +47,30 @@ export async function loginDemoUser(email, password) {
   const user = [...DEMO_ACCOUNTS, ...readUsers()].find((item) => item.email === email.trim().toLowerCase());
   if (!user || user.active === false || (user.password !== password && !await matchesLegacyPassword(password, user))) throw new Error('Invalid credentials or inactive account');
   localStorage.setItem(SESSION_KEY, user.id);
-  return publicUser(user);
+  return listDemoUsers().find((candidate) => candidate.id === user.id);
+}
+// Frontend mock for a future GET /api/users/me and PATCH /api/users/me adapter.
+// Only name and phone are writable here; email, role, and status remain untouched.
+export function getDemoCustomerProfile(userId) {
+  const user = listDemoUsers().find((candidate) => candidate.id === userId && candidate.role === 'customer' && candidate.active);
+  if (!user) throw new Error('Customer profile not found');
+  return user;
+}
+export function updateDemoCustomerProfile(userId, changes) {
+  getDemoCustomerProfile(userId);
+  const name = typeof changes.name === 'string' ? changes.name.trim() : '';
+  if (!name) throw new Error('Name is required');
+  const phone = typeof changes.phone === 'string' ? changes.phone.trim() : '';
+  const users = readUsers();
+  const index = users.findIndex((user) => user.id === userId);
+  if (index >= 0) {
+    users[index] = { ...users[index], name, phone };
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  } else {
+    const profiles = readProfiles();
+    localStorage.setItem(PROFILES_KEY, JSON.stringify({ ...profiles, [userId]: { name, phone } }));
+  }
+  return getDemoCustomerProfile(userId);
 }
 export function setDemoUserActive(id, active) {
   if (DEMO_ACCOUNTS.some((user) => user.id === id)) throw new Error('Demo accounts cannot be disabled');

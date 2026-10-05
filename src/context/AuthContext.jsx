@@ -4,6 +4,7 @@ import {
   loginDemoUser,
   logoutDemoUser,
   registerDemoUser,
+  updateDemoCustomerProfile,
 } from '../data/demoAuth';
 
 const AuthContext = createContext();
@@ -28,8 +29,15 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  const updateProfile = (changes) => {
+    if (!user || user.role !== 'customer') throw new Error('Sign in as a customer to edit your profile');
+    const updatedUser = updateDemoCustomerProfile(user.id, changes);
+    setUser(updatedUser);
+    return updatedUser;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading: false, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading: false, login, register, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

@@ -19,16 +19,30 @@ try {
   const bookings = await server.ssrLoadModule('/src/data/demoBookings.js');
   const { default: Admin } = await server.ssrLoadModule('/src/pages/Admin.jsx');
   const { default: Login } = await server.ssrLoadModule('/src/pages/Login.jsx');
+  const { default: Profile } = await server.ssrLoadModule('/src/pages/Profile.jsx');
   const { AuthProvider } = await server.ssrLoadModule('/src/context/AuthContext.jsx');
 
   await assert.rejects(auth.loginDemoUser('customer@filme.example', 'wrong'));
   const customer = await auth.loginDemoUser('customer@filme.example', 'nigga123');
   assert.equal(customer.role, 'customer');
   assert.equal(auth.getCurrentUser().id, customer.id);
+  assert.throws(() => auth.updateDemoCustomerProfile(customer.id, { name: '   ', phone: '09171234567' }), /Name is required/);
+  const updatedProfile = auth.updateDemoCustomerProfile(customer.id, { name: '  Alex P. Rivera  ', phone: '09171234567', email: 'changed@example.com', role: 'admin', active: false });
+  assert.equal(updatedProfile.name, 'Alex P. Rivera');
+  assert.equal(updatedProfile.phone, '09171234567');
+  assert.equal(updatedProfile.email, customer.email);
+  assert.equal(updatedProfile.role, 'customer');
+  assert.equal(updatedProfile.active, true);
+  assert.equal(auth.getCurrentUser().name, 'Alex P. Rivera'); // refresh-style read from storage
   auth.logoutDemoUser();
   assert.equal(auth.getCurrentUser(), null);
+  const signedInAgain = await auth.loginDemoUser('customer@filme.example', 'nigga123');
+  assert.equal(signedInAgain.name, 'Alex P. Rivera');
+  assert.equal(signedInAgain.phone, '09171234567');
+  auth.logoutDemoUser();
   const admin = await auth.loginDemoUser('admin@filme.example', 'nigga123');
   assert.equal(admin.role, 'admin');
+  assert.throws(() => auth.updateDemoCustomerProfile(admin.id, { name: 'Other' }), /Customer profile not found/);
 
   const movie = catalog.listMovies({ status: 'now_showing' })[0];
   catalog.saveDemoMovie({ ...movie, price: 499 });
@@ -54,6 +68,8 @@ try {
   assert.deepEqual(bookings.getBookedSeats(movie._id, date, slot.time), []);
 
   const registered = await auth.registerDemoUser('Sam Lee', 'sam@example.com', 'secret123');
+  auth.updateDemoCustomerProfile(registered.id, { name: 'Sam L. Lee', phone: '0012345' });
+  assert.equal(auth.getCurrentUser().phone, '0012345');
   auth.setDemoUserActive(registered.id, false);
   await assert.rejects(auth.loginDemoUser('sam@example.com', 'secret123'));
   assert.equal(auth.getCurrentUser(), null);
@@ -70,7 +86,13 @@ try {
   ));
   assert.match(loginHtml.replaceAll('<!-- -->', ''), /Use demo customer/);
   assert.match(loginHtml.replaceAll('<!-- -->', ''), /Use demo admin/);
-  console.log('PASS demo auth, persistence, catalog, schedule, booking, cancellation, and user management');
+  await auth.loginDemoUser('customer@filme.example', 'nigga123');
+  const profileHtml = renderToString(React.createElement(AuthProvider, null, React.createElement(Profile)));
+  assert.match(profileHtml, /Alex P\. Rivera/);
+  assert.match(profileHtml, /09171234567/);
+  assert.match(profileHtml, /customer@filme\.example/);
+  assert.doesNotMatch(profileHtml, /type="email"/);
+  console.log('PASS demo auth, profile save and reload, catalog, schedule, booking, cancellation, and user management');
 } finally {
   await server.close();
 }

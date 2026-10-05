@@ -43,12 +43,10 @@ export default function Navbar() {
           Movies
         </Link>
         {user?.role === 'customer' && (
-          <Link
-            to="/my-bookings"
-            className={`nav-link ${isActive('/my-bookings') ? 'active' : ''}`}
-          >
-            My Bookings
-          </Link>
+          <>
+            <Link to="/my-bookings" className={`nav-link ${isActive('/my-bookings') ? 'active' : ''}`}>My Bookings</Link>
+            <Link to="/profile" className={`nav-link ${isActive('/profile') ? 'active' : ''}`}>Profile</Link>
+          </>
         )}
         {user?.role === 'admin' && <Link to="/admin" className={`nav-link ${isActive('/admin') ? 'active' : ''}`}>Dashboard</Link>}
       </div>

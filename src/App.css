@@ -1789,6 +1789,13 @@ input, select {
 
 .demo-account-actions { display: flex; flex-wrap: wrap; gap: .65rem; margin: 1.25rem 0; }
 .demo-account-actions .btn { flex: 1; justify-content: center; white-space: nowrap; }
+.profile-container { max-width: 520px; }
+.profile-label { display: block; font-size: .8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: .5rem; text-transform: uppercase; letter-spacing: .5px; }
+.profile-optional { font-weight: 400; text-transform: none; letter-spacing: 0; }
+.profile-email { padding: .85rem 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-card); color: var(--text-secondary); overflow-wrap: anywhere; }
+.profile-help { margin-top: .4rem; font-size: .8rem; color: var(--text-muted); }
+.profile-field-error { display: block; margin-top: .4rem; color: var(--danger-text); font-size: .8rem; }
+.profile-success { padding: .75rem 1rem; margin-bottom: 1rem; border: 1px solid rgba(34,197,94,.3); border-radius: var(--radius-md); background: rgba(34,197,94,.1); color: var(--success-text); font-size: .85rem; }
 .admin-page { max-width: 1200px; margin: 0 auto; padding: 2rem clamp(1rem, 4vw, 3rem); }
 .admin-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 2rem; }
 .admin-heading h1 { font-size: clamp(2rem, 4vw, 2.75rem); margin: .3rem 0; }
