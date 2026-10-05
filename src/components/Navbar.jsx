@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useState, useEffect } from 'react';
 import { FiMenu, FiMoon, FiSun, FiX } from 'react-icons/fi';
+import ActionPending from './ActionPending';
 
 export default function Navbar() {
   const { user, loading, logout } = useAuth();
@@ -11,6 +12,15 @@ export default function Navbar() {
   const [theme, setTheme] = useState(() =>
     document.documentElement.dataset.theme === 'light' ? 'light' : 'dark'
   );
+  const [signingOut, setSigningOut] = useState(false);
+
+  const handleLogout = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+    await logout();
+    setSigningOut(false);
+    setMenuOpen(false);
+  };
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -62,7 +72,7 @@ export default function Navbar() {
         <div className="nav-mobile-account">
           {loading ? null : user ? <>
             <span className="nav-mobile-name">Hi, {user.name}</span>
-            <button type="button" className="nav-logout" onClick={() => { setMenuOpen(false); logout(); }}>Logout</button>
+            <button type="button" className="nav-logout" disabled={signingOut} aria-busy={signingOut} onClick={handleLogout}><ActionPending pending={signingOut}>{signingOut ? 'Signing out...' : 'Logout'}</ActionPending></button>
           </> : <Link to="/login" className="nav-link" onClick={() => setMenuOpen(false)}>Sign In</Link>}
         </div>
       </div>
@@ -81,8 +91,8 @@ export default function Navbar() {
         {loading ? null : user ? (
           <>
             <span className="nav-user-name">Hi, {user.name}</span>
-            <button className="nav-logout" onClick={logout}>
-              Logout
+            <button type="button" className="nav-logout" disabled={signingOut} aria-busy={signingOut} onClick={handleLogout}>
+              <ActionPending pending={signingOut}>{signingOut ? 'Signing out...' : 'Logout'}</ActionPending>
             </button>
           </>
         ) : (

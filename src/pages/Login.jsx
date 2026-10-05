@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import ActionPending from '../components/ActionPending';
 
 export default function Login() {
   const { login } = useAuth();
@@ -63,8 +64,8 @@ export default function Login() {
                 required
               />
             </div>
-            <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? 'Signing in...' : 'Sign In'}
+            <button type="submit" className="btn btn-primary" disabled={loading} aria-busy={loading}>
+              <ActionPending pending={loading}>{loading ? 'Signing in...' : 'Sign In'}</ActionPending>
             </button>
           </form>
 

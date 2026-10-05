@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import ActionPending from '../components/ActionPending';
 
 export default function Register() {
   const { register } = useAuth();
@@ -76,8 +77,8 @@ export default function Register() {
                 minLength={8}
               />
             </div>
-            <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? 'Creating account...' : 'Create Account'}
+            <button type="submit" className="btn btn-primary" disabled={loading} aria-busy={loading}>
+              <ActionPending pending={loading}>{loading ? 'Creating account...' : 'Create Account'}</ActionPending>
             </button>
           </form>
 

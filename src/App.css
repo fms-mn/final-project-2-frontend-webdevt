@@ -259,6 +259,9 @@ input, select {
 }
 
 .nav-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   padding: 0.4rem 1rem;
   border-radius: var(--radius-full);
   font-size: 0.8rem;
@@ -1498,6 +1501,32 @@ input, select {
   animation: spin 0.8s linear infinite;
 }
 
+.action-spinner-delay {
+  display: inline-flex;
+  opacity: 0;
+  animation: showActionSpinner 0s 1s forwards;
+}
+
+.action-spinner {
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes showActionSpinner {
+  to { opacity: 1; }
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  opacity: 0.65;
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
@@ -1760,8 +1789,6 @@ input, select {
 }
 
 :root[data-theme='light'] .hero {
-  min-height: clamp(480px, 70svh, 680px);
-  padding-block: clamp(3rem, 5vw, 5rem);
   background: #10121b;
   color: #fff;
 }
@@ -1782,20 +1809,10 @@ input, select {
   pointer-events: none;
 }
 
-:root[data-theme='light'] .hero-content {
-  max-width: 570px;
-}
-
-:root[data-theme='light'] .hero h1 {
-  margin-bottom: 1.1rem;
-}
-
 :root[data-theme='light'] .hero p {
-  max-width: 520px;
-  margin-bottom: 1.5rem;
+  color: #e3e6ed;
 }
 
-:root[data-theme='light'] .hero p,
 :root[data-theme='light'] .hero-meta {
   color: #e3e6ed;
 }
@@ -1851,10 +1868,6 @@ input, select {
 
   :root[data-theme='light'] .hero::after {
     height: 36px;
-  }
-
-  :root[data-theme='light'] .hero-content {
-    max-width: 100%;
   }
 }
 
