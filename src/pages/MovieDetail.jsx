@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useMovie } from '../hooks/useMovies';
 import { listAuditoriums, listShowtimes } from '../data/demoSchedule';
 import { createDemoBooking, getBookedSeats } from '../data/demoBookings';
+import BookingConfirmationModal from '../components/BookingConfirmationModal';
 
 const ROWS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 const SEATS_PER_ROW = 10;
@@ -55,7 +56,10 @@ export default function MovieDetail() {
   const [selectedTime, setSelectedTime] = useState(() => initialSelection(id).time);
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [booking, setBooking] = useState(false);
+  const bookingLocked = useRef(false);
+  const [bookingError, setBookingError] = useState('');
   const [bookingSuccess, setBookingSuccess] = useState(null);
+  const [confirmationOpen, setConfirmationOpen] = useState(false);
 
   const dates = getNextDays(7);
   const showtimes = listShowtimes(id);
@@ -70,11 +74,21 @@ export default function MovieDetail() {
   const isComingSoon = movie?.status === 'coming_soon';
 
   const toggleSeat = (seatId) => {
-    if (showtimeUnavailable) return;
-    setSelectedSeats((prev) => toggleSeatSelection(prev, seatId, bookedSeats));
+    if (booking || showtimeUnavailable || bookedSeats.includes(seatId)) return;
+    setBookingError('');
+    if (bookingSuccess) {
+      bookingLocked.current = false;
+      setBookingSuccess(null);
+      setSelectedSeats([seatId]);
+    } else {
+      setSelectedSeats((prev) => toggleSeatSelection(prev, seatId, bookedSeats));
+    }
   };
 
-  const handleBooking = () => {
+  const closeConfirmation = useCallback(() => setConfirmationOpen(false), []);
+
+  const handleBooking = async () => {
+    if (bookingLocked.current || bookingSuccess) return;
     if (!user || user.role !== 'user') {
       navigate(user?.role === 'admin' ? '/admin' : '/login', { state: { from: { pathname: `/movie/${id}`, search: '', hash: '' } } });
       return;
@@ -82,8 +96,11 @@ export default function MovieDetail() {
 
     if (selectedSeats.length === 0) return;
 
+    bookingLocked.current = true;
     setBooking(true);
+    setBookingError('');
     try {
+      await new Promise((resolve) => setTimeout(resolve, 0));
       const result = createDemoBooking({
         userId: user.id,
         movie,
@@ -92,9 +109,10 @@ export default function MovieDetail() {
         showTime: selectedTime,
       });
       setBookingSuccess(result);
-      setSelectedSeats([]);
+      setConfirmationOpen(true);
     } catch (error) {
-      alert(error.message || 'Booking failed');
+      bookingLocked.current = false;
+      setBookingError(error.message || 'Booking failed');
     } finally {
       setBooking(false);
     }
@@ -134,9 +152,9 @@ export default function MovieDetail() {
       {isBookable && (
         <nav className="booking-progress" aria-label="Booking progress">
           <Link to="/movies"><span>01</span> Choose a movie</Link>
-          <span className="current" aria-current="step"><span>02</span> Choose seats</span>
+          <span className={confirmationOpen ? '' : 'current'} aria-current={confirmationOpen ? undefined : 'step'}><span>02</span> Choose seats</span>
           <span><span>03</span> Review booking</span>
-          <span><span>04</span> Complete</span>
+          <span className={confirmationOpen ? 'current' : ''} aria-current={confirmationOpen ? 'step' : undefined}><span>04</span> Complete</span>
         </nav>
       )}
       <div className={`booking-layout ${isBookable ? '' : 'booking-layout-single'}`}>
@@ -189,21 +207,6 @@ export default function MovieDetail() {
       </aside>
 
       <div className="booking-main">
-      {bookingSuccess && (
-        <div className="booking-confirmation" role="status">
-          <h3>Booking confirmed!</h3>
-          <p>
-            Seats: {bookingSuccess.seats.join(', ')} · Total: ₱{bookingSuccess.totalPrice}
-          </p>
-          <button
-            className="btn btn-secondary btn-small"
-            onClick={() => navigate('/my-bookings')}
-          >
-            View My Bookings
-          </button>
-        </div>
-      )}
-
       {isBookable && (
         <div className="booking-section">
           <div className="booking-heading">
@@ -233,7 +236,8 @@ export default function MovieDetail() {
                 <button
                   key={dateStr}
                   className={`date-btn ${selectedDate === dateStr ? 'active' : ''}`}
-                  onClick={() => { setSelectedDate(dateStr); setSelectedSeats([]); }}
+                  onClick={() => { bookingLocked.current = false; setSelectedDate(dateStr); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); }}
+                  disabled={booking}
                 >
                   <span className="day-name">{dayNames[date.getDay()]}</span>
                   <span className="day-num">{date.getDate()}</span>
@@ -254,8 +258,8 @@ export default function MovieDetail() {
               <button
                 key={slot.id}
                 className={`showtime-btn ${selectedTime === slot.time ? 'active' : ''}`}
-                onClick={() => { setSelectedTime(slot.time); setSelectedSeats([]); }}
-                disabled={new Date(`${selectedDate}T${slot.time}:00`).getTime() <= Date.now()}
+                onClick={() => { bookingLocked.current = false; setSelectedTime(slot.time); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); }}
+                disabled={booking || new Date(`${selectedDate}T${slot.time}:00`).getTime() <= Date.now()}
               >
                 {slot.time} · {listAuditoriums().find((item) => item.id === slot.auditoriumId)?.name || 'Cinema'}
               </button>
@@ -284,7 +288,7 @@ export default function MovieDetail() {
                       {Array.from({ length: seatsInRow }).map((_, i) => {
                         const seatId = `${row}${i + 1}`;
                         const isBooked = bookedSeats.includes(seatId);
-                        const isSelected = selectedSeats.includes(seatId);
+                        const isSelected = !isBooked && selectedSeats.includes(seatId);
                         const status = isBooked ? 'booked' : showtimeUnavailable ? 'unavailable' : isSelected ? 'selected' : 'available';
                         return (
                           <button
@@ -292,7 +296,7 @@ export default function MovieDetail() {
                             type="button"
                             className={`seat ${isBooked ? 'seat-booked' : ''} ${isSelected ? 'seat-selected' : ''} ${i === aisleAfter && seatsInRow > i + 1 ? 'seat-aisle' : ''}`}
                             onClick={() => toggleSeat(seatId)}
-                            disabled={isBooked || showtimeUnavailable}
+                            disabled={booking || isBooked || showtimeUnavailable}
                             aria-label={`Seat ${seatId}, ${status}`}
                             aria-pressed={isSelected}
                             title={`Seat ${seatId}: ${status}`}
@@ -358,11 +362,13 @@ export default function MovieDetail() {
               <button
                 className="btn btn-primary"
                 style={{ width: '100%', justifyContent: 'center', marginTop: '1rem' }}
-                onClick={handleBooking}
+                onClick={bookingSuccess ? () => { bookingLocked.current = false; setBookingSuccess(null); setSelectedSeats([]); setBookingError(''); } : handleBooking}
                 disabled={booking}
+                aria-busy={booking}
               >
-                {booking ? 'Processing...' : `Confirm Booking · ₱${selectedSeats.length * movie.price}`}
+                {booking ? 'Processing...' : bookingSuccess ? 'Book another showing' : `Confirm Booking · ₱${selectedSeats.length * movie.price}`}
               </button>
+              {bookingError && <p className="booking-submit-error" role="alert">{bookingError}</p>}
             </div>
           )}
         </div>
@@ -382,6 +388,13 @@ export default function MovieDetail() {
             ))}
           </div>
         </div>
+      )}
+      {confirmationOpen && bookingSuccess && (
+        <BookingConfirmationModal
+          booking={bookingSuccess}
+          onClose={closeConfirmation}
+          onViewBookings={() => navigate('/my-bookings')}
+        />
       )}
     </div>
   );
