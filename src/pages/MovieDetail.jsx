@@ -67,6 +67,7 @@ export default function MovieDetail() {
   const aisleAfter = SEATS_PER_ROW >= 6 && SEATS_PER_ROW % 2 === 0 ? SEATS_PER_ROW / 2 - 1 : -1;
   const showtimeUnavailable = !selectedSlot || new Date(`${selectedDate}T${selectedTime}:00`).getTime() <= Date.now();
   const isBookable = movie?.status === 'now_showing' && user?.role !== 'admin';
+  const isComingSoon = movie?.status === 'coming_soon';
 
   const toggleSeat = (seatId) => {
     if (showtimeUnavailable) return;
@@ -128,7 +129,7 @@ export default function MovieDetail() {
   }
 
   return (
-    <div className="movie-detail booking-experience fade-in">
+    <div className={`movie-detail booking-experience fade-in ${isComingSoon ? 'coming-soon-detail' : ''}`}>
       {isBookable && (
         <nav className="booking-progress" aria-label="Booking progress">
           <Link to="/movies"><span>01</span> Choose a movie</Link>
@@ -148,6 +149,7 @@ export default function MovieDetail() {
             <img src={movie.posterUrl} alt={movie.title} />
           </div>
           <div className="movie-detail-text">
+            {isComingSoon && <span className="booking-eyebrow">Coming Soon</span>}
             <h1>{movie.title}</h1>
             <div className="movie-detail-tags">
               {movie.genre.map((g) => (
@@ -161,16 +163,24 @@ export default function MovieDetail() {
                 <span className="stat-label">Duration</span>
                 <span className="stat-value">{movie.duration} min</span>
               </div>
+              {isComingSoon && movie.releaseDate && (
+                <div className="stat stat-release">
+                  <span className="stat-label">In cinemas</span>
+                  <span className="stat-value">{new Date(movie.releaseDate).toLocaleDateString('en-PH', {
+                    month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC',
+                  })}</span>
+                </div>
+              )}
               {movie.director && (
                 <div className="stat">
                   <span className="stat-label">Director</span>
                   <span className="stat-value">{movie.director}</span>
                 </div>
               )}
-              <div className="stat">
+              {!isComingSoon && <div className="stat">
                 <span className="stat-label">Price</span>
                 <span className="stat-value stat-price">₱{movie.price}</span>
-              </div>
+              </div>}
             </div>
           </div>
         </div>
