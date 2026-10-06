@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useMovie } from '../hooks/useMovies';
@@ -60,6 +60,10 @@ export default function MovieDetail() {
   const [bookingError, setBookingError] = useState('');
   const [bookingSuccess, setBookingSuccess] = useState(null);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
+  const [seatMapScrollable, setSeatMapScrollable] = useState(false);
+  const seatMapRef = useRef(null);
+  const reviewRef = useRef(null);
 
   const dates = getNextDays(7);
   const showtimes = listShowtimes(id);
@@ -73,9 +77,21 @@ export default function MovieDetail() {
   const isBookable = movie?.status === 'now_showing' && user?.role !== 'admin';
   const isComingSoon = movie?.status === 'coming_soon';
 
+  useEffect(() => {
+    const viewport = seatMapRef.current;
+    if (!viewport) return;
+    const update = () => setSeatMapScrollable(viewport.scrollWidth > viewport.clientWidth + 1);
+    const observer = new ResizeObserver(update);
+    observer.observe(viewport);
+    observer.observe(viewport.firstElementChild);
+    update();
+    return () => observer.disconnect();
+  }, [movie, isBookable]);
+
   const toggleSeat = (seatId) => {
     if (booking || showtimeUnavailable || bookedSeats.includes(seatId)) return;
     setBookingError('');
+    setReviewing(false);
     if (bookingSuccess) {
       bookingLocked.current = false;
       setBookingSuccess(null);
@@ -86,6 +102,15 @@ export default function MovieDetail() {
   };
 
   const closeConfirmation = useCallback(() => setConfirmationOpen(false), []);
+
+  const reviewBooking = () => {
+    if (selectedSeats.length === 0 || showtimeUnavailable) return;
+    setReviewing(true);
+    requestAnimationFrame(() => {
+      reviewRef.current?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+      reviewRef.current?.focus({ preventScroll: true });
+    });
+  };
 
   const handleBooking = async () => {
     if (bookingLocked.current || bookingSuccess) return;
@@ -147,13 +172,14 @@ export default function MovieDetail() {
   }
 
   return (
-    <div className={`movie-detail booking-experience fade-in ${isComingSoon ? 'coming-soon-detail' : ''}`}>
+    <div className={`movie-detail booking-experience fade-in ${isComingSoon ? 'coming-soon-detail' : ''} ${isBookable ? 'booking-active' : ''}`}>
       {isDemo && <p className="demo-catalog-notice">Preview catalog · This is a sample movie.</p>}
       {isBookable && (
         <nav className="booking-progress" aria-label="Booking progress">
+          <span className="booking-progress-mobile" aria-current="step">Step {confirmationOpen ? 4 : reviewing ? 3 : 2} of 4 · {confirmationOpen ? 'Complete' : reviewing ? 'Review booking' : 'Choose seats'}</span>
           <Link to="/movies"><span>01</span> Choose a movie</Link>
-          <span className={confirmationOpen ? '' : 'current'} aria-current={confirmationOpen ? undefined : 'step'}><span>02</span> Choose seats</span>
-          <span><span>03</span> Review booking</span>
+          <span className={confirmationOpen || reviewing ? '' : 'current'} aria-current={confirmationOpen || reviewing ? undefined : 'step'}><span>02</span> Choose seats</span>
+          <span className={reviewing && !confirmationOpen ? 'current' : ''} aria-current={reviewing && !confirmationOpen ? 'step' : undefined}><span>03</span> Review booking</span>
           <span className={confirmationOpen ? 'current' : ''} aria-current={confirmationOpen ? 'step' : undefined}><span>04</span> Complete</span>
         </nav>
       )}
@@ -236,7 +262,7 @@ export default function MovieDetail() {
                 <button
                   key={dateStr}
                   className={`date-btn ${selectedDate === dateStr ? 'active' : ''}`}
-                  onClick={() => { bookingLocked.current = false; setSelectedDate(dateStr); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); }}
+                  onClick={() => { bookingLocked.current = false; setSelectedDate(dateStr); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); setReviewing(false); }}
                   disabled={booking}
                 >
                   <span className="day-name">{dayNames[date.getDay()]}</span>
@@ -258,7 +284,7 @@ export default function MovieDetail() {
               <button
                 key={slot.id}
                 className={`showtime-btn ${selectedTime === slot.time ? 'active' : ''}`}
-                onClick={() => { bookingLocked.current = false; setSelectedTime(slot.time); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); }}
+                onClick={() => { bookingLocked.current = false; setSelectedTime(slot.time); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); setReviewing(false); }}
                 disabled={booking || new Date(`${selectedDate}T${slot.time}:00`).getTime() <= Date.now()}
               >
                 {slot.time} · {listAuditoriums().find((item) => item.id === slot.auditoriumId)?.name || 'Cinema'}
@@ -273,12 +299,12 @@ export default function MovieDetail() {
             <div><span className="booking-eyebrow">{auditorium?.name || 'Cinema'}</span><h3>Select seats</h3></div>
             <span>{selectedSeats.length} selected</span>
           </div>
-          <div className="seat-map-scroll" role="region" aria-label="Cinema seat map; scroll horizontally to see all seats" tabIndex={0}>
+          <div className="screen-indicator">
+            <div className="screen-line" aria-hidden="true" />
+            <span className="screen-label">SCREEN</span>
+          </div>
+          <div className="seat-map-scroll" role="region" aria-label="Cinema seat map; scroll horizontally to see all seats" aria-describedby={seatMapScrollable ? 'seat-scroll-hint' : undefined} tabIndex={0} ref={seatMapRef}>
             <div className="seat-map">
-              <div className="screen-indicator">
-                <div className="screen-line" aria-hidden="true" />
-                <span className="screen-label">SCREEN</span>
-              </div>
               <div className="seats-grid">
                 {visibleRows.map((row, rowIndex) => {
                   const seatsInRow = Math.min(SEATS_PER_ROW, seatCapacity - rowIndex * SEATS_PER_ROW);
@@ -312,7 +338,7 @@ export default function MovieDetail() {
               </div>
             </div>
           </div>
-          <p className="seat-scroll-hint">Swipe sideways to see all seats.</p>
+          {seatMapScrollable && <p className="seat-scroll-hint" id="seat-scroll-hint">Swipe sideways to see all seats.</p>}
 
           {/* Legend */}
           <div className="seat-legend">
@@ -333,7 +359,7 @@ export default function MovieDetail() {
 
           {/* Booking Summary */}
           {selectedSeats.length > 0 && selectedSlot && (
-            <div className="booking-summary">
+            <div className={`booking-summary ${reviewing ? 'is-reviewing' : ''}`} ref={reviewRef} tabIndex={-1}>
               <h3>Booking Summary</h3>
               <div className="summary-row">
                 <span className="label">Movie</span>
@@ -375,6 +401,16 @@ export default function MovieDetail() {
       )}
       </div>
       </div>
+
+      {isBookable && (
+        <div className="booking-mobile-bar">
+          <div className="booking-mobile-total">
+            <span>{selectedSeats.length} {selectedSeats.length === 1 ? 'seat' : 'seats'} selected</span>
+            <strong>₱{(selectedSeats.length * movie.price).toLocaleString('en-PH')}</strong>
+          </div>
+          <button type="button" className="btn btn-primary" onClick={reviewBooking} disabled={selectedSeats.length === 0 || showtimeUnavailable || booking}>Review Booking</button>
+        </div>
+      )}
 
       {/* Cast */}
       {movie.cast && movie.cast.length > 0 && (
