@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import ActionPending from '../components/ActionPending';
 
 export default function Profile() {
   const { user, updateProfile } = useAuth();
@@ -8,9 +9,11 @@ export default function Profile() {
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const hasChanges = name.trim() !== user.name || phone.trim() !== (user.phone || '');
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (!hasChanges || saving) return;
     setError('');
     setSaved(false);
     setSaving(true);
@@ -49,7 +52,7 @@ export default function Profile() {
               <div className="profile-email">{user.email}</div>
               <p className="profile-help">Email cannot be changed here.</p>
             </div>
-            <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Saving...' : 'Save Profile'}</button>
+            <button type="submit" className="btn btn-primary" disabled={!hasChanges || saving} aria-busy={saving}><ActionPending pending={saving}>{saving ? 'Saving...' : 'Save Profile'}</ActionPending></button>
           </form>
         </div>
       </div>

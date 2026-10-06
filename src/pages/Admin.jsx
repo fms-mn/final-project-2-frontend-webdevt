@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
+import ActionPending from '../components/ActionPending';
 
 const TABS = ['overview', 'movies', 'users'];
 const STATUSES = ['draft', 'published', 'archived'];
@@ -38,6 +39,7 @@ export default function Admin() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
+  const [busyAction, setBusyAction] = useState('');
   const [movieDraft, setMovieDraft] = useState(blankMovie);
   const [confirmRemove, setConfirmRemove] = useState('');
   const [attempt, setAttempt] = useState(0);
@@ -66,8 +68,9 @@ export default function Admin() {
   const reload = useCallback(() => setAttempt((count) => count + 1), []);
 
   // Runs one write, then shows the outcome and refreshes the lists from the server.
-  const act = async (action, message) => {
+  const act = async (action, message, actionId) => {
     setBusy(true);
+    setBusyAction(actionId);
     try {
       await action();
       setError('');
@@ -78,6 +81,7 @@ export default function Admin() {
       setNotice('');
     } finally {
       setBusy(false);
+      setBusyAction('');
     }
   };
 
@@ -89,7 +93,7 @@ export default function Admin() {
       if (_id) await api(`/movies/${_id}`, { method: 'PUT', body });
       else await api('/movies', { method: 'POST', body });
       setMovieDraft(blankMovie);
-    }, _id ? 'Movie updated' : 'Movie added');
+    }, _id ? 'Movie updated' : 'Movie added', 'save');
   };
 
   const removeMovie = (movie) => {
@@ -98,12 +102,12 @@ export default function Admin() {
       return;
     }
     setConfirmRemove('');
-    act(() => api(`/movies/${movie._id}`, { method: 'DELETE' }), 'Movie removed');
+    act(() => api(`/movies/${movie._id}`, { method: 'DELETE' }), 'Movie removed', `remove:${movie._id}`);
   };
 
   const setActive = (user, isActive) => act(
     () => api(`/users/${user._id}/status`, { method: 'PATCH', body: { isActive } }),
-    isActive ? 'Account enabled' : 'Account disabled',
+    isActive ? 'Account enabled' : 'Account disabled', `user:${user._id}`,
   );
 
   const edit = (field) => (event) => setMovieDraft({ ...movieDraft, [field]: event.target.value });
@@ -179,7 +183,7 @@ export default function Admin() {
             </label>
             <p className="profile-help">Only published movies appear on the public website.</p>
             <div className="admin-actions">
-              <button className="btn btn-primary btn-small" type="submit" disabled={busy}>Save movie</button>
+              <button className="btn btn-primary btn-small" type="submit" disabled={busy} aria-busy={busyAction === 'save'}><ActionPending pending={busyAction === 'save'}>{busyAction === 'save' ? 'Saving...' : 'Save movie'}</ActionPending></button>
               {movieDraft._id && <button className="btn btn-secondary btn-small" type="button" onClick={() => setMovieDraft(blankMovie)}>Cancel edit</button>}
             </div>
           </form>
@@ -194,8 +198,8 @@ export default function Admin() {
                 <div className="admin-actions">
                   {movie.status === 'published' && <Link className="btn btn-secondary btn-small" to={`/movie/${movie._id}`}>View</Link>}
                   <button type="button" className="btn btn-secondary btn-small" onClick={() => { setMovieDraft(toDraft(movie)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Edit</button>
-                  <button type="button" className="btn btn-danger btn-small" disabled={busy} onClick={() => removeMovie(movie)}>
-                    {confirmRemove === movie._id ? 'Confirm remove' : 'Remove'}
+                  <button type="button" className="btn btn-danger btn-small" disabled={busy} aria-busy={busyAction === `remove:${movie._id}`} onClick={() => removeMovie(movie)}>
+                    <ActionPending pending={busyAction === `remove:${movie._id}`}>{busyAction === `remove:${movie._id}` ? 'Removing...' : confirmRemove === movie._id ? 'Confirm remove' : 'Remove'}</ActionPending>
                   </button>
                 </div>
               </div>
@@ -213,8 +217,8 @@ export default function Admin() {
                 <small>{user.email} · {user.role} · {user.isActive ? 'active' : 'disabled'}</small>
               </div>
               {user.role === 'user' && (
-                <button type="button" className="btn btn-secondary btn-small" disabled={busy} onClick={() => setActive(user, !user.isActive)}>
-                  {user.isActive ? 'Disable' : 'Enable'}
+                <button type="button" className="btn btn-secondary btn-small" disabled={busy} aria-busy={busyAction === `user:${user._id}`} onClick={() => setActive(user, !user.isActive)}>
+                  <ActionPending pending={busyAction === `user:${user._id}`}>{busyAction === `user:${user._id}` ? 'Updating...' : user.isActive ? 'Disable' : 'Enable'}</ActionPending>
                 </button>
               )}
             </div>
