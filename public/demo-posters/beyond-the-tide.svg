@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 900" role="img" aria-label="Beyond the Tide illustrated poster">
+  <defs>
+    <linearGradient id="sea" x2="0" y2="1"><stop stop-color="#0f263e"/><stop offset=".5" stop-color="#256680"/><stop offset="1" stop-color="#09202e"/></linearGradient>
+    <radialGradient id="sun"><stop stop-color="#ffdda5"/><stop offset="1" stop-color="#ffdda5" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="600" height="900" fill="url(#sea)"/>
+  <circle cx="305" cy="315" r="240" fill="url(#sun)" opacity=".7"/>
+  <circle cx="305" cy="315" r="90" fill="#ffe1ae"/>
+  <path d="M0 510Q100 470 200 510T400 510T600 510V900H0Z" fill="#17506a"/>
+  <path d="M0 580Q120 535 240 580T480 580T720 580V900H0Z" fill="#0e3c54"/>
+  <path d="M0 665Q125 620 250 665T500 665T750 665V900H0Z" fill="#092a3e"/>
+  <path d="M270 460 330 460 345 585 255 585Z" fill="#091b2a"/>
+  <path d="M300 400 300 520M300 410 380 485H300Z" fill="#f0d3a9" stroke="#f0d3a9" stroke-width="3"/>
+  <text x="300" y="750" text-anchor="middle" fill="#f6eee0" font-family="Arial,sans-serif" font-size="48" font-weight="700" letter-spacing="7">BEYOND</text>
+  <text x="300" y="815" text-anchor="middle" fill="#f6eee0" font-family="Arial,sans-serif" font-size="48" font-weight="700" letter-spacing="7">THE TIDE</text>
+</svg>

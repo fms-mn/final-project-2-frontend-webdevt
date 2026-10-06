@@ -12,7 +12,7 @@ export default function Movies() {
     ? requestedStatus
     : 'all';
 
-  const { movies: allMovies, loading, error, reload } = useMovies();
+  const { movies: allMovies, loading, error, reload, isDemo } = useMovies();
   const query = search.trim().toLowerCase();
   const movies = allMovies.filter((movie) =>
     (filter === 'all' || movie.status === filter) &&
@@ -23,6 +23,7 @@ export default function Movies() {
     <div className="movies-page fade-in">
       <h1>All Movies</h1>
       <p>Browse our complete catalog of movies</p>
+      {isDemo && <p className="demo-catalog-notice">Preview catalog · Sample movies are shown while the database is unavailable.</p>}
 
       <div className="search-bar">
         <FiSearch className="search-icon" />

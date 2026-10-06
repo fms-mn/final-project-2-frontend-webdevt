@@ -50,7 +50,7 @@ export default function MovieDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const { movie, loading, notFound, error, reload } = useMovie(id);
+  const { movie, loading, notFound, error, reload, isDemo } = useMovie(id);
   const [selectedDate, setSelectedDate] = useState(() => initialSelection(id).date);
   const [selectedTime, setSelectedTime] = useState(() => initialSelection(id).time);
   const [selectedSeats, setSelectedSeats] = useState([]);
@@ -130,6 +130,7 @@ export default function MovieDetail() {
 
   return (
     <div className={`movie-detail booking-experience fade-in ${isComingSoon ? 'coming-soon-detail' : ''}`}>
+      {isDemo && <p className="demo-catalog-notice">Preview catalog · This is a sample movie.</p>}
       {isBookable && (
         <nav className="booking-progress" aria-label="Booking progress">
           <Link to="/movies"><span>01</span> Choose a movie</Link>

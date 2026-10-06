@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 900" role="img" aria-label="Oppenheimer: The Aftermath illustrated poster">
+  <defs>
+    <linearGradient id="fire" x2="0" y2="1"><stop stop-color="#c14820"/><stop offset=".45" stop-color="#57211d"/><stop offset="1" stop-color="#100e18"/></linearGradient>
+    <radialGradient id="flare"><stop stop-color="#ffd383"/><stop offset=".35" stop-color="#ea7d32"/><stop offset="1" stop-color="#e74e1f" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="600" height="900" fill="url(#fire)"/>
+  <circle cx="300" cy="285" r="290" fill="url(#flare)" opacity=".85"/>
+  <circle cx="300" cy="285" r="165" fill="none" stroke="#ffd08a" stroke-width="3" opacity=".6"/>
+  <circle cx="300" cy="285" r="225" fill="none" stroke="#ffd08a" stroke-width="2" opacity=".45"/>
+  <path d="M0 490 95 445 165 485 240 435 300 500 375 425 445 485 520 440 600 490V900H0Z" fill="#331917" opacity=".8"/>
+  <path d="M210 700 235 455 300 395 365 455 390 700Z" fill="#19151a"/>
+  <path d="M255 420q45-75 90 0l35 35H220Z" fill="#20171a"/>
+  <path d="M275 520h50l-12 180h-26Z" fill="#482521"/>
+  <text x="300" y="775" text-anchor="middle" fill="#ffb06f" font-family="Arial,sans-serif" font-size="46" font-weight="700" letter-spacing="5">OPPENHEIMER</text>
+  <text x="300" y="825" text-anchor="middle" fill="#ffd2a8" font-family="Arial,sans-serif" font-size="24" letter-spacing="9">THE AFTERMATH</text>
+</svg>

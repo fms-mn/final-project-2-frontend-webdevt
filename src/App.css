@@ -2034,6 +2034,18 @@ input, select {
 .booking-confirmation p { color: var(--text-secondary); font-size: .85rem; }
 .booking-confirmation .btn { margin-top: .8rem; }
 
+.demo-catalog-notice {
+  max-width: 1200px;
+  margin: 1rem auto;
+  padding: .65rem 1rem;
+  border: 1px solid var(--border-glow);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: .8rem;
+}
+.booking-experience > .demo-catalog-notice { margin: 0 0 1.5rem; }
+
 /* Upcoming films show the poster and details together without booking controls. */
 .coming-soon-detail { max-width: 1100px; width: calc(100% - 2rem); }
 .coming-soon-detail .booking-layout-single .booking-film-panel { max-width: none; }

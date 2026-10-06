@@ -3,13 +3,14 @@ import MovieCard from '../components/MovieCard';
 import { useMovies } from '../hooks/useMovies';
 
 export default function Home() {
-  const { movies, loading, error, reload } = useMovies();
+  const { movies, loading, error, reload, isDemo } = useMovies();
   const nowShowing = movies.filter((movie) => movie.status === 'now_showing');
   const comingSoon = movies.filter((movie) => movie.status === 'coming_soon');
   const featuredMovie = nowShowing[0] || comingSoon[0];
 
   return (
     <div className="fade-in">
+      {isDemo && <p className="demo-catalog-notice">Preview catalog · Sample movies are shown while the database is unavailable.</p>}
       <section className="hero">
         {featuredMovie && (
           <img
