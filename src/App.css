@@ -2075,6 +2075,7 @@ input, select {
   font-size: 1.7rem;
   font-weight: 700;
 }
+.booking-modal-mark-danger { background: rgba(220, 38, 38, .14); color: var(--danger-text); }
 .booking-modal h2 { margin: .3rem 0; font-size: clamp(1.6rem, 5vw, 2rem); line-height: 1.2; }
 .booking-modal-reference { color: var(--text-secondary); font-size: .85rem; font-weight: 600; }
 .booking-modal-details { margin: 1.5rem 0; border-top: 1px solid var(--border-color); }
@@ -2085,6 +2086,10 @@ input, select {
 .booking-modal-actions { display: flex; gap: .75rem; }
 .booking-modal-actions .btn { flex: 1; justify-content: center; }
 .booking-modal-actions .btn:focus-visible { outline: 3px solid var(--accent-primary); outline-offset: 3px; }
+.booking-cancel-explanation { margin: -1rem 0 1.5rem; color: var(--text-secondary); font-size: .9rem; line-height: 1.6; }
+.booking-cancel-modal .btn-danger { background: #b4233b; border-color: #b4233b; color: #fff; }
+.booking-cancel-modal .btn-danger:hover { background: #941a30; border-color: #941a30; }
+:root[data-theme='light'] .booking-cancel-modal .btn-danger { color: #fff; }
 @media (max-width: 480px) {
   .booking-modal-actions { flex-direction: column; }
   .booking-modal-actions .btn { min-height: 44px; }

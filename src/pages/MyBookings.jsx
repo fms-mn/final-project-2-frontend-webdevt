@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { canCancelDemoBooking, cancelDemoBooking, getDemoBookingReference, getDemoBookings, isUpcomingDemoBooking } from '../data/demoBookings';
+import CancelBookingModal from '../components/CancelBookingModal';
 
 function formatDate(date) {
   return new Date(`${date}T00:00:00`).toLocaleDateString('en-PH', {
@@ -45,14 +46,35 @@ export default function MyBookings() {
   const { user } = useAuth();
   const bookings = user ? getDemoBookings(user.id) : [];
   const [feedback, setFeedback] = useState(null);
+  const [bookingToCancel, setBookingToCancel] = useState(null);
+  const [cancellationError, setCancellationError] = useState('');
+  const cancellationLocked = useRef(false);
+  const successRef = useRef(null);
 
-  const cancelBooking = (booking) => {
-    if (!window.confirm(`Cancel booking ${getDemoBookingReference(booking)}? Its seats will become available again.`)) return;
+  useEffect(() => {
+    if (feedback?.type === 'success') successRef.current?.focus();
+  }, [feedback]);
+
+  const closeCancellation = useCallback(() => setBookingToCancel(null), []);
+
+  const askToCancel = (booking) => {
+    if (!canCancelDemoBooking(booking)) return;
+    cancellationLocked.current = false;
+    setCancellationError('');
+    setFeedback(null);
+    setBookingToCancel(booking);
+  };
+
+  const confirmCancellation = () => {
+    if (!bookingToCancel || cancellationLocked.current) return;
+    cancellationLocked.current = true;
     try {
-      cancelDemoBooking(booking._id, user.id);
-      setFeedback({ userId: user.id, type: 'success', message: `Booking ${getDemoBookingReference(booking)} was cancelled. Its seats are available again.` });
+      const cancelled = cancelDemoBooking(bookingToCancel._id, user.id);
+      setBookingToCancel(null);
+      setFeedback({ userId: user.id, type: 'success', message: `Booking ${getDemoBookingReference(cancelled)} was cancelled. Its seats are available again.` });
     } catch (error) {
-      setFeedback({ userId: user.id, type: 'error', message: error.message || 'Could not cancel this booking.' });
+      cancellationLocked.current = false;
+      setCancellationError(error.message || 'Could not cancel this booking.');
     }
   };
 
@@ -68,11 +90,11 @@ export default function MyBookings() {
       <p className="demo-note" style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
         Demo mode: bookings are saved in this browser only until the booking system is connected.
       </p>
-      {feedback?.userId === user?.id && <div className={feedback.type === 'success' ? 'booking-feedback-success' : 'error-message'} role={feedback.type === 'success' ? 'status' : 'alert'}>{feedback.message}</div>}
+      {feedback?.userId === user?.id && <div className="booking-feedback-success" role="status" tabIndex={-1} ref={successRef}>{feedback.message}</div>}
 
       <section className="bookings-group" aria-labelledby="upcoming-bookings-title">
         <div className="bookings-group-heading"><h2 id="upcoming-bookings-title">Upcoming</h2><span>{upcoming.length}</span></div>
-        {upcoming.length ? upcoming.map((booking) => <BookingCard key={booking._id} booking={booking} onCancel={cancelBooking} />) : (
+        {upcoming.length ? upcoming.map((booking) => <BookingCard key={booking._id} booking={booking} onCancel={askToCancel} />) : (
           <div className="bookings-empty"><h3>No upcoming bookings</h3><p>Choose a movie and reserve your next seats.</p><Link to="/movies" className="btn btn-primary btn-small">Browse Movies</Link></div>
         )}
       </section>
@@ -83,6 +105,14 @@ export default function MyBookings() {
           <div className="bookings-empty"><h3>No booking history yet</h3><p>Past and cancelled bookings will appear here.</p></div>
         )}
       </section>
+      {bookingToCancel && (
+        <CancelBookingModal
+          booking={bookingToCancel}
+          error={cancellationError}
+          onKeep={closeCancellation}
+          onCancel={confirmCancellation}
+        />
+      )}
     </div>
   );
 }

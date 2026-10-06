@@ -1,4 +1,4 @@
-import { SHOWTIMES } from '../constants/showtimes';
+import { SHOWTIMES } from '../constants/showtimes.js';
 
 // DEMO ONLY: a fixed daily schedule. Real auditoriums and showtimes arrive with the showtime API;
 // until then every movie shows at the same times, spread across four sample auditoriums.

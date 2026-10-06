@@ -1,4 +1,4 @@
-import { listAuditoriums, listShowtimes } from './demoSchedule';
+import { listAuditoriums, listShowtimes } from './demoSchedule.js';
 
 // DEMO ONLY: bookings are kept in this browser until the booking API is connected.
 // An Express API must enforce ownership, seat availability, and cancellation rules later.
