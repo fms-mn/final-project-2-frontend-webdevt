@@ -1209,6 +1209,18 @@ input, select {
   margin-top: 0.5rem;
 }
 
+.demo-login {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.demo-login p {
+  color: var(--text-secondary);
+  font-size: .8rem;
+  line-height: 1.5;
+}
+
 .auth-footer {
   text-align: center;
   margin-top: 1.5rem;

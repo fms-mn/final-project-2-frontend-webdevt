@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { api, forgetSession, UNAUTHORIZED_EVENT } from '../api';
+import { endDemoSession, getDemoUser, startDemoSession, updateDemoUser } from '../data/demoAccount';
 
 const AuthContext = createContext();
 
@@ -14,11 +15,17 @@ export function AuthProvider({ children }) {
 
   // On first load (and after a page refresh) ask the server whether the session cookie is valid.
   useEffect(() => {
+    const demoUser = import.meta.env.DEV && getDemoUser();
+    if (demoUser) {
+      setUser(demoUser);
+      setLoading(false);
+      return;
+    }
     const controller = new AbortController();
     api('/users/me', { signal: controller.signal })
-      .then((data) => setUser(toUser(data.user)))
+      .then((data) => setUser((current) => current?.isDemo ? current : toUser(data.user)))
       .catch((error) => {
-        if (error.name !== 'AbortError') setUser(null); // 401 simply means "not signed in"
+        if (error.name !== 'AbortError') setUser((current) => current?.isDemo ? current : null);
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
@@ -28,13 +35,14 @@ export function AuthProvider({ children }) {
 
   // The session ended while the site was open (api.js saw a 401).
   useEffect(() => {
-    const handleExpired = () => setUser(null);
+    const handleExpired = () => setUser((current) => current?.isDemo ? current : null);
     window.addEventListener(UNAUTHORIZED_EVENT, handleExpired);
     return () => window.removeEventListener(UNAUTHORIZED_EVENT, handleExpired);
   }, []);
 
   const login = async (email, password) => {
     const data = await api('/auth/login', { method: 'POST', body: { email, password } });
+    if (import.meta.env.DEV) endDemoSession();
     const signedInUser = toUser(data.user);
     setUser(signedInUser);
     return signedInUser;
@@ -42,12 +50,28 @@ export function AuthProvider({ children }) {
 
   const register = async (name, email, password) => {
     const data = await api('/auth/register', { method: 'POST', body: { name, email, password } });
+    if (import.meta.env.DEV) endDemoSession();
     const newUser = toUser(data.user);
     setUser(newUser);
     return newUser;
   };
 
+  const loginAsDemo = () => {
+    if (!import.meta.env.DEV) throw new Error('Demo sign-in is available in local development only');
+    const demoUser = startDemoSession();
+    forgetSession();
+    setUser(demoUser);
+    setLoading(false);
+    return demoUser;
+  };
+
   const logout = async () => {
+    if (user?.isDemo) {
+      endDemoSession();
+      forgetSession();
+      setUser(null);
+      return;
+    }
     try {
       await api('/auth/logout', { method: 'POST' });
     } catch {
@@ -59,6 +83,11 @@ export function AuthProvider({ children }) {
 
   // Saves the signed-in user's own name and phone (PATCH /api/users/me).
   const updateProfile = async (changes) => {
+    if (user?.isDemo) {
+      const updatedUser = updateDemoUser(changes);
+      setUser(updatedUser);
+      return updatedUser;
+    }
     const data = await api('/users/me', { method: 'PATCH', body: changes });
     const updatedUser = toUser(data.user);
     setUser(updatedUser);
@@ -66,7 +95,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateProfile }}>
+    <AuthContext.Provider value={{ user, loading, login, loginAsDemo, register, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

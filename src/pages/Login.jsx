@@ -4,13 +4,22 @@ import { useAuth } from '../context/AuthContext';
 import ActionPending from '../components/ActionPending';
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, loginAsDemo } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const goAfterLogin = (signedInUser) => {
+    const destination = location.state?.from;
+    navigate(destination && (signedInUser.role === 'admin' ? destination.pathname.startsWith('/admin') : !destination.pathname.startsWith('/admin'))
+      ? `${destination.pathname}${destination.search}${destination.hash}`
+      : signedInUser.role === 'admin' ? '/admin' : '/', {
+      replace: true,
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,16 +28,20 @@ export default function Login() {
 
     try {
       const signedInUser = await login(email, password);
-      const destination = location.state?.from;
-      navigate(destination && (signedInUser.role === 'admin' ? destination.pathname.startsWith('/admin') : !destination.pathname.startsWith('/admin'))
-        ? `${destination.pathname}${destination.search}${destination.hash}`
-        : signedInUser.role === 'admin' ? '/admin' : '/', {
-        replace: true,
-      });
+      goAfterLogin(signedInUser);
     } catch (err) {
       setError(err.message || 'Login failed');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDemoLogin = () => {
+    setError('');
+    try {
+      goAfterLogin(loginAsDemo());
+    } catch (err) {
+      setError(err.message || 'Demo sign-in failed');
     }
   };
 
@@ -68,6 +81,15 @@ export default function Login() {
               <ActionPending pending={loading}>{loading ? 'Signing in...' : 'Sign In'}</ActionPending>
             </button>
           </form>
+
+          {import.meta.env.DEV && (
+            <div className="demo-login">
+              <p>Preview the user side without a database. Your profile and bookings stay in this browser.</p>
+              <button type="button" className="btn btn-secondary" onClick={handleDemoLogin} disabled={loading}>
+                Continue as Demo User
+              </button>
+            </div>
+          )}
 
           <div className="auth-footer">
             Don&apos;t have an account? <Link to="/register">Sign up</Link>
