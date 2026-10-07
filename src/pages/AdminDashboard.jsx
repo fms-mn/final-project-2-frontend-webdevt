@@ -4,8 +4,10 @@ import {
   FiSearch, FiShield, FiTrash2, FiTrendingUp, FiUpload, FiUserCheck, FiUsers, FiX,
 } from 'react-icons/fi';
 import { demoMovies } from '../data/demoMovies';
+import { initialCinemas, initialShowtimes } from '../data/demoAdminOperations';
+import AdminShowtimes from '../components/admin/AdminShowtimes';
 
-const TABS = ['overview', 'movies', 'bookings', 'users'];
+const TABS = ['overview', 'movies', 'showtimes', 'bookings', 'users'];
 const RATINGS = ['G', 'PG', 'R'];
 const GENRES = ['Action', 'Adventure', 'Animation', 'Comedy', 'Crime', 'Documentary', 'Drama', 'Fantasy', 'Horror', 'Romance', 'Sci-Fi', 'Thriller'];
 const RANGE_DATA = {
@@ -96,6 +98,8 @@ export default function AdminDashboard() {
   const [query, setQuery] = useState('');
   const [movies, setMovies] = useState(() => demoMovies.map((movie) => ({ ...movie })));
   const [users, setUsers] = useState(initialUsers);
+  const cinemas = initialCinemas;
+  const [showtimes, setShowtimes] = useState(() => initialShowtimes.map((showtime) => ({ ...showtime })));
   const [movieDraft, setMovieDraft] = useState(null);
   const [deleteMovieId, setDeleteMovieId] = useState('');
   const [movieNotice, setMovieNotice] = useState('');
@@ -296,6 +300,8 @@ export default function AdminDashboard() {
           <p className="admin-local-note">Add, edit, delete and poster upload actions are frontend-only and reset when the page is refreshed.</p>
         </section>
       </>}
+
+      {tab === 'showtimes' && <AdminShowtimes movies={movies} cinemas={cinemas} showtimes={showtimes} setShowtimes={setShowtimes} />}
 
       {tab === 'bookings' && <section className="admin-panel admin-management booking-management">
         <div className="admin-card-heading booking-heading-row">

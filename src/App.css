@@ -2462,6 +2462,65 @@ input, select {
 .user-delete-confirmation { text-align: center; }
 .delete-warning-icon { display: grid; place-items: center; width: 58px; height: 58px; margin: .25rem auto 1rem; border-radius: 50%; background: rgba(220, 38, 38, .12); color: var(--danger-text); font-size: 1.35rem; }
 .user-delete-confirmation p { color: var(--text-secondary); font-size: .85rem; line-height: 1.65; }
+.showtime-management .admin-card-heading p, .cinema-management .admin-card-heading p { margin-top: .25rem; color: var(--text-muted); font-size: .72rem; }
+.showtime-form-grid, .cinema-form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; gap: 1rem; }
+.showtime-form-grid label, .cinema-form-grid label { display: flex; flex-direction: column; gap: .35rem; color: var(--text-secondary); font-size: .72rem; font-weight: 700; }
+.showtime-form-grid input, .showtime-form-grid select, .cinema-form-grid input { width: 100%; min-height: 43px; padding: .6rem .7rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-primary); color: var(--text-primary); font: inherit; }
+.showtime-form-actions, .cinema-form-actions { display: flex; grid-column: 1 / -1; justify-content: flex-end; gap: .6rem; }
+.showtime-filters { display: flex; align-items: end; gap: .7rem; margin-bottom: 1rem; padding: .8rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-primary); }
+.showtime-filters label { display: flex; min-width: 160px; flex-direction: column; gap: .25rem; color: var(--text-muted); font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+.showtime-filters input, .showtime-filters select { min-height: 38px; padding: .4rem .6rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-secondary); color: var(--text-primary); }
+.showtime-filters > button { min-height: 38px; padding: .4rem .7rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--surface-tint); color: var(--text-secondary); font-size: .7rem; font-weight: 700; }
+.showtime-list { display: grid; gap: .65rem; }
+.showtime-row { display: grid; grid-template-columns: 105px minmax(200px, 1fr) 95px 100px auto; align-items: center; gap: 1rem; padding: .85rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-primary); }
+.showtime-date, .showtime-movie, .showtime-price, .showtime-seats { display: flex; flex-direction: column; }
+.showtime-date { position: relative; padding-left: 1.45rem; }
+.showtime-date > svg { position: absolute; top: .2rem; left: 0; color: var(--accent-primary); }
+.showtime-date strong, .showtime-movie strong { font-size: .78rem; }
+.showtime-date span, .showtime-movie span, .showtime-price span, .showtime-seats span { color: var(--text-muted); font-size: .65rem; }
+.showtime-movie span { display: flex; align-items: center; gap: .3rem; }
+.showtime-price strong { color: var(--gold); }
+.showtime-seats strong { color: var(--success-text); }
+.showtime-actions { display: flex; align-items: center; gap: .35rem; }
+.showtime-actions .confirm-delete, .cinema-room-actions .confirm-delete { border-color: var(--danger-text); background: rgba(220, 38, 38, .15); color: var(--danger-text); }
+.cinema-capacity-preview { display: flex; min-height: 63px; flex-direction: column; justify-content: center; padding: .55rem .75rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-primary); }
+.cinema-capacity-preview span { color: var(--text-muted); font-size: .64rem; text-transform: uppercase; }
+.cinema-capacity-preview strong { color: var(--gold); font-size: 1rem; }
+.cinema-management-layout { display: grid; grid-template-columns: minmax(260px, .7fr) minmax(0, 1.6fr); gap: 1rem; }
+.cinema-room-list { display: flex; flex-direction: column; gap: .6rem; }
+.cinema-room-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .65rem; padding: .85rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-primary); cursor: pointer; transition: border-color var(--transition-fast), background var(--transition-fast); }
+.cinema-room-card:hover, .cinema-room-card.selected { border-color: var(--border-glow); background: var(--bg-card-hover); }
+.cinema-room-card > div:first-child { display: flex; align-items: center; min-width: 0; gap: .6rem; }
+.cinema-room-card > div:first-child > svg { flex: none; color: var(--accent-primary); }
+.cinema-room-card > div:first-child > span { display: flex; min-width: 0; flex-direction: column; }
+.cinema-room-card strong { font-size: .78rem; }
+.cinema-room-card small { overflow: hidden; color: var(--text-muted); font-size: .62rem; text-overflow: ellipsis; white-space: nowrap; }
+.cinema-room-meta { display: flex; flex-direction: column; text-align: right; }
+.cinema-room-meta strong { color: var(--gold); }
+.cinema-room-meta span { color: var(--text-muted); font-size: .58rem; }
+.cinema-room-actions { display: flex; grid-column: 1 / -1; gap: .35rem; padding-top: .55rem; border-top: 1px solid var(--border-color); }
+.cinema-room-actions button { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid var(--border-color); border-radius: 50%; background: var(--surface-tint); color: var(--text-secondary); }
+.seat-layout-panel { min-width: 0; padding: 1rem; overflow: hidden; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-primary); }
+.seat-layout-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
+.seat-layout-heading h3 { font-size: 1.05rem; }
+.seat-layout-heading > div:last-child { display: flex; flex-direction: column; text-align: right; }
+.seat-layout-heading > div:last-child strong { color: var(--success-text); font-size: 1.1rem; }
+.seat-layout-heading > div:last-child span { color: var(--text-muted); font-size: .62rem; }
+.cinema-screen { width: min(75%, 500px); margin: 0 auto 1.5rem; padding: .32rem; border-top: 3px solid var(--accent-primary); border-radius: 50%; color: var(--text-muted); font-size: .58rem; letter-spacing: .35em; text-align: center; box-shadow: 0 -7px 18px rgba(233, 69, 96, .12); }
+.admin-seat-map { width: max-content; min-width: 100%; overflow-x: auto; padding: .25rem; }
+.admin-seat-row { display: flex; align-items: center; justify-content: center; gap: .5rem; margin-bottom: .45rem; }
+.admin-seat-row > span { width: 18px; flex: none; color: var(--text-muted); font-size: .62rem; text-align: center; }
+.admin-seat-row > div { display: grid; grid-template-columns: repeat(var(--seats-per-row), 29px); gap: .3rem; }
+.admin-seat-row button { width: 29px; height: 27px; border: 1px solid #526781; border-radius: 5px 5px 3px 3px; background: #344762; color: #fff; font-size: .57rem; font-weight: 700; }
+.admin-seat-row button.unavailable { border-color: #697383; background: #3b4350; color: #aeb6c2; }
+.admin-seat-row button.maintenance { border-color: #d49a26; background: rgba(212, 154, 38, .25); color: var(--gold); }
+.admin-seat-row button:hover, .admin-seat-row button:focus-visible { transform: translateY(-2px); outline: 2px solid var(--accent-primary); outline-offset: 1px; }
+.admin-seat-legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; padding-top: .8rem; border-top: 1px solid var(--border-color); }
+.admin-seat-legend span { display: flex; align-items: center; gap: .35rem; color: var(--text-secondary); font-size: .65rem; }
+.admin-seat-legend i { width: 12px; height: 12px; border-radius: 3px; background: #344762; }
+.admin-seat-legend i.unavailable { background: #3b4350; }
+.admin-seat-legend i.maintenance { background: #9b7221; }
+.seat-layout-help { margin-top: .65rem; color: var(--text-muted); font-size: .65rem; text-align: center; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .demo-login .btn + .btn { margin-top: .65rem; }
 
@@ -2471,6 +2530,10 @@ input, select {
   .admin-sales-card .donut-wrap { grid-template-columns: auto minmax(180px, 1fr); justify-items: stretch; }
   .booking-admin-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .booking-admin-filters .admin-search { grid-column: 1 / -1; }
+  .showtime-row { grid-template-columns: 100px minmax(180px, 1fr) 90px 90px; }
+  .showtime-actions { grid-column: 1 / -1; justify-content: flex-end; padding-top: .5rem; border-top: 1px solid var(--border-color); }
+  .cinema-management-layout { grid-template-columns: 1fr; }
+  .cinema-room-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 600px) {
   .admin-dashboard .admin-stats { grid-template-columns: 1fr; }
@@ -2502,4 +2565,15 @@ input, select {
   .user-edit-form, .user-detail-content dl { grid-template-columns: 1fr; }
   .user-modal-actions { flex-direction: column-reverse; }
   .user-modal-actions .btn { justify-content: center; }
+  .showtime-form-grid, .cinema-form-grid { grid-template-columns: 1fr; }
+  .showtime-form-actions, .cinema-form-actions { grid-column: auto; flex-direction: column-reverse; }
+  .showtime-form-actions .btn, .cinema-form-actions .btn { justify-content: center; }
+  .showtime-filters { align-items: stretch; flex-direction: column; }
+  .showtime-filters label { min-width: 0; }
+  .showtime-row { grid-template-columns: 1fr 1fr; gap: .75rem; }
+  .showtime-movie { grid-column: 1 / -1; grid-row: 1; }
+  .showtime-actions { grid-column: 1 / -1; }
+  .cinema-room-list { grid-template-columns: 1fr; }
+  .seat-layout-panel { padding: .75rem .4rem; }
+  .admin-seat-map { justify-content: start; }
 }
