@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import MovieCard from '../components/MovieCard';
+import HeroTrailer from '../components/HeroTrailer';
 import { useMovies } from '../hooks/useMovies';
 
 export default function Home() {
@@ -19,6 +20,7 @@ export default function Home() {
             alt=""
           />
         )}
+        {featuredMovie?.trailerId && <HeroTrailer key={featuredMovie.trailerId} videoId={featuredMovie.trailerId} />}
         <div className="hero-content">
           <span className="hero-badge">
             {featuredMovie?.status === 'now_showing' ? 'Now showing at FILME' : 'Your next movie night starts here'}

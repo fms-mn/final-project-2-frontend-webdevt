@@ -371,6 +371,59 @@ input, select {
   max-width: 680px;
 }
 
+/* The featured movie's trailer, behind the text and under the dark overlay (.hero::before). It
+   fades in once YouTube reports that the video is playing; until then the poster shows. */
+.hero-trailer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+  container-type: size;
+}
+
+.hero-trailer.is-playing {
+  opacity: 1;
+}
+
+/* Cover the banner like a background image: a 16:9 frame at least as big as the banner. */
+.hero-trailer-frame iframe {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100cqw, 177.78cqh);
+  height: max(100cqh, 56.25cqw);
+  transform: translate(-50%, -50%);
+  border: 0;
+}
+
+.hero-sound {
+  position: absolute;
+  right: clamp(1rem, 4vw, 3rem);
+  bottom: clamp(1rem, 4vw, 2.5rem);
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: var(--radius-full);
+  background: rgba(10, 10, 15, 0.55);
+  color: #fff;
+  font-size: 1.15rem;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+
+.hero-sound:hover,
+.hero-sound:focus-visible {
+  background: rgba(10, 10, 15, 0.8);
+  border-color: #fff;
+}
+
 .hero-badge {
   display: inline-flex;
   align-items: center;
