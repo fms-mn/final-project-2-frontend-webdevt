@@ -6,6 +6,8 @@
 // - The server also hands out a CSRF token (login, register and GET /users/me); it is kept in
 //   memory and sent as X-CSRF-Token on every write.
 
+import { demoAdminRequest, isDemoAdminSession } from './data/demoAdminApi.js';
+
 const BASE = '/api';
 export const UNAUTHORIZED_EVENT = 'filme:unauthorized';
 
@@ -25,6 +27,10 @@ export function forgetSession() {
 }
 
 export async function api(path, { method = 'GET', body, signal } = {}) {
+  if (import.meta.env?.DEV && isDemoAdminSession()) {
+    if (signal?.aborted) throw new DOMException('The operation was aborted.', 'AbortError');
+    return demoAdminRequest(path, { method, body });
+  }
   const isWrite = method !== 'GET' && method !== 'HEAD';
 
   let response;
