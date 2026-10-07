@@ -11,7 +11,7 @@ const ROWS = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
 const SEATS_PER_ROW = 10;
 
 function ChairShape({ label }) {
-  return <><span className="chair-backrest"><span className="chair-label">{label}</span></span><span className="chair-cushion" /></>;
+  return <><span className="chair-backrest" /><span className="chair-cushion" /><span className="chair-label">{label}</span></>;
 }
 
 export function toggleSeatSelection(selectedSeats, seatId, bookedSeats) {
@@ -325,10 +325,6 @@ export default function MovieDetail() {
           </div>
 
           <div className="booking-seat-panel">
-          <div className="booking-seat-heading">
-            <div><span className="booking-eyebrow">{auditorium?.name || 'Cinema'}</span><h3>Select seats</h3></div>
-            <span>{selectedSeats.length} selected</span>
-          </div>
           <div className="screen-indicator">
             <div className="screen-line" aria-hidden="true" />
             <span className="screen-label">SCREEN</span>
@@ -385,6 +381,11 @@ export default function MovieDetail() {
               <span>Booked</span>
             </div>
           </div>
+          {selectedSeats.length > 0 && (
+            <p className="seat-selection-summary">
+              Selected: {[...selectedSeats].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).join(', ')}
+            </p>
+          )}
           </div>
 
           {/* Booking Summary */}
