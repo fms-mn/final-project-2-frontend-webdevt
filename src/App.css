@@ -2428,6 +2428,40 @@ input, select {
 .booking-management-table .admin-table td:first-child strong { color: var(--accent-secondary); }
 .status-pill.cancelled { background: rgba(239, 68, 68, .1); color: var(--danger-text); }
 .status-pill.refunded { background: rgba(124, 58, 237, .12); color: #b596ff; }
+.user-management .admin-card-heading p { margin-top: .25rem; color: var(--text-muted); font-size: .72rem; }
+.user-admin-list { display: grid; gap: .7rem; }
+.user-admin-row { display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; align-items: center; gap: .9rem; padding: .9rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-primary); }
+.user-avatar { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg, rgba(233, 69, 96, .2), rgba(124, 58, 237, .2)); color: var(--accent-secondary); font-size: .76rem; font-weight: 800; }
+.user-avatar.large { width: 64px; height: 64px; font-size: 1rem; }
+.user-admin-info { display: flex; min-width: 0; flex-direction: column; }
+.user-admin-info > div { display: flex; align-items: center; gap: .5rem; }
+.user-admin-info > div > strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-admin-info > span { color: var(--text-secondary); font-size: .74rem; }
+.user-admin-info > small { margin-top: .15rem; color: var(--text-muted); font-size: .67rem; }
+.user-admin-actions { display: flex; align-items: center; gap: .4rem; }
+.user-delete-button { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid rgba(220, 38, 38, .25); border-radius: 50%; background: rgba(220, 38, 38, .08); color: var(--danger-text); }
+.user-delete-button:hover { background: rgba(220, 38, 38, .18); }
+.user-action-history ol { display: grid; gap: 0; list-style: none; }
+.user-action-history li { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .7rem 0; border-top: 1px solid var(--border-color); color: var(--text-secondary); font-size: .75rem; }
+.user-action-history li:first-child { border-top: 0; }
+.user-action-history time { flex: none; color: var(--text-muted); font-size: .66rem; }
+.history-empty { padding: 1.25rem; border: 1px dashed var(--border-color); border-radius: var(--radius-md); color: var(--text-muted); font-size: .75rem; text-align: center; }
+.user-modal-backdrop { position: fixed; inset: 0; z-index: 1200; display: grid; place-items: center; padding: 1rem; background: rgba(4, 5, 12, .78); backdrop-filter: blur(5px); }
+.user-modal { width: min(100%, 540px); max-height: calc(100dvh - 2rem); overflow-y: auto; padding: clamp(1.25rem, 4vw, 2rem); border: 1px solid var(--border-glow); border-radius: var(--radius-xl); background: var(--bg-card); box-shadow: var(--shadow-lg); }
+.user-detail-identity { display: flex; align-items: center; gap: .9rem; margin-bottom: 1.25rem; }
+.user-detail-identity > div:last-child { display: flex; flex-direction: column; }
+.user-detail-identity span { color: var(--text-secondary); font-size: .75rem; }
+.user-detail-content dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
+.user-detail-content dl > div { padding: .75rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-primary); }
+.user-detail-content dt { color: var(--text-muted); font-size: .64rem; text-transform: uppercase; letter-spacing: .05em; }
+.user-detail-content dd { margin: .2rem 0 0; overflow-wrap: anywhere; color: var(--text-primary); font-size: .78rem; font-weight: 700; }
+.user-edit-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .9rem; }
+.user-edit-form label { display: flex; flex-direction: column; gap: .3rem; color: var(--text-secondary); font-size: .7rem; font-weight: 700; }
+.user-edit-form input, .user-edit-form select { width: 100%; min-height: 42px; padding: .6rem .7rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-primary); color: var(--text-primary); font: inherit; }
+.user-modal-actions { display: flex; grid-column: 1 / -1; justify-content: flex-end; gap: .6rem; margin-top: 1.25rem; }
+.user-delete-confirmation { text-align: center; }
+.delete-warning-icon { display: grid; place-items: center; width: 58px; height: 58px; margin: .25rem auto 1rem; border-radius: 50%; background: rgba(220, 38, 38, .12); color: var(--danger-text); font-size: 1.35rem; }
+.user-delete-confirmation p { color: var(--text-secondary); font-size: .85rem; line-height: 1.65; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .demo-login .btn + .btn { margin-top: .65rem; }
 
@@ -2463,4 +2497,9 @@ input, select {
   .booking-heading-row .btn { justify-content: center; }
   .booking-admin-filters { grid-template-columns: 1fr; }
   .booking-admin-filters .admin-search { grid-column: auto; }
+  .user-admin-row { grid-template-columns: 46px minmax(0, 1fr); align-items: start; }
+  .user-admin-actions { grid-column: 1 / -1; flex-wrap: wrap; }
+  .user-edit-form, .user-detail-content dl { grid-template-columns: 1fr; }
+  .user-modal-actions { flex-direction: column-reverse; }
+  .user-modal-actions .btn { justify-content: center; }
 }

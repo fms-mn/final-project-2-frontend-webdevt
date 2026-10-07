@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
-  FiCalendar, FiClock, FiDollarSign, FiDownload, FiEdit2, FiFilm, FiPlus,
-  FiSearch, FiTrash2, FiTrendingUp, FiUpload, FiUserCheck, FiUsers, FiX,
+  FiCalendar, FiClock, FiDollarSign, FiDownload, FiEdit2, FiEye, FiFilm, FiPlus,
+  FiSearch, FiShield, FiTrash2, FiTrendingUp, FiUpload, FiUserCheck, FiUsers, FiX,
 } from 'react-icons/fi';
 import { demoMovies } from '../data/demoMovies';
 
@@ -24,10 +24,10 @@ const blankMovie = {
   releaseDate: inputDate(), status: 'draft', posterUrl: '',
 };
 const initialUsers = [
-  { id: 'usr-1024', name: 'Mika Santos', email: 'mika@example.com', role: 'Customer', active: true },
-  { id: 'usr-1025', name: 'Andre Cruz', email: 'andre@example.com', role: 'Customer', active: true },
-  { id: 'usr-1026', name: 'Lena Reyes', email: 'lena@example.com', role: 'Customer', active: false },
-  { id: 'usr-1027', name: 'Noah Garcia', email: 'noah@example.com', role: 'Customer', active: true },
+  { id: 'usr-1024', name: 'Mika Santos', email: 'mika@example.com', phone: '0917 123 4567', role: 'Customer', active: true, joined: '2026-08-14', bookings: 12 },
+  { id: 'usr-1025', name: 'Andre Cruz', email: 'andre@example.com', phone: '0918 234 5678', role: 'Customer', active: true, joined: '2026-08-28', bookings: 8 },
+  { id: 'usr-1026', name: 'Lena Reyes', email: 'lena@example.com', phone: '0919 345 6789', role: 'Customer', active: false, joined: '2026-09-03', bookings: 4 },
+  { id: 'usr-1027', name: 'Noah Garcia', email: 'noah@example.com', phone: '0920 456 7890', role: 'Staff', active: true, joined: '2026-09-19', bookings: 6 },
 ];
 const recentBookings = [
   { id: 'BK-1048', customer: 'Mika Santos', email: 'mika@example.com', movie: 'Midnight Signal', date: inputDate(), showtime: '6:30 PM', seats: 'D5, D6', total: 560, status: 'Confirmed', payment: 'GCash' },
@@ -104,6 +104,10 @@ export default function AdminDashboard() {
   const [bookingStatus, setBookingStatus] = useState('all');
   const [bookingMovie, setBookingMovie] = useState('all');
   const [bookingDate, setBookingDate] = useState('');
+  const [userDialog, setUserDialog] = useState(null);
+  const [userDraft, setUserDraft] = useState(null);
+  const [userNotice, setUserNotice] = useState('');
+  const [userActionHistory, setUserActionHistory] = useState([]);
   const filteredMovies = useMemo(() => movies.filter((movie) => movie.title.toLowerCase().includes(query.toLowerCase())), [movies, query]);
   const filteredUsers = useMemo(() => users.filter((item) => `${item.name} ${item.email}`.toLowerCase().includes(query.toLowerCase())), [users, query]);
   const filteredBookings = useMemo(() => recentBookings.filter((booking) => {
@@ -112,7 +116,30 @@ export default function AdminDashboard() {
   }), [query, bookingStatus, bookingMovie, bookingDate]);
   const dashboardData = useMemo(() => period === 'custom' ? buildCustomRange(customFrom, customTo) : RANGE_DATA[period], [period, customFrom, customTo]);
   const totalRevenue = dashboardData.values.reduce((total, value) => total + value, 0);
-  const toggleUser = (id) => setUsers((items) => items.map((item) => item.id === id ? { ...item, active: !item.active } : item));
+  const dialogUser = userDialog ? users.find((item) => item.id === userDialog.id) : null;
+  const recordUserAction = (description) => setUserActionHistory((items) => [{ id: `${Date.now()}-${items.length}`, description, time: new Intl.DateTimeFormat('en-PH', { hour: 'numeric', minute: '2-digit' }).format(new Date()) }, ...items]);
+  const toggleUser = (id) => {
+    const target = users.find((item) => item.id === id);
+    if (!target) return;
+    setUsers((items) => items.map((item) => item.id === id ? { ...item, active: !item.active } : item));
+    setUserNotice(`${target.name} was ${target.active ? 'disabled' : 'enabled'}.`);
+    recordUserAction(`${target.active ? 'Disabled' : 'Enabled'} ${target.name}'s account`);
+  };
+  const openUserDetails = (user) => { setUserDialog({ type: 'view', id: user.id }); setUserNotice(''); };
+  const openUserEdit = (user) => { setUserDraft({ ...user }); setUserDialog({ type: 'edit', id: user.id }); setUserNotice(''); };
+  const saveUser = (event) => {
+    event.preventDefault();
+    setUsers((items) => items.map((item) => item.id === userDraft.id ? { ...userDraft } : item));
+    setUserNotice(`${userDraft.name}'s account was updated.`);
+    recordUserAction(`Updated ${userDraft.name}'s details and role to ${userDraft.role}`);
+    setUserDialog(null); setUserDraft(null);
+  };
+  const deleteUser = (user) => {
+    setUsers((items) => items.filter((item) => item.id !== user.id));
+    setUserNotice(`${user.name} was deleted from this preview.`);
+    recordUserAction(`Deleted ${user.name}'s account`);
+    setUserDialog(null);
+  };
   const editMovieField = (field) => (event) => setMovieDraft((draft) => ({ ...draft, [field]: event.target.value }));
   const openAddMovie = () => { setMovieDraft({ ...blankMovie }); setDeleteMovieId(''); setMovieNotice(''); setPosterError(''); setMovieFormError(''); };
   const openEditMovie = (movie) => {
@@ -299,11 +326,47 @@ export default function AdminDashboard() {
         <p className="admin-local-note">The booking table and CSV export use frontend mock data only. Exporting downloads the currently filtered rows.</p>
       </section>}
 
-      {tab === 'users' && <section className="admin-panel admin-management">
-        <div className="admin-card-heading"><div><span className="home-section-eyebrow">MANAGEMENT</span><h2>Customer accounts</h2></div><label className="admin-search"><FiSearch aria-hidden="true" /><span className="sr-only">Search users</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search users..." /></label></div>
-        <div className="admin-list">{filteredUsers.map((item) => <div className="admin-row" key={item.id}><div><strong>{item.name}</strong><small>{item.email} · {item.role}</small></div><button type="button" className={`status-pill status-button ${item.active ? 'confirmed' : 'inactive'}`} onClick={() => toggleUser(item.id)}>{item.active ? 'Active' : 'Disabled'}</button></div>)}</div>
-        <p className="admin-local-note">Changes in this preview stay on the current page. Connect these controls to your API when the backend is ready.</p>
-      </section>}
+      {tab === 'users' && <>
+        <section className="admin-panel admin-management user-management">
+          <div className="admin-card-heading"><div><span className="home-section-eyebrow">USER MANAGEMENT</span><h2>User accounts</h2><p>{users.length} accounts in this frontend preview</p></div><label className="admin-search"><FiSearch aria-hidden="true" /><span className="sr-only">Search users</span><input value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Search users" /></label></div>
+          {userNotice && <div className="admin-notice" role="status">{userNotice}</div>}
+          <div className="user-admin-list">{filteredUsers.map((item) => <article className="user-admin-row" key={item.id}>
+            <div className="user-avatar" aria-hidden="true">{item.name.split(' ').map((part) => part[0]).slice(0, 2).join('')}</div>
+            <div className="user-admin-info"><div><strong>{item.name}</strong><span className={`status-pill ${item.active ? 'confirmed' : 'inactive'}`}>{item.active ? 'Active' : 'Disabled'}</span></div><span>{item.email}</span><small>{item.role} · {item.bookings} bookings · Joined {new Intl.DateTimeFormat('en-PH', { month: 'short', year: 'numeric' }).format(new Date(`${item.joined}T00:00:00`))}</small></div>
+            <div className="user-admin-actions"><button type="button" className="btn btn-secondary btn-small" onClick={() => openUserDetails(item)}><FiEye /> View</button><button type="button" className="btn btn-secondary btn-small" onClick={() => openUserEdit(item)}><FiEdit2 /> Edit</button><button type="button" className={`status-pill status-button ${item.active ? 'confirmed' : 'inactive'}`} onClick={() => toggleUser(item.id)}>{item.active ? 'Disable' : 'Enable'}</button><button type="button" className="user-delete-button" aria-label={`Delete ${item.name}`} onClick={() => setUserDialog({ type: 'delete', id: item.id })}><FiTrash2 /></button></div>
+          </article>)}</div>
+          {filteredUsers.length === 0 && <div className="admin-empty"><FiUsers /><strong>No users found</strong><span>Try another search.</span></div>}
+          <p className="admin-local-note">User changes are frontend-only and reset when the page is refreshed.</p>
+        </section>
+
+        <section className="admin-panel user-action-history">
+          <div className="admin-card-heading"><div><span className="home-section-eyebrow">ADMIN ACTIONS</span><h2>Action history</h2></div><FiShield /></div>
+          {userActionHistory.length === 0 ? <div className="history-empty">No user-management actions have been made in this session.</div> : <ol>{userActionHistory.map((entry) => <li key={entry.id}><span>{entry.description}</span><time>{entry.time}</time></li>)}</ol>}
+        </section>
+
+        {userDialog && dialogUser && <div className="user-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setUserDialog(null); }}>
+          <div className="user-modal" role="dialog" aria-modal="true" aria-labelledby="user-dialog-title">
+            <div className="admin-card-heading"><div><span className="home-section-eyebrow">{userDialog.type === 'delete' ? 'CONFIRM ACTION' : userDialog.type === 'edit' ? 'EDIT USER' : 'USER DETAILS'}</span><h2 id="user-dialog-title">{userDialog.type === 'delete' ? 'Delete user?' : dialogUser.name}</h2></div><button type="button" className="icon-button" aria-label="Close dialog" onClick={() => setUserDialog(null)}><FiX /></button></div>
+
+            {userDialog.type === 'view' && <div className="user-detail-content">
+              <div className="user-detail-identity"><div className="user-avatar large">{dialogUser.name.split(' ').map((part) => part[0]).slice(0, 2).join('')}</div><div><strong>{dialogUser.name}</strong><span>{dialogUser.role}</span></div></div>
+              <dl><div><dt>User ID</dt><dd>{dialogUser.id}</dd></div><div><dt>Email</dt><dd>{dialogUser.email}</dd></div><div><dt>Phone</dt><dd>{dialogUser.phone}</dd></div><div><dt>Status</dt><dd>{dialogUser.active ? 'Active' : 'Disabled'}</dd></div><div><dt>Total bookings</dt><dd>{dialogUser.bookings}</dd></div><div><dt>Joined</dt><dd>{new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium' }).format(new Date(`${dialogUser.joined}T00:00:00`))}</dd></div></dl>
+              <div className="user-modal-actions"><button type="button" className="btn btn-secondary btn-small" onClick={() => setUserDialog(null)}>Close</button><button type="button" className="btn btn-primary btn-small" onClick={() => openUserEdit(dialogUser)}><FiEdit2 /> Edit user</button></div>
+            </div>}
+
+            {userDialog.type === 'edit' && userDraft && <form className="user-edit-form" onSubmit={saveUser}>
+              <label>Full name<input required value={userDraft.name} onChange={(event) => setUserDraft({ ...userDraft, name: event.target.value })} /></label>
+              <label>Email address<input required type="email" value={userDraft.email} onChange={(event) => setUserDraft({ ...userDraft, email: event.target.value })} /></label>
+              <label>Phone number<input required value={userDraft.phone} onChange={(event) => setUserDraft({ ...userDraft, phone: event.target.value })} /></label>
+              <label>Role<select value={userDraft.role} onChange={(event) => setUserDraft({ ...userDraft, role: event.target.value })}><option>Customer</option><option>Staff</option><option>Admin</option></select></label>
+              <label>Account status<select value={userDraft.active ? 'active' : 'disabled'} onChange={(event) => setUserDraft({ ...userDraft, active: event.target.value === 'active' })}><option value="active">Active</option><option value="disabled">Disabled</option></select></label>
+              <div className="user-modal-actions"><button type="button" className="btn btn-secondary btn-small" onClick={() => setUserDialog(null)}>Cancel</button><button type="submit" className="btn btn-primary btn-small">Save changes</button></div>
+            </form>}
+
+            {userDialog.type === 'delete' && <div className="user-delete-confirmation"><div className="delete-warning-icon"><FiTrash2 /></div><p>This removes <strong>{dialogUser.name}</strong> from the preview user list. This action cannot be undone until the page is refreshed.</p><div className="user-modal-actions"><button type="button" className="btn btn-secondary btn-small" onClick={() => setUserDialog(null)}>Cancel</button><button type="button" className="btn btn-danger btn-small" onClick={() => deleteUser(dialogUser)}>Delete user</button></div></div>}
+          </div>
+        </div>}
+      </>}
     </div>
   );
 }
