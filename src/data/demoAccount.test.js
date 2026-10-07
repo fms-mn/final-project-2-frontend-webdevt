@@ -25,6 +25,13 @@ test('the preview account persists profile edits but keeps a fixed user identity
   assert.equal(getDemoUser().role, 'user');
   assert.equal(getDemoUser().id, 'demo-user');
 
+  assert.deepEqual(startDemoSession('admin'), {
+    id: 'demo-admin', name: 'Preview Admin', email: 'admin@filme.local',
+    phone: '', role: 'admin', isDemo: true,
+  });
+  assert.equal(getDemoUser().role, 'admin');
+  assert.equal(getDemoUser().id, 'demo-admin');
+
   endDemoSession();
   assert.equal(getDemoUser(), null);
   delete globalThis.localStorage;

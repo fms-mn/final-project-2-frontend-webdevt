@@ -7,6 +7,7 @@ import AdminRooms from '../components/admin/AdminRooms';
 import AdminShowings from '../components/admin/AdminShowings';
 import AdminUsers from '../components/admin/AdminUsers';
 import { describeError } from '../utils/adminTools';
+import { useAuth } from '../context/AuthContext';
 import '../admin.css';
 
 const TABS = [
@@ -15,6 +16,7 @@ const TABS = [
 ];
 
 export default function Admin() {
+  const { user } = useAuth();
   const [tab, setTab] = useState('overview');
   const [movies, setMovies] = useState([]);
   const [users, setUsers] = useState([]);
@@ -53,8 +55,9 @@ export default function Admin() {
         <div>
           <span className="home-section-eyebrow">FILME box office · back room</span>
           <h1>Admin dashboard</h1>
-          <p>Sales, the movie catalog, showings, bookings, rooms and accounts, all on live data.</p>
+          <p>{user?.isDemo ? 'Explore the complete dashboard with realistic preview data. Changes are disabled in demo mode.' : 'Sales, the movie catalog, showings, bookings, rooms and accounts, all on live data.'}</p>
         </div>
+        {user?.isDemo && <span className="admin-demo-badge">Demo preview</span>}
       </div>
       <div className="admin-tabs" role="tablist" aria-label="Admin sections">
         {TABS.map(([id, label]) => (
