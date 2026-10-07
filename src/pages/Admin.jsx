@@ -8,7 +8,7 @@ const STATUSES = ['draft', 'published', 'archived'];
 const RATINGS = ['G', 'PG', 'PG-13', 'R'];
 
 const blankMovie = {
-  title: '', synopsis: '', genre: '', rating: 'PG-13', posterUrl: '', duration: 120,
+  title: '', synopsis: '', genre: '', rating: 'PG-13', posterUrl: '', trailerUrl: '', duration: 120,
   releaseDate: new Date().toISOString().slice(0, 10), status: 'draft',
 };
 
@@ -19,6 +19,7 @@ const toDraft = (movie) => ({
   genre: movie.genre,
   rating: movie.rating,
   posterUrl: movie.posterUrl,
+  trailerUrl: movie.trailerUrl || '',
   duration: movie.duration,
   releaseDate: String(movie.releaseDate).slice(0, 10),
   status: movie.status,
@@ -174,6 +175,7 @@ export default function Admin() {
               </select>
             </label>
             <label>Poster URL<input required type="url" value={movieDraft.posterUrl} onChange={edit('posterUrl')} placeholder="https://..." /></label>
+            <label>Trailer link (optional)<input type="url" value={movieDraft.trailerUrl} onChange={edit('trailerUrl')} placeholder="https://www.youtube.com/watch?v=..." /></label>
             <label>Duration (minutes)<input required type="number" min="1" step="1" value={movieDraft.duration} onChange={edit('duration')} /></label>
             <label>Release date<input required type="date" value={movieDraft.releaseDate} onChange={edit('releaseDate')} /></label>
             <label>Status
@@ -181,7 +183,7 @@ export default function Admin() {
                 {STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
               </select>
             </label>
-            <p className="profile-help">Only published movies appear on the public website.</p>
+            <p className="profile-help">Only published movies appear on the public website. A YouTube trailer link plays by itself (muted) in the home page banner when this is the featured movie, the newest one that is now showing. Clear the box to remove it.</p>
             <div className="admin-actions">
               <button className="btn btn-primary btn-small" type="submit" disabled={busy} aria-busy={busyAction === 'save'}><ActionPending pending={busyAction === 'save'}>{busyAction === 'save' ? 'Saving...' : 'Save movie'}</ActionPending></button>
               {movieDraft._id && <button className="btn btn-secondary btn-small" type="button" onClick={() => setMovieDraft(blankMovie)}>Cancel edit</button>}
