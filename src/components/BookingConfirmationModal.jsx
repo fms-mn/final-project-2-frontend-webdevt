@@ -77,11 +77,11 @@ export default function BookingConfirmationModal({ draft, booking, pending, erro
   return createPortal(
     <div className="booking-modal-overlay confirmation-overlay">
       <section className="booking-modal confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="booking-modal-title" aria-describedby="booking-modal-reference" ref={dialogRef} tabIndex={-1}>
-        <header className="confirmation-modal-header">
-          <span className="booking-eyebrow">{booking ? 'Your ticket' : 'Final step'}</span>
+        <header className={`confirmation-modal-header ${booking ? 'is-confirmed' : ''}`}>
+          {booking ? <span className="confirmation-success-indicator" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M8 16.5 13.5 22 24 11" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg></span> : <span className="booking-eyebrow">Final step</span>}
           <button type="button" className="confirmation-close" aria-label={booking ? 'Close ticket' : 'Close confirmation'} onClick={onClose} disabled={pending}>×</button>
           <h2 id="booking-modal-title" ref={headingRef} tabIndex={-1}>{booking ? 'Booking confirmed' : 'Confirm your booking'}</h2>
-          <p id="booking-modal-reference" className="booking-modal-reference">{booking ? 'Show this code at the cinema. Your ticket is also in My tickets.' : 'Review your seats and total before confirming.'}</p>
+          <p id="booking-modal-reference" className="booking-modal-reference">{booking ? 'You’re all set! Your ticket is saved in My tickets. Show the code below at the cinema.' : 'Review your seats and total before confirming.'}</p>
         </header>
         <div className="confirmation-modal-content">
         <div className={`confirmation-ticket ${booking ? 'is-confirmed' : 'is-review'}`}>
