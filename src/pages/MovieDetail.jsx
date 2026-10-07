@@ -158,6 +158,14 @@ export default function MovieDetail() {
     });
   };
 
+  const cancelBooking = () => {
+    if (booking || bookingLocked.current || !reviewing || bookingSuccess) return;
+    setSelectedSeats([]);
+    setReviewing(false);
+    setBookingError('');
+    window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  };
+
   const handleBooking = async () => {
     if (!reviewing || bookingLocked.current || booking || bookingSuccess || showtimeUnavailable) return;
     if (!user || user.role !== 'user') {
@@ -433,15 +441,18 @@ export default function MovieDetail() {
                 <span className="label">Total</span>
                 <span className="value">₱{(selectedSeats.length * ticketPrice).toLocaleString('en-PH')}</span>
               </div>
-              <button
-                className="btn btn-primary"
-                style={{ width: '100%', justifyContent: 'center', marginTop: '1rem' }}
-                onClick={bookingSuccess ? () => { bookingLocked.current = false; setBookingSuccess(null); setSelectedSeats([]); setBookingError(''); } : reviewing ? handleBooking : reviewBooking}
-                disabled={booking || selectedSeats.length === 0 || showtimeUnavailable}
-                aria-busy={booking}
-              >
-                {booking ? 'Processing...' : bookingSuccess ? 'Book another showing' : reviewing ? `Confirm Booking · ₱${(selectedSeats.length * ticketPrice).toLocaleString('en-PH')}` : 'Continue to Confirmation'}
-              </button>
+              <div className={`booking-review-actions ${reviewing && !bookingSuccess ? 'has-cancel' : ''}`}>
+                {reviewing && !bookingSuccess && <button type="button" className="btn btn-secondary booking-cancel-action" onClick={cancelBooking} disabled={booking}>Cancel Booking</button>}
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={bookingSuccess ? () => { bookingLocked.current = false; setBookingSuccess(null); setSelectedSeats([]); setBookingError(''); } : reviewing ? handleBooking : reviewBooking}
+                  disabled={booking || selectedSeats.length === 0 || showtimeUnavailable}
+                  aria-busy={booking}
+                >
+                  {booking ? 'Processing...' : bookingSuccess ? 'Book another showing' : reviewing ? `Confirm Booking · ₱${(selectedSeats.length * ticketPrice).toLocaleString('en-PH')}` : 'Continue to Confirmation'}
+                </button>
+              </div>
               {bookingError && <p className="booking-submit-error" role="alert">{bookingError}</p>}
             </div>
           )}
@@ -451,15 +462,18 @@ export default function MovieDetail() {
       </div>
 
       {isBookable && !bookingSuccess && (
-        <div className="booking-mobile-bar" ref={mobileBarRef}>
+        <div className={`booking-mobile-bar ${reviewing ? 'is-reviewing' : ''}`} ref={mobileBarRef}>
           {bookingError && <p className="booking-mobile-error" role="alert">{bookingError}</p>}
           <div className="booking-mobile-total">
             <span>{reviewing ? 'Total' : `${selectedSeats.length} ${selectedSeats.length === 1 ? 'seat' : 'seats'} selected`}</span>
             <strong>₱{(selectedSeats.length * ticketPrice).toLocaleString('en-PH')}</strong>
           </div>
-          <button type="button" className="btn btn-primary" onClick={reviewing ? handleBooking : reviewBooking} disabled={selectedSeats.length === 0 || showtimeUnavailable || booking} aria-busy={booking}>
-            {booking ? 'Processing...' : reviewing ? 'Confirm Booking' : 'Continue to Confirmation'}
-          </button>
+          <div className="booking-mobile-actions">
+            {reviewing && <button type="button" className="btn btn-secondary booking-cancel-action" onClick={cancelBooking} disabled={booking}>Cancel Booking</button>}
+            <button type="button" className="btn btn-primary" onClick={reviewing ? handleBooking : reviewBooking} disabled={selectedSeats.length === 0 || showtimeUnavailable || booking} aria-busy={booking}>
+              {booking ? 'Processing...' : reviewing ? 'Confirm Booking' : 'Continue to Confirmation'}
+            </button>
+          </div>
         </div>
       )}
 
