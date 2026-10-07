@@ -4,9 +4,12 @@
     <meta charset="UTF-8" />
     <script>
       try {
-        document.documentElement.dataset.theme = localStorage.getItem('filme_theme') === 'light' ? 'light' : 'dark';
+        const saved = localStorage.getItem('filme_theme');
+        document.documentElement.dataset.theme = saved === 'light' || saved === 'dark'
+          ? saved
+          : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
       } catch {
-        document.documentElement.dataset.theme = 'dark';
+        document.documentElement.dataset.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
       }
     </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />

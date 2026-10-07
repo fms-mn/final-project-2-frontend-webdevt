@@ -36,10 +36,10 @@ export default function Login() {
     }
   };
 
-  const handleDemoLogin = () => {
+  const handleDemoLogin = (role) => {
     setError('');
     try {
-      goAfterLogin(loginAsDemo());
+      goAfterLogin(loginAsDemo(role));
     } catch (err) {
       setError(err.message || 'Demo sign-in failed');
     }
@@ -84,9 +84,12 @@ export default function Login() {
 
           {import.meta.env.DEV && (
             <div className="demo-login">
-              <p>Preview the user side without a database. Your profile and bookings stay in this browser.</p>
-              <button type="button" className="btn btn-secondary" onClick={handleDemoLogin} disabled={loading}>
+              <p>Preview either side of FILME without starting the database.</p>
+              <button type="button" className="btn btn-secondary" onClick={() => handleDemoLogin('user')} disabled={loading}>
                 Continue as Demo User
+              </button>
+              <button type="button" className="btn btn-secondary" onClick={() => handleDemoLogin('admin')} disabled={loading}>
+                View Demo Admin
               </button>
             </div>
           )}

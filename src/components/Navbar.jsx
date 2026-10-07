@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useState, useEffect } from 'react';
-import { FiMenu, FiX } from 'react-icons/fi';
+import { FiMenu, FiMoon, FiSun, FiX } from 'react-icons/fi';
 import ActionPending from './ActionPending';
 
 export default function Navbar() {
@@ -10,6 +10,28 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [theme, setTheme] = useState(() => document.documentElement.dataset.theme || 'light');
+
+  useEffect(() => {
+    const deviceTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    const followDevice = () => {
+      try {
+        if (localStorage.getItem('filme_theme') === 'light' || localStorage.getItem('filme_theme') === 'dark') return;
+      } catch { /* Device preference remains available when storage is blocked. */ }
+      const nextTheme = deviceTheme.matches ? 'dark' : 'light';
+      document.documentElement.dataset.theme = nextTheme;
+      setTheme(nextTheme);
+    };
+    deviceTheme.addEventListener('change', followDevice);
+    return () => deviceTheme.removeEventListener('change', followDevice);
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'light' ? 'dark' : 'light';
+    document.documentElement.dataset.theme = nextTheme;
+    setTheme(nextTheme);
+    try { localStorage.setItem('filme_theme', nextTheme); } catch { /* The current choice still applies. */ }
+  };
 
   const handleLogout = async () => {
     if (signingOut) return;
@@ -75,6 +97,9 @@ export default function Navbar() {
             Sign In
           </Link>
         )}
+        <button type="button" className="theme-toggle" onClick={toggleTheme} aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'} title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}>
+          {theme === 'light' ? <FiMoon aria-hidden="true" /> : <FiSun aria-hidden="true" />}
+        </button>
       </div>
       <button type="button" className="nav-menu-toggle" aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'} aria-expanded={menuOpen} aria-controls="primary-navigation" onClick={() => setMenuOpen((open) => !open)}>
         {menuOpen ? <FiX aria-hidden="true" /> : <FiMenu aria-hidden="true" />}

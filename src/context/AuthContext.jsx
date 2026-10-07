@@ -56,9 +56,9 @@ export function AuthProvider({ children }) {
     return newUser;
   };
 
-  const loginAsDemo = () => {
+  const loginAsDemo = (role = 'user') => {
     if (!import.meta.env.DEV) throw new Error('Demo sign-in is available in local development only');
-    const demoUser = startDemoSession();
+    const demoUser = startDemoSession(role);
     forgetSession();
     setUser(demoUser);
     setLoading(false);
