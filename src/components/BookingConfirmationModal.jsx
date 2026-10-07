@@ -39,27 +39,30 @@ export default function BookingConfirmationModal({ booking, onClose, onViewBooki
     };
   }, [onClose]);
 
-  const showDate = new Date(`${booking.showDate}T00:00:00`).toLocaleDateString('en-PH', {
-    weekday: 'short', month: 'long', day: 'numeric', year: 'numeric',
-  });
+  const when = booking.showtime?.startTime ? new Date(booking.showtime.startTime) : new Date(`${booking.showDate}T${booking.showTime}:00`);
+  const showDate = when.toLocaleDateString('en-PH', { weekday: 'short', day: 'numeric', month: 'short' });
+  const showTime = booking.showtime?.startTime ? when.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', hour12: false }) : booking.showTime;
+  const code = booking.bookingCode || getDemoBookingReference(booking);
+  const price = booking.totalAmount != null ? booking.totalAmount / 100 : booking.totalPrice;
+  const unitPrice = booking.unitPrice != null ? booking.unitPrice / 100 : price / booking.seats.length;
 
   return createPortal(
     <div className="booking-modal-overlay">
       <section className="booking-modal" role="dialog" aria-modal="true" aria-labelledby="booking-modal-title" aria-describedby="booking-modal-reference" ref={dialogRef}>
-        <span className="booking-modal-mark" aria-hidden="true">✓</span>
-        <span className="booking-eyebrow">04 Complete</span>
-        <h2 id="booking-modal-title">Booking Confirmed</h2>
-        <p id="booking-modal-reference" className="booking-modal-reference">Reference {getDemoBookingReference(booking)}</p>
-        <dl className="booking-modal-details">
-          <div><dt>Movie</dt><dd>{booking.movie.title}</dd></div>
-          <div><dt>Date</dt><dd>{showDate}</dd></div>
-          <div><dt>Showtime</dt><dd>{booking.showTime}</dd></div>
-          <div><dt>Seats</dt><dd>{booking.seats.join(', ')}</dd></div>
-          <div className="booking-modal-total"><dt>Total amount</dt><dd>₱{booking.totalPrice.toLocaleString('en-PH')}</dd></div>
-        </dl>
+        <span className="booking-eyebrow">Booking confirmed</span>
+        <h2 id="booking-modal-title">See you at {showTime}</h2>
+        <p id="booking-modal-reference" className="booking-modal-reference">Your seats are held. Show the code below at the cinema, or find this ticket any time in My tickets.</p>
+        <div className="confirmation-ticket">
+          <div className="confirmation-main">
+            <div className="confirmation-brand"><img src="/filme-mark.svg" alt="" /> FILME <span>ADMIT {booking.seats.length}</span></div>
+            <h3>{booking.movie?.title || 'Your film'}</h3>
+            <dl><div><dt>Date</dt><dd>{showDate}</dd></div><div><dt>Time</dt><dd>{showTime}</dd></div><div><dt>Room</dt><dd>{booking.auditorium?.name || 'Cinema'}</dd></div><div><dt>Seats</dt><dd>{booking.seats.join(' · ')}</dd></div></dl>
+          </div>
+          <div className="confirmation-stub"><small>Booking code</small><strong>{code}</strong><div className="ticket-bars" aria-hidden="true"/><div className="confirmation-price"><span>{booking.seats.length} × ₱{unitPrice.toLocaleString('en-PH')}</span><b>₱{price.toLocaleString('en-PH')}</b></div></div>
+        </div>
         <div className="booking-modal-actions">
-          <button type="button" className="btn btn-primary" onClick={onViewBookings} ref={viewButtonRef}>View My Bookings</button>
-          <button type="button" className="btn btn-secondary" onClick={onClose}>Close</button>
+          <button type="button" className="btn btn-dark" onClick={onViewBookings} ref={viewButtonRef}>Go to My tickets</button>
+          <button type="button" className="btn btn-secondary" onClick={onClose}>Book another film</button>
         </div>
       </section>
     </div>,

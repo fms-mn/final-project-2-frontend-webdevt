@@ -1,16 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useMovie } from '../hooks/useMovies';
 import { listAuditoriums, listShowtimes } from '../data/demoSchedule';
 import { createDemoBooking, getBookedSeats } from '../data/demoBookings';
 import BookingConfirmationModal from '../components/BookingConfirmationModal';
 
-const ROWS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+const ROWS = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
 const SEATS_PER_ROW = 10;
 
 function ChairShape({ label }) {
-  return <><span className="chair-backrest"><span className="chair-label">{label}</span></span><span className="chair-cushion" /></>;
+  return <><span className="chair-backrest" /><span className="chair-cushion" /><span className="chair-label">{label}</span></>;
 }
 
 export function toggleSeatSelection(selectedSeats, seatId, bookedSeats) {
@@ -49,11 +50,16 @@ function initialSelection(movieId) {
 export default function MovieDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
 
   const { movie, loading, notFound, error, reload, isDemo } = useMovie(id);
-  const [selectedDate, setSelectedDate] = useState(() => initialSelection(id).date);
-  const [selectedTime, setSelectedTime] = useState(() => initialSelection(id).time);
+  const previewBooking = isDemo || user?.id === 'demo-user';
+  const [selectedDate, setSelectedDate] = useState(() => searchParams.get('date') || initialSelection(id).date);
+  const [selectedTime, setSelectedTime] = useState(() => searchParams.get('time') || initialSelection(id).time);
+  const [selectedShowtimeId, setSelectedShowtimeId] = useState(() => searchParams.get('showtime') || '');
+  const [liveSlots, setLiveSlots] = useState([]);
+  const [liveSeats, setLiveSeats] = useState(null);
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [booking, setBooking] = useState(false);
   const bookingLocked = useRef(false);
@@ -66,16 +72,41 @@ export default function MovieDetail() {
   const reviewRef = useRef(null);
 
   const dates = getNextDays(7);
-  const showtimes = listShowtimes(id);
-  const selectedSlot = showtimes.find((slot) => slot.time === selectedTime);
-  const auditorium = listAuditoriums().find((item) => item.id === selectedSlot?.auditoriumId);
-  const bookedSeats = movie ? getBookedSeats(id, selectedDate, selectedTime) : [];
-  const seatCapacity = auditorium?.capacity ?? ROWS.length * SEATS_PER_ROW;
-  const visibleRows = ROWS.slice(0, Math.ceil(seatCapacity / SEATS_PER_ROW));
-  const aisleAfter = SEATS_PER_ROW >= 6 && SEATS_PER_ROW % 2 === 0 ? SEATS_PER_ROW / 2 - 1 : -1;
-  const showtimeUnavailable = !selectedSlot || new Date(`${selectedDate}T${selectedTime}:00`).getTime() <= Date.now();
+  const showtimes = previewBooking ? listShowtimes(id) : liveSlots;
+  const selectedSlot = showtimes.find((slot) => slot.id === selectedShowtimeId) || showtimes.find((slot) => slot.time === selectedTime);
+  const auditorium = previewBooking ? listAuditoriums().find((item) => item.id === selectedSlot?.auditoriumId) : liveSeats?.auditorium;
+  const bookedSeats = previewBooking ? (movie ? getBookedSeats(id, selectedDate, selectedTime) : []) : (liveSeats?.seats || []).filter(seat => seat.status === 'booked').map(seat => seat.label);
+  const seatsPerRow = auditorium?.seatsPerRow ?? SEATS_PER_ROW;
+  const seatCapacity = auditorium?.capacity ?? (auditorium?.rows && auditorium?.seatsPerRow ? auditorium.rows * auditorium.seatsPerRow : 8 * SEATS_PER_ROW);
+  const visibleRows = ROWS.slice(0, Math.ceil(seatCapacity / seatsPerRow));
+  const aisleAfter = seatsPerRow >= 6 && seatsPerRow % 2 === 0 ? seatsPerRow / 2 - 1 : -1;
+  const showtimeUnavailable = !selectedSlot || (previewBooking ? new Date(`${selectedDate}T${selectedTime}:00`).getTime() <= Date.now() : (!liveSeats || liveSeats.showtime?._id !== selectedSlot._id || new Date(selectedSlot.startTime).getTime() <= Date.now()));
+  const ticketPrice = previewBooking ? movie?.price || 0 : (selectedSlot?.ticketPrice || 0) / 100;
   const isBookable = movie?.status === 'now_showing' && user?.role !== 'admin';
   const isComingSoon = movie?.status === 'coming_soon';
+
+  useEffect(() => {
+    if (previewBooking || !movie) return;
+    const controller = new AbortController();
+    api(`/showtimes?movie=${encodeURIComponent(id)}&date=${selectedDate}`, { signal: controller.signal })
+      .then(slots => setLiveSlots(slots.map(slot => ({ ...slot, id: slot._id, time: new Date(slot.startTime).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', hour12: false }) }))))
+      .catch(error => { if (error.name !== 'AbortError') setBookingError(error.message); });
+    return () => controller.abort();
+  }, [id, selectedDate, previewBooking, movie]);
+
+  useEffect(() => {
+    if (!previewBooking && liveSlots.length && !liveSlots.some(slot => slot.time === selectedTime)) {
+      setSelectedTime(liveSlots[0].time);
+    }
+  }, [previewBooking, liveSlots, selectedTime]);
+
+  useEffect(() => {
+    if (previewBooking || !selectedSlot) { setLiveSeats(null); return; }
+    const controller = new AbortController();
+    api(`/showtimes/${selectedSlot._id}/seats`, { signal: controller.signal })
+      .then(setLiveSeats).catch(error => { if (error.name !== 'AbortError') setBookingError(error.message); });
+    return () => controller.abort();
+  }, [previewBooking, selectedSlot?._id]);
 
   useEffect(() => {
     const viewport = seatMapRef.current;
@@ -126,13 +157,14 @@ export default function MovieDetail() {
     setBookingError('');
     try {
       await new Promise((resolve) => setTimeout(resolve, 0));
-      const result = createDemoBooking({
+      const result = previewBooking ? createDemoBooking({
         userId: user.id,
         movie,
         seats: selectedSeats,
         showDate: selectedDate,
         showTime: selectedTime,
-      });
+      }) : await api('/bookings', { method: 'POST', body: { showtime: selectedSlot._id, seats: selectedSeats } });
+      if (!previewBooking) api(`/showtimes/${selectedSlot._id}/seats`).then(setLiveSeats).catch(() => {});
       setBookingSuccess(result);
       setConfirmationOpen(true);
     } catch (error) {
@@ -195,7 +227,9 @@ export default function MovieDetail() {
           </div>
           <div className="movie-detail-text">
             {isComingSoon && <span className="booking-eyebrow">Coming Soon</span>}
+            {isBookable && <span className="booking-eyebrow">Choose your seats</span>}
             <h1>{movie.title}</h1>
+            {isBookable && <p className="booking-mobile-context">{new Date(`${selectedDate}T00:00:00`).toLocaleDateString('en-PH',{weekday:'short',day:'numeric',month:'short'})} · {auditorium?.name || 'Cinema'}</p>}
             <div className="movie-detail-tags">
               {movie.genre.map((g) => (
                 <span key={g} className="tag">{g}</span>
@@ -224,7 +258,7 @@ export default function MovieDetail() {
               )}
               {!isComingSoon && <div className="stat">
                 <span className="stat-label">Price</span>
-                <span className="stat-value stat-price">₱{movie.price}</span>
+                <span className="stat-value stat-price">₱{ticketPrice}</span>
               </div>}
             </div>
           </div>
@@ -243,10 +277,6 @@ export default function MovieDetail() {
             </div>
             <span className="booking-price">₱{movie.price} <small>/ seat</small></span>
           </div>
-          <p className="booking-demo-note" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-            Demo booking: showtimes, prices and seats are placeholders saved in this browser only
-            until the booking system is connected.
-          </p>
 
           <div className="booking-schedule">
           <div>
@@ -262,7 +292,7 @@ export default function MovieDetail() {
                 <button
                   key={dateStr}
                   className={`date-btn ${selectedDate === dateStr ? 'active' : ''}`}
-                  onClick={() => { bookingLocked.current = false; setSelectedDate(dateStr); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); setReviewing(false); }}
+                  onClick={() => { bookingLocked.current = false; setSelectedDate(dateStr); setSelectedShowtimeId(''); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); setReviewing(false); }}
                   disabled={booking}
                 >
                   <span className="day-name">{dayNames[date.getDay()]}</span>
@@ -283,11 +313,11 @@ export default function MovieDetail() {
             {showtimes.map((slot) => (
               <button
                 key={slot.id}
-                className={`showtime-btn ${selectedTime === slot.time ? 'active' : ''}`}
-                onClick={() => { bookingLocked.current = false; setSelectedTime(slot.time); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); setReviewing(false); }}
-                disabled={booking || new Date(`${selectedDate}T${slot.time}:00`).getTime() <= Date.now()}
+                className={`showtime-btn ${selectedSlot?.id === slot.id ? 'active' : ''}`}
+                onClick={() => { bookingLocked.current = false; setSelectedTime(slot.time); setSelectedShowtimeId(slot.id); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); setReviewing(false); }}
+                disabled={booking || (previewBooking ? new Date(`${selectedDate}T${slot.time}:00`).getTime() <= Date.now() : new Date(slot.startTime).getTime() <= Date.now())}
               >
-                {slot.time} · {listAuditoriums().find((item) => item.id === slot.auditoriumId)?.name || 'Cinema'}
+                {slot.time}
               </button>
             ))}
           </div>
@@ -295,10 +325,6 @@ export default function MovieDetail() {
           </div>
 
           <div className="booking-seat-panel">
-          <div className="booking-seat-heading">
-            <div><span className="booking-eyebrow">{auditorium?.name || 'Cinema'}</span><h3>Select seats</h3></div>
-            <span>{selectedSeats.length} selected</span>
-          </div>
           <div className="screen-indicator">
             <div className="screen-line" aria-hidden="true" />
             <span className="screen-label">SCREEN</span>
@@ -307,7 +333,7 @@ export default function MovieDetail() {
             <div className="seat-map">
               <div className="seats-grid">
                 {visibleRows.map((row, rowIndex) => {
-                  const seatsInRow = Math.min(SEATS_PER_ROW, seatCapacity - rowIndex * SEATS_PER_ROW);
+                  const seatsInRow = Math.min(seatsPerRow, seatCapacity - rowIndex * seatsPerRow);
                   return (
                     <div key={row} className="seat-row">
                       <span className="seat-row-label">{row}</span>
@@ -327,7 +353,7 @@ export default function MovieDetail() {
                             aria-pressed={isSelected}
                             title={`Seat ${seatId}: ${status}`}
                           >
-                            <ChairShape label={seatId} />
+                            <ChairShape label={i + 1} />
                           </button>
                         );
                       })}
@@ -355,19 +381,26 @@ export default function MovieDetail() {
               <span>Booked</span>
             </div>
           </div>
+          <p className="seat-selection-summary" aria-live="polite">
+            Selected: {selectedSeats.length ? [...selectedSeats].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).join(', ') : 'None'}
+          </p>
           </div>
 
           {/* Booking Summary */}
-          {selectedSeats.length > 0 && selectedSlot && (
+          {selectedSlot && (
             <div className={`booking-summary ${reviewing ? 'is-reviewing' : ''}`} ref={reviewRef} tabIndex={-1}>
-              <h3>Booking Summary</h3>
+              <span className="booking-eyebrow">Your ticket</span><h3>{movie.title}</h3>
               <div className="summary-row">
                 <span className="label">Movie</span>
                 <span className="value">{movie.title}</span>
               </div>
               <div className="summary-row">
                 <span className="label">Date</span>
-                <span className="value">{selectedDate}</span>
+                <span className="value">{new Date(`${selectedDate}T00:00:00`).toLocaleDateString('en-PH',{weekday:'short',day:'numeric',month:'short'})}</span>
+              </div>
+              <div className="summary-row">
+                <span className="label">Room</span>
+                <span className="value">{auditorium?.name || 'Cinema'}</span>
               </div>
               <div className="summary-row">
                 <span className="label">Time</span>
@@ -379,20 +412,20 @@ export default function MovieDetail() {
               </div>
               <div className="summary-row">
                 <span className="label">Price per seat</span>
-                <span className="value">₱{movie.price}</span>
+                <span className="value">₱{ticketPrice}</span>
               </div>
               <div className="summary-row summary-total">
                 <span className="label">Total</span>
-                <span className="value">₱{selectedSeats.length * movie.price}</span>
+                <span className="value">₱{(selectedSeats.length * ticketPrice).toLocaleString('en-PH')}</span>
               </div>
               <button
                 className="btn btn-primary"
                 style={{ width: '100%', justifyContent: 'center', marginTop: '1rem' }}
-                onClick={bookingSuccess ? () => { bookingLocked.current = false; setBookingSuccess(null); setSelectedSeats([]); setBookingError(''); } : handleBooking}
-                disabled={booking}
+                onClick={bookingSuccess ? () => { bookingLocked.current = false; setBookingSuccess(null); setSelectedSeats([]); setBookingError(''); } : reviewing ? handleBooking : reviewBooking}
+                disabled={booking || selectedSeats.length === 0 || showtimeUnavailable}
                 aria-busy={booking}
               >
-                {booking ? 'Processing...' : bookingSuccess ? 'Book another showing' : `Confirm Booking · ₱${selectedSeats.length * movie.price}`}
+                {booking ? 'Processing...' : bookingSuccess ? 'Book another showing' : reviewing ? `Confirm booking · ₱${(selectedSeats.length * ticketPrice).toLocaleString('en-PH')}` : 'Review booking'}
               </button>
               {bookingError && <p className="booking-submit-error" role="alert">{bookingError}</p>}
             </div>
@@ -406,7 +439,7 @@ export default function MovieDetail() {
         <div className="booking-mobile-bar">
           <div className="booking-mobile-total">
             <span>{selectedSeats.length} {selectedSeats.length === 1 ? 'seat' : 'seats'} selected</span>
-            <strong>₱{(selectedSeats.length * movie.price).toLocaleString('en-PH')}</strong>
+            <strong>₱{(selectedSeats.length * ticketPrice).toLocaleString('en-PH')}</strong>
           </div>
           <button type="button" className="btn btn-primary" onClick={reviewBooking} disabled={selectedSeats.length === 0 || showtimeUnavailable || booking}>Review Booking</button>
         </div>

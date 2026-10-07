@@ -25,7 +25,7 @@ export default function MovieCard({ movie, showShowtimes = false }) {
           <span>{movie.rating}</span>
         </div>
         {isShowing ? (
-          <div className="movie-card-price">₱{movie.price} / ticket</div>
+          <div className="movie-card-price">Choose a showing →</div>
         ) : (
           <div className="movie-card-release">
             In cinemas {new Date(movie.releaseDate).toLocaleDateString('en-PH', {

@@ -1,7 +1,6 @@
 import { listAuditoriums, listShowtimes } from './demoSchedule.js';
 
-// DEMO ONLY: bookings are kept in this browser until the booking API is connected.
-// An Express API must enforce ownership, seat availability, and cancellation rules later.
+// Local preview bookings for the development demo account.
 const BOOKINGS_KEY = 'filme_demo_bookings';
 const SEAT_PATTERN = /^[A-H](10|[1-9])$/;
 
@@ -72,7 +71,7 @@ export function getDemoBookings(userId) {
 }
 
 export function getDemoBookingReference(booking) {
-  return `FM-${booking._id.replaceAll('-', '').slice(0, 12).toUpperCase()}`;
+  return `FLM-${booking._id.replaceAll('-', '').slice(0, 8).toUpperCase()}`;
 }
 
 export function isUpcomingDemoBooking(booking) {

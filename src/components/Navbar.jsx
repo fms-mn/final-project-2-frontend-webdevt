@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useState, useEffect } from 'react';
-import { FiMenu, FiMoon, FiSun, FiX } from 'react-icons/fi';
+import { FiMenu, FiX } from 'react-icons/fi';
 import ActionPending from './ActionPending';
 
 export default function Navbar() {
@@ -9,9 +9,6 @@ export default function Navbar() {
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [theme, setTheme] = useState(() =>
-    document.documentElement.dataset.theme === 'light' ? 'light' : 'dark'
-  );
   const [signingOut, setSigningOut] = useState(false);
 
   const handleLogout = async () => {
@@ -38,33 +35,20 @@ export default function Navbar() {
   }, [menuOpen]);
 
   const isActive = (path) => location.pathname === path;
-  const toggleTheme = () => {
-    const nextTheme = theme === 'dark' ? 'light' : 'dark';
-    document.documentElement.dataset.theme = nextTheme;
-    try {
-      localStorage.setItem('filme_theme', nextTheme);
-    } catch {
-      // The selected theme still applies for this session if storage is unavailable.
-    }
-    setTheme(nextTheme);
-  };
-
   return (
     <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
-      <Link to="/" className="nav-brand">
-        🎬 FILME
-      </Link>
+      <Link to="/" className="nav-brand" aria-label="FILME home"><img src="/filme-mark.svg" alt="" />FILME</Link>
 
       <div id="primary-navigation" className={`nav-links ${menuOpen ? 'is-open' : ''}`}>
         <Link to="/" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/') ? 'active' : ''}`}>
-          Home
+          Tonight
         </Link>
         <Link to="/movies" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/movies') ? 'active' : ''}`}>
-          Movies
+          All movies
         </Link>
         {user?.role === 'user' && (
           <>
-            <Link to="/my-bookings" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/my-bookings') ? 'active' : ''}`}>My Bookings</Link>
+            <Link to="/my-bookings" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/my-bookings') ? 'active' : ''}`}>My tickets</Link>
             <Link to="/profile" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/profile') ? 'active' : ''}`}>Profile</Link>
           </>
         )}
@@ -78,21 +62,12 @@ export default function Navbar() {
       </div>
 
       <div className="nav-user">
-        <button
-          type="button"
-          className="theme-toggle"
-          onClick={toggleTheme}
-          aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-        >
-          {theme === 'dark' ? <FiSun aria-hidden="true" /> : <FiMoon aria-hidden="true" />}
-          <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span>
-        </button>
         {loading ? null : user ? (
           <>
-            <span className="nav-user-name">Hi, {user.name}</span>
+            <span className="nav-user-name">{user.name}</span>
+            <span className="nav-avatar">{user.name.split(/\s+/).map(part => part[0]).slice(0,2).join('').toUpperCase()}</span>
             <button type="button" className="nav-logout" disabled={signingOut} aria-busy={signingOut} onClick={handleLogout}>
-              <ActionPending pending={signingOut}>{signingOut ? 'Signing out...' : 'Logout'}</ActionPending>
+              <ActionPending pending={signingOut}>{signingOut ? 'Signing out...' : 'Log out'}</ActionPending>
             </button>
           </>
         ) : (

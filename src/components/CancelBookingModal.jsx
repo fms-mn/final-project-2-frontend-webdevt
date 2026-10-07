@@ -48,7 +48,7 @@ export default function CancelBookingModal({ booking, error, onKeep, onCancel })
       <section className="booking-modal booking-cancel-modal" role="dialog" aria-modal="true" aria-labelledby="cancel-modal-title" aria-describedby="cancel-modal-explanation" ref={dialogRef}>
         <span className="booking-modal-mark booking-modal-mark-danger" aria-hidden="true">!</span>
         <h2 id="cancel-modal-title">Cancel this booking?</h2>
-        <p className="booking-modal-reference">Reference {getDemoBookingReference(booking)}</p>
+        <p className="booking-modal-reference">Reference {booking.bookingCode || getDemoBookingReference(booking)}</p>
         <dl className="booking-modal-details">
           <div><dt>Movie</dt><dd>{booking.movie?.title || 'Movie'}</dd></div>
           <div><dt>Showtime</dt><dd>{showtime}</dd></div>
