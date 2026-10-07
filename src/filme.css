@@ -1,4 +1,4 @@
-:root,:root[data-theme='light'],:root[data-theme='dark'] {
+:root,:root[data-theme='light'] {
   color-scheme: light;
   --bg-primary:#E8EBF4;--bg-secondary:#E8EBF4;--bg-card:#fff;--bg-card-hover:#f7f8fc;
   --bg-glass:#fff;--bg-glass-hover:#fff;--text-primary:#12163A;--text-secondary:#525d83;
@@ -7,9 +7,26 @@
   --shadow-sm:0 5px 18px #12163a0d;--shadow-md:0 12px 32px #12163a15;--shadow-lg:0 20px 45px #12163a20;
   --nav-bg:#E8EBF4;--nav-bg-scrolled:#E8EBF4;--surface-tint:#f2f3f9;--success-text:#0B7F58;
   --danger-text:#E94560;
+  --filme-ink:#12163A;--filme-ink-on:#fff;--filme-rule:#d3d8e8;
+  --filme-coral-fill:#E94560;
+  --filme-booked-stripe:#ced8ec;--filme-booked-base:#f8faff;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg-primary:#0b1027;--bg-secondary:#101733;--bg-card:#192242;--bg-card-hover:#222d52;
+  --bg-glass:#192242;--bg-glass-hover:#222d52;
+  --text-primary:#f4f5fc;--text-secondary:#bbc6e0;--text-muted:#a2aed0;
+  --accent-primary:#ff657d;--accent-secondary:#ff657d;--accent-gradient:#E94560;
+  --gold:#ffcf5d;--border-color:#465275;--border-glow:#a64b6b;
+  --shadow-sm:0 5px 18px #02061755;--shadow-md:0 12px 32px #02061770;--shadow-lg:0 20px 45px #02061790;
+  --nav-bg:#101733;--nav-bg-scrolled:#101733;--surface-tint:#263151;
+  --success-text:#74dfb5;--danger-text:#ff8294;
+  --filme-ink:#e3e9fa;--filme-ink-on:#101733;--filme-rule:#596585;
+  --filme-coral-fill:#c72b50;
+  --filme-booked-stripe:#667391;--filme-booked-base:#303b5b;
 }
 html {scroll-behavior:smooth}
-body {background:#E8EBF4;color:#12163A;font-family:'Instrument Sans Variable',sans-serif;line-height:1.45}
+body {background:var(--bg-primary);color:var(--text-primary);font-family:'Instrument Sans Variable',sans-serif;line-height:1.45}
 h1,h2,h3,h4,.btn,.nav-link {font-family:'Bricolage Grotesque Variable',sans-serif}
 h1,h2,h3 {letter-spacing:-.055em}
 button,input,select,textarea {font-family:'Instrument Sans Variable',sans-serif}
@@ -349,4 +366,76 @@ a {color:inherit}
   .booking-mobile-bar {padding:10px max(18px, env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left))}
   .bookings-page,.movies-page,.admin-page {padding:30px 18px}
   .footer-content {display:block}.footer-content p {margin-top:10px}
+}
+
+/* FILME surfaces share the theme palette; the navy ticket and coral stub keep their identity. */
+:root[data-theme='dark'] .navbar,:root[data-theme='dark'] .navbar.scrolled {background:var(--nav-bg);border-color:var(--border-color)}
+:root[data-theme='dark'] .nav-brand {color:var(--text-primary);-webkit-text-fill-color:var(--text-primary)}
+:root[data-theme='dark'] .nav-link,:root[data-theme='dark'] .nav-user-name {color:var(--text-secondary)}
+:root[data-theme='dark'] .nav-link:hover,:root[data-theme='dark'] .nav-link.active {color:var(--text-primary)}
+:root[data-theme='dark'] .nav-avatar {background:var(--bg-card-hover)}
+:root[data-theme='dark'] .nav-logout,:root[data-theme='dark'] .nav-btn,:root[data-theme='dark'] .nav-menu-toggle {border-color:var(--filme-ink);color:var(--filme-ink)}
+:root[data-theme='dark'] .nav-logout:hover,:root[data-theme='dark'] .nav-btn:hover {background:var(--filme-ink);color:var(--filme-ink-on)}
+:root[data-theme='dark'] .footer {border-color:var(--border-color);color:var(--text-secondary)}
+:root[data-theme='dark'] .footer-brand strong {color:var(--text-primary)}
+:root[data-theme='dark'] .eyebrow,:root[data-theme='dark'] .home-section-eyebrow,:root[data-theme='dark'] .booking-eyebrow {color:var(--text-muted)}
+:root[data-theme='dark'] .tonight-intro>p,:root[data-theme='dark'] .featured-caption p,:root[data-theme='dark'] .section-title p,:root[data-theme='dark'] .how-strip p {color:var(--text-secondary)}
+:root[data-theme='dark'] .hero-days button {border-color:var(--filme-ink);color:var(--text-primary)}
+:root[data-theme='dark'] .hero-days button.active {background:var(--filme-ink);color:var(--filme-ink-on)}
+:root[data-theme='dark'] .filmstrip-frame:before,:root[data-theme='dark'] .filmstrip-frame:after {background:repeating-linear-gradient(90deg,var(--bg-primary) 0 8px,transparent 8px 20px)}
+:root[data-theme='dark'] .calendar-card,:root[data-theme='dark'] .how-strip,:root[data-theme='dark'] .movie-card,:root[data-theme='dark'] .auth-card,:root[data-theme='dark'] .admin-panel,:root[data-theme='dark'] .booking-card,:root[data-theme='dark'] .admin-stat,:root[data-theme='dark'] .admin-row,:root[data-theme='dark'] .bookings-empty {background:var(--bg-card);border-color:var(--border-color)}
+:root[data-theme='dark'] .calendar-icon,:root[data-theme='dark'] .rating-pill {border-color:var(--border-color)}
+:root[data-theme='dark'] .calendar-copy small,:root[data-theme='dark'] .movies-page>p,:root[data-theme='dark'] .bookings-page>p,:root[data-theme='dark'] .admin-heading p,:root[data-theme='dark'] .auth-card .subtitle {color:var(--text-secondary)}
+:root[data-theme='dark'] .how-strip>div,:root[data-theme='dark'] .admin-tabs {border-color:var(--filme-rule)}
+:root[data-theme='dark'] .search-bar,:root[data-theme='dark'] .form-group input,:root[data-theme='dark'] .admin-form input,:root[data-theme='dark'] .admin-form select,:root[data-theme='dark'] .admin-form textarea {background:var(--bg-secondary);border-color:var(--border-color);color:var(--text-primary)}
+:root[data-theme='dark'] .search-bar::placeholder,:root[data-theme='dark'] .form-group input::placeholder,:root[data-theme='dark'] .admin-form input::placeholder,:root[data-theme='dark'] .admin-form textarea::placeholder {color:var(--text-muted)}
+:root[data-theme='dark'] .filter-btn,:root[data-theme='dark'] .btn-secondary {border-color:var(--filme-ink);color:var(--filme-ink)}
+:root[data-theme='dark'] .filter-btn:hover {background:var(--filme-ink);color:var(--filme-ink-on)}
+:root[data-theme='dark'] .filter-btn.active,:root[data-theme='dark'] .movie-card-badge {background:var(--bg-card-hover);color:var(--text-primary)}
+:root[data-theme='dark'] .btn-primary,:root[data-theme='dark'] .btn-primary:hover,:root[data-theme='dark'] .calendar-icon small,:root[data-theme='dark'] .wallet-upcoming .wallet-ticket:first-child .wallet-ticket-ribbon,:root[data-theme='dark'] .confirmation-stub,:root[data-theme='dark'] .booking-experience .booking-summary .btn-primary {background:var(--filme-coral-fill);color:#fff}
+:root[data-theme='dark'] .admin-tabs .filter-btn.active,:root[data-theme='dark'] .admin-stat strong {color:var(--text-primary)}
+:root[data-theme='dark'] .profile-email {background:var(--bg-secondary);color:var(--text-primary)}
+:root[data-theme='dark'] .booking-progress {color:var(--text-secondary)}
+:root[data-theme='dark'] .booking-progress .current {background:var(--filme-ink);color:var(--filme-ink-on)}
+:root[data-theme='dark'] .booking-experience .movie-detail-hero .tag {border-color:var(--filme-ink);color:var(--text-primary)}
+:root[data-theme='dark'] .booking-experience:not(.booking-active) .movie-detail-text p,:root[data-theme='dark'] .booking-experience .movie-detail-text .booking-mobile-context {color:var(--text-secondary)}
+:root[data-theme='dark'] .booking-schedule,:root[data-theme='dark'] .booking-summary,:root[data-theme='dark'] .booking-mobile-bar {background:var(--bg-card);border-color:var(--border-color)}
+:root[data-theme='dark'] .booking-experience .date-btn,:root[data-theme='dark'] .booking-experience .showtime-btn {background:var(--bg-secondary);border-color:var(--filme-ink);color:var(--text-primary)}
+:root[data-theme='dark'] .booking-experience .date-btn.active,:root[data-theme='dark'] .booking-experience .showtime-btn.active {background:var(--filme-ink);border-color:var(--filme-ink);color:var(--filme-ink-on)}
+:root[data-theme='dark'] .booking-summary::before,:root[data-theme='dark'] .booking-summary::after {background:var(--bg-primary)}
+:root[data-theme='dark'] .booking-summary .summary-row .label {color:var(--text-secondary)}
+:root[data-theme='dark'] .booking-summary .summary-row .value,:root[data-theme='dark'] .booking-summary .summary-total .value,:root[data-theme='dark'] .booking-mobile-total strong {color:var(--text-primary)}
+:root[data-theme='dark'] .booking-summary .summary-total {border-color:var(--filme-rule)}
+:root[data-theme='dark'] .booking-active .booking-seat-panel {background:var(--bg-card);border-color:var(--border-color);color:var(--text-primary)}
+:root[data-theme='dark'] .booking-active .screen-line {background:var(--filme-ink)}
+:root[data-theme='dark'] .booking-active .screen-label,:root[data-theme='dark'] .booking-active .seat-row-label,:root[data-theme='dark'] .booking-active .seat-legend-item {color:var(--text-secondary)}
+:root[data-theme='dark'] .booking-active .seat {--chair-fill:#293757;--chair-outline:#aebcda;color:#f5f7fc}
+:root[data-theme='dark'] .booking-active .seat.seat-selected {--chair-fill:var(--filme-coral-fill);--chair-outline:#ff9eaf;color:#fff}
+:root[data-theme='dark'] .booking-active .seat.seat-booked {--chair-fill:repeating-linear-gradient(135deg,var(--filme-booked-base) 0 4px,var(--filme-booked-stripe) 4px 7px);--chair-outline:#7785a5;color:#fff}
+:root[data-theme='dark'] .booking-active .seat-selection-summary {color:var(--text-primary)}
+:root[data-theme='dark'] .booking-card-footer,:root[data-theme='dark'] .wallet-ticket-bottom {border-color:var(--filme-rule)}
+:root[data-theme='dark'] .booking-total strong,:root[data-theme='dark'] .wallet-ticket-facts b {color:var(--text-primary)}
+:root[data-theme='dark'] .wallet-ticket {background:var(--bg-card)}
+:root[data-theme='dark'] .wallet-ticket::before,:root[data-theme='dark'] .wallet-ticket::after {background:var(--bg-primary)}
+:root[data-theme='dark'] .wallet-ticket-facts,:root[data-theme='dark'] .wallet-ticket-bottom small,:root[data-theme='dark'] .wallet-footnote {color:var(--text-secondary)}
+:root[data-theme='dark'] .wallet-ticket-history {background:var(--bg-secondary);color:var(--text-secondary)}
+:root[data-theme='dark'] .wallet-ticket-history .wallet-ticket-ribbon {color:var(--text-muted)}
+:root[data-theme='dark'] .booking-modal-overlay {background:var(--bg-primary)}
+:root[data-theme='dark'] .booking-modal-reference {color:var(--text-secondary)}
+:root[data-theme='dark'] .booking-modal .booking-eyebrow,:root[data-theme='dark'] .status-confirmed,:root[data-theme='dark'] .ticket-stamp:not(.cancelled) {color:var(--success-text);border-color:var(--success-text)}
+:root[data-theme='dark'] .booking-cancel-modal {background:var(--bg-card);border-color:var(--border-color)}
+:root[data-theme='dark'] .booking-cancel-modal .booking-modal-details {background:var(--bg-secondary);color:var(--text-primary)}
+:root[data-theme='dark'] .booking-cancel-modal .booking-modal-details dd {color:var(--text-primary)}
+:root[data-theme='dark'] .confirmation-stub::before,:root[data-theme='dark'] .confirmation-stub::after {background:var(--bg-primary)}
+:root[data-theme='dark'] .confirmation-modal .booking-modal-actions .btn-secondary {color:var(--text-secondary)}
+body,.navbar,.theme-toggle,.movie-card,.auth-card,.admin-panel,.admin-row,.booking-summary,.booking-mobile-bar,.booking-seat-panel,.wallet-ticket {transition:background-color .2s ease,border-color .2s ease,color .2s ease,transform .2s ease,box-shadow .2s ease}
+@media(max-width:800px) {
+  .nav-user {display:flex}
+  .nav-user>:not(.theme-toggle) {display:none}
+  .theme-toggle {width:44px;height:44px;padding:0}
+  .nav-menu-toggle {width:44px;height:44px}
+  :root[data-theme='dark'] .nav-links {background:var(--bg-card);border-color:var(--border-color)}
+}
+@media(prefers-reduced-motion:reduce) {
+  body,.navbar,.theme-toggle,.calendar-card,.seat {transition:none!important}
 }
