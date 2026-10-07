@@ -9,7 +9,7 @@ import MovieDetail from './pages/MovieDetail';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import MyBookings from './pages/MyBookings';
-import Admin from './pages/Admin';
+import Admin from './pages/AdminDashboard';
 import Profile from './pages/Profile';
 import './App.css';
 

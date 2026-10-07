@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import ActionPending from '../components/ActionPending';
 
 export default function Login() {
-  const { login, loginAsDemo } = useAuth();
+  const { login, loginAsDemo, loginAsDemoAdmin } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -45,6 +45,15 @@ export default function Login() {
     }
   };
 
+  const handleAdminPreview = () => {
+    setError('');
+    try {
+      goAfterLogin(loginAsDemoAdmin());
+    } catch (err) {
+      setError(err.message || 'Admin preview failed');
+    }
+  };
+
   return (
     <div className="auth-page fade-in">
       <div className="auth-container">
@@ -82,14 +91,15 @@ export default function Login() {
             </button>
           </form>
 
-          {import.meta.env.DEV && (
-            <div className="demo-login">
-              <p>Preview the user side without a database. Your profile and bookings stay in this browser.</p>
-              <button type="button" className="btn btn-secondary" onClick={handleDemoLogin} disabled={loading}>
-                Continue as Demo User
-              </button>
-            </div>
-          )}
+          <div className="demo-login">
+            <p>Preview the system without a database. Demo activity stays in this browser.</p>
+            <button type="button" className="btn btn-secondary" onClick={handleDemoLogin} disabled={loading}>
+              Continue as Demo User
+            </button>
+            <button type="button" className="btn btn-secondary" onClick={handleAdminPreview} disabled={loading}>
+              Preview Admin Dashboard
+            </button>
+          </div>
 
           <div className="auth-footer">
             Don&apos;t have an account? <Link to="/register">Sign up</Link>

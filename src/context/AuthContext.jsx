@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { api, forgetSession, UNAUTHORIZED_EVENT } from '../api';
-import { endDemoSession, getDemoUser, startDemoSession, updateDemoUser } from '../data/demoAccount';
+import { endDemoSession, getDemoUser, startDemoAdminSession, startDemoSession, updateDemoUser } from '../data/demoAccount';
 
 const AuthContext = createContext();
 
@@ -15,7 +15,7 @@ export function AuthProvider({ children }) {
 
   // On first load (and after a page refresh) ask the server whether the session cookie is valid.
   useEffect(() => {
-    const demoUser = import.meta.env.DEV && getDemoUser();
+    const demoUser = getDemoUser();
     if (demoUser) {
       setUser(demoUser);
       setLoading(false);
@@ -42,7 +42,7 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const data = await api('/auth/login', { method: 'POST', body: { email, password } });
-    if (import.meta.env.DEV) endDemoSession();
+    endDemoSession();
     const signedInUser = toUser(data.user);
     setUser(signedInUser);
     return signedInUser;
@@ -50,19 +50,26 @@ export function AuthProvider({ children }) {
 
   const register = async (name, email, password) => {
     const data = await api('/auth/register', { method: 'POST', body: { name, email, password } });
-    if (import.meta.env.DEV) endDemoSession();
+    endDemoSession();
     const newUser = toUser(data.user);
     setUser(newUser);
     return newUser;
   };
 
   const loginAsDemo = () => {
-    if (!import.meta.env.DEV) throw new Error('Demo sign-in is available in local development only');
     const demoUser = startDemoSession();
     forgetSession();
     setUser(demoUser);
     setLoading(false);
     return demoUser;
+  };
+
+  const loginAsDemoAdmin = () => {
+    const demoAdmin = startDemoAdminSession();
+    forgetSession();
+    setUser(demoAdmin);
+    setLoading(false);
+    return demoAdmin;
   };
 
   const logout = async () => {
@@ -95,7 +102,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, loginAsDemo, register, logout, updateProfile }}>
+    <AuthContext.Provider value={{ user, loading, login, loginAsDemo, loginAsDemoAdmin, register, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );
