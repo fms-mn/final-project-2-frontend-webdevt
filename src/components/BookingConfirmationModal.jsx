@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { getDemoBookingReference } from '../data/demoBookings';
 import { listAuditoriums } from '../data/demoSchedule';
@@ -8,6 +8,19 @@ export default function BookingConfirmationModal({ draft, booking, pending, erro
   const headingRef = useRef(null);
   const feedbackTimer = useRef(null);
   const [copyFeedback, setCopyFeedback] = useState('');
+  const [celebrationKey, setCelebrationKey] = useState(null);
+  const celebratedBookings = useRef(new Set());
+  const previousBookingKey = useRef(booking?._id || booking?.bookingCode || null);
+  const bookingKey = booking?._id || booking?.bookingCode || null;
+
+  useLayoutEffect(() => {
+    if (!bookingKey) setCelebrationKey(null);
+    if (bookingKey && bookingKey !== previousBookingKey.current && !celebratedBookings.current.has(bookingKey)) {
+      celebratedBookings.current.add(bookingKey);
+      setCelebrationKey(bookingKey);
+    }
+    previousBookingKey.current = bookingKey;
+  }, [bookingKey]);
 
   useEffect(() => {
     const previousFocus = document.activeElement;
@@ -78,13 +91,16 @@ export default function BookingConfirmationModal({ draft, booking, pending, erro
     <div className="booking-modal-overlay confirmation-overlay">
       <section className="booking-modal confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="booking-modal-title" aria-describedby="booking-modal-reference" ref={dialogRef} tabIndex={-1}>
         <header className={`confirmation-modal-header ${booking ? 'is-confirmed' : ''}`}>
-          {booking ? <span className="confirmation-success-indicator" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M8 16.5 13.5 22 24 11" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg></span> : <span className="booking-eyebrow">Final step</span>}
+          {booking ? <span className={`confirmation-success-indicator ${celebrationKey === bookingKey ? 'is-celebrating' : ''}`} aria-hidden="true">
+            <span className="confirmation-success-circle"><svg viewBox="0 0 48 48" fill="none"><path d="M11 24.5 20 33 37 15" stroke="currentColor" strokeWidth="5.5" strokeLinecap="round" strokeLinejoin="round" /></svg></span>
+            {celebrationKey === bookingKey && <span className="confirmation-confetti">{Array.from({ length: 8 }, (_, index) => <i key={index} />)}</span>}
+          </span> : <span className="booking-eyebrow">Final step</span>}
           <button type="button" className="confirmation-close" aria-label={booking ? 'Close ticket' : 'Close confirmation'} onClick={onClose} disabled={pending}>×</button>
-          <h2 id="booking-modal-title" ref={headingRef} tabIndex={-1}>{booking ? 'Booking confirmed' : 'Confirm your booking'}</h2>
-          <p id="booking-modal-reference" className="booking-modal-reference">{booking ? 'You’re all set! Your ticket is saved in My tickets. Show the code below at the cinema.' : 'Review your seats and total before confirming.'}</p>
+          <h2 id="booking-modal-title" ref={headingRef} tabIndex={-1}>{booking ? 'You’re booked! Enjoy the show.' : 'Confirm your booking'}</h2>
+          <p id="booking-modal-reference" className="booking-modal-reference">{booking ? 'Your booking is confirmed and saved in My tickets. Show the code below at the cinema.' : 'Review your seats and total before confirming.'}</p>
         </header>
         <div className="confirmation-modal-content">
-        <div className={`confirmation-ticket ${booking ? 'is-confirmed' : 'is-review'}`}>
+        <div className={`confirmation-ticket ${booking ? 'is-confirmed' : 'is-review'} ${booking && celebrationKey === bookingKey ? 'is-celebrating' : ''}`}>
           <div className="confirmation-main">
             <div className="confirmation-brand"><img src="/filme-mark.svg" alt="" /> FILME <span>ADMIT {seats.length}</span></div>
             <h3>{booking?.movie?.title || draft.movieTitle}</h3>
@@ -107,7 +123,7 @@ export default function BookingConfirmationModal({ draft, booking, pending, erro
         <footer className="booking-modal-actions confirmation-modal-actions">
           {!booking && error && <p className="confirmation-error" role="alert">{error}</p>}
           {booking ? <>
-            <button type="button" className="btn btn-dark" onClick={onViewBookings}>Go to My tickets</button>
+            <button type="button" className="btn btn-primary" onClick={onViewBookings}>Go to My tickets</button>
             <button type="button" className="btn btn-secondary" onClick={onClose}>Close</button>
           </> : <>
             <button type="button" className="btn btn-secondary" onClick={onClose} disabled={pending}>Back to seats</button>

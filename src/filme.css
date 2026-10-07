@@ -445,13 +445,31 @@ body,.navbar,.theme-toggle,.movie-card,.auth-card,.admin-panel,.admin-row,.booki
 .confirmation-overlay .confirmation-modal {display:flex;flex-direction:column;width:min(970px,calc(100vw - 32px));max-width:970px;max-height:calc(100dvh - 40px);min-height:0;margin:0;overflow:hidden;background:var(--bg-primary);border:1px solid var(--border-color);border-radius:20px;box-shadow:var(--shadow-lg);color:var(--text-primary)}
 .confirmation-modal-header {position:relative;flex:none;padding:24px 28px 0}
 .confirmation-modal-header .booking-eyebrow {color:var(--text-muted)}
-.confirmation-success-indicator {display:grid;place-items:center;width:46px;height:46px;margin:0 auto;border-radius:50%;background:#dff4e9;color:#0B7F58;animation:filme-success-appear .32s ease-out both}
-.confirmation-success-indicator svg {width:27px;height:27px}
-.confirmation-success-indicator path {stroke-dasharray:32;stroke-dashoffset:32;animation:filme-success-check .55s ease-out .12s forwards}
-@keyframes filme-success-appear {from {opacity:0;transform:scale(.84)} to {opacity:1;transform:scale(1)}}
+.confirmation-success-indicator {position:relative;display:grid;place-items:center;width:88px;height:88px;margin:0 auto;pointer-events:none}
+.confirmation-success-circle {display:grid;place-items:center;width:100%;height:100%;border-radius:50%;background:#0B7F58;color:#fff;box-shadow:0 8px 22px #0b7f5833}
+.confirmation-success-indicator svg {width:48px;height:48px}
+.confirmation-success-indicator path {stroke-dasharray:55;stroke-dashoffset:0}
+.confirmation-success-indicator.is-celebrating .confirmation-success-circle {animation:filme-success-pop .42s cubic-bezier(.2,1.4,.45,1) both}
+.confirmation-success-indicator.is-celebrating path {stroke-dashoffset:55;animation:filme-success-check .45s ease-out .14s forwards}
+.confirmation-confetti {position:absolute;inset:0;pointer-events:none}
+.confirmation-confetti i {position:absolute;top:47%;left:48%;width:7px;height:12px;border-radius:2px;background:#E94560;opacity:0;animation:filme-success-confetti .7s ease-out .08s both}
+.confirmation-confetti i:nth-child(2),.confirmation-confetti i:nth-child(5),.confirmation-confetti i:nth-child(8) {background:#FFC93C}
+.confirmation-confetti i:nth-child(3),.confirmation-confetti i:nth-child(6) {background:#0B7F58}
+.confirmation-confetti i:nth-child(1) {--confetti-x:-66px;--confetti-y:-35px;--confetti-rotation:-75deg}
+.confirmation-confetti i:nth-child(2) {--confetti-x:-37px;--confetti-y:-67px;--confetti-rotation:48deg}
+.confirmation-confetti i:nth-child(3) {--confetti-x:0px;--confetti-y:-77px;--confetti-rotation:90deg}
+.confirmation-confetti i:nth-child(4) {--confetti-x:44px;--confetti-y:-62px;--confetti-rotation:-55deg}
+.confirmation-confetti i:nth-child(5) {--confetti-x:67px;--confetti-y:-25px;--confetti-rotation:75deg}
+.confirmation-confetti i:nth-child(6) {--confetti-x:66px;--confetti-y:26px;--confetti-rotation:-40deg}
+.confirmation-confetti i:nth-child(7) {--confetti-x:-65px;--confetti-y:23px;--confetti-rotation:55deg}
+.confirmation-confetti i:nth-child(8) {--confetti-x:35px;--confetti-y:53px;--confetti-rotation:-80deg}
+@keyframes filme-success-pop {from {opacity:.65;transform:scale(.75)} to {opacity:1;transform:scale(1)}}
 @keyframes filme-success-check {to {stroke-dashoffset:0}}
+@keyframes filme-success-confetti {20% {opacity:1} to {opacity:0;transform:translate(var(--confetti-x),var(--confetti-y)) rotate(var(--confetti-rotation))}}
+.confirmation-ticket.is-celebrating {animation:filme-ticket-reveal .35s ease-out both}
+@keyframes filme-ticket-reveal {from {opacity:.65} to {opacity:1}}
 .confirmation-modal-header h2 {margin:8px 42px 8px;font-size:clamp(32px,4vw,56px);line-height:1.05}
-.confirmation-modal-header.is-confirmed h2 {margin-top:6px}
+.confirmation-modal-header.is-confirmed h2 {margin-top:10px}
 .confirmation-modal-header h2:focus {outline:none}
 .confirmation-modal-header .booking-modal-reference {max-width:none;margin:0 0 18px;color:var(--text-secondary);font-size:15px;line-height:1.4}
 .confirmation-close {position:absolute;top:17px;right:20px;display:grid;place-items:center;width:40px;height:40px;border:1px solid var(--border-color);border-radius:50%;background:var(--bg-card);color:var(--text-primary);font-size:27px;line-height:1}
@@ -474,8 +492,10 @@ body,.navbar,.theme-toggle,.movie-card,.auth-card,.admin-panel,.admin-row,.booki
   .confirmation-overlay {padding:calc(10px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom))}
   .confirmation-overlay .confirmation-modal {width:min(480px,calc(100vw - 20px));max-height:calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom));margin:0;overflow:hidden}
   .confirmation-modal-header {padding:18px 14px 0}
-  .confirmation-success-indicator {width:36px;height:36px}
-  .confirmation-success-indicator svg {width:22px;height:22px}
+  .confirmation-success-indicator {width:64px;height:64px}
+  .confirmation-success-indicator svg {width:38px;height:38px}
+  .confirmation-confetti i {animation-name:filme-success-confetti-mobile}
+  @keyframes filme-success-confetti-mobile {20% {opacity:1} to {opacity:0;transform:translate(calc(var(--confetti-x) * .72),calc(var(--confetti-y) * .72)) rotate(var(--confetti-rotation))}}
   .confirmation-modal-header h2 {margin:6px 38px 6px;font-size:clamp(27px,8vw,36px)}
   .confirmation-modal-header .booking-modal-reference {margin:0 0 12px;font-size:13px}
   .confirmation-close {top:12px;right:12px;width:36px;height:36px;font-size:24px}
@@ -488,6 +508,7 @@ body,.navbar,.theme-toggle,.movie-card,.auth-card,.admin-panel,.admin-row,.booki
   .confirmation-modal .confirmation-modal-actions .btn-secondary {border:1px solid var(--filme-ink);color:var(--filme-ink)}
 }
 @media(prefers-reduced-motion:reduce) {
-  .confirmation-success-indicator,.confirmation-success-indicator path {animation:none}
-  .confirmation-success-indicator path {stroke-dashoffset:0}
+  .confirmation-success-indicator.is-celebrating .confirmation-success-circle,.confirmation-success-indicator.is-celebrating path,.confirmation-confetti i,.confirmation-ticket.is-celebrating {animation:none}
+  .confirmation-confetti {display:none}
+  .confirmation-success-indicator.is-celebrating path {stroke-dashoffset:0}
 }
