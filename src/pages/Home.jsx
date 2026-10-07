@@ -1,125 +1,57 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import MovieCard from '../components/MovieCard';
-import HeroTrailer from '../components/HeroTrailer';
+import { api } from '../api';
+import { listAuditoriums, listShowtimes } from '../data/demoSchedule';
+import { getBookedSeats } from '../data/demoBookings';
 import { useMovies } from '../hooks/useMovies';
+import HeroTrailer from '../components/HeroTrailer';
+
+const dateKey = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const timeLabel = value => new Date(value).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', hour12: false });
+function Clock({ value }) { return <span className="board-time">{value.split('').map((part, i) => part === ':' ? <em key={i}>:</em> : <b key={i}>{part}</b>)}</span>; }
 
 export default function Home() {
   const { movies, loading, error, reload, isDemo } = useMovies();
-  const nowShowing = movies.filter((movie) => movie.status === 'now_showing');
-  const comingSoon = movies.filter((movie) => movie.status === 'coming_soon');
-  const featuredMovie = nowShowing[0] || comingSoon[0];
-
-  return (
-    <div className="fade-in">
-      {isDemo && <p className="demo-catalog-notice">Preview catalog · Sample movies are shown while the database is unavailable.</p>}
-      <section className="hero">
-        {featuredMovie && (
-          <img
-            className="hero-backdrop"
-            src={featuredMovie.backdropUrl || featuredMovie.posterUrl}
-            alt=""
-          />
-        )}
-        {featuredMovie?.trailerId && <HeroTrailer key={featuredMovie.trailerId} videoId={featuredMovie.trailerId} />}
-        <div className="hero-content">
-          <span className="hero-badge">
-            {featuredMovie?.status === 'now_showing' ? 'Now showing at FILME' : 'Your next movie night starts here'}
-          </span>
-          <h1>{featuredMovie ? featuredMovie.title : 'Find your next movie at FILME'}</h1>
-          {featuredMovie ? (
-            <>
-              <div className="hero-meta">
-                <span>{featuredMovie.genre?.slice(0, 2).join(' · ')}</span>
-                <span>{featuredMovie.duration} min</span>
-                <span>{featuredMovie.rating}</span>
-              </div>
-              <p>{featuredMovie.description}</p>
-            </>
-          ) : (
-            <p>Explore what is playing now and see what is coming to the big screen next.</p>
-          )}
-          <div className="hero-buttons">
-            {featuredMovie && (
-              <Link to={`/movie/${featuredMovie._id}`} className="btn btn-primary">
-                View Movie Details
-              </Link>
-            )}
-            <Link to="/movies" className="btn btn-secondary">Browse All Movies</Link>
-          </div>
-        </div>
-      </section>
-
-      <section className="section home-movie-section" aria-labelledby="now-showing-title">
-            <div className="home-section-header">
-              <div>
-                <span className="home-section-eyebrow">On the big screen</span>
-                <h2 id="now-showing-title">Now Showing</h2>
-                <p>Choose a movie, pick your seats, and make tonight yours.</p>
-              </div>
-              <Link to="/movies?status=now_showing" className="home-section-link">View all movies →</Link>
-            </div>
-            {loading ? (
-              <div className="loading"><div className="spinner" /></div>
-            ) : error ? (
-              <div className="empty-state">
-                <h3>We couldn&apos;t load the movies</h3>
-                <p>{error}</p>
-                <button type="button" className="btn btn-primary" onClick={reload}>Try again</button>
-              </div>
-            ) : nowShowing.length > 0 ? (
-              <div className="movies-grid">
-                {nowShowing.slice(0, 4).map((movie) => (
-                  <MovieCard key={movie._id} movie={movie} showShowtimes />
-                ))}
-              </div>
-            ) : (
-              <p className="home-empty">No movies are showing right now. Check back soon.</p>
-            )}
-      </section>
-
-      <section className="section home-movie-section home-coming-soon" aria-labelledby="coming-soon-title">
-            <div className="home-section-header">
-              <div>
-                <span className="home-section-eyebrow">Worth the wait</span>
-                <h2 id="coming-soon-title">Coming Soon</h2>
-                <p>See what is headed to FILME next.</p>
-              </div>
-              <Link to="/movies?status=coming_soon" className="home-section-link">Explore upcoming →</Link>
-            </div>
-            {loading || error ? null : comingSoon.length > 0 ? (
-              <div className="movies-grid">
-                {comingSoon.slice(0, 4).map((movie) => (
-                  <MovieCard key={movie._id} movie={movie} />
-                ))}
-              </div>
-            ) : (
-              <p className="home-empty">Upcoming movies will appear here soon.</p>
-            )}
-      </section>
-
-      <section className="section">
-        <div className="section-header">
-          <h2>Why FILME?</h2>
-          <p>Your premium movie booking destination</p>
-        </div>
-        <div className="features-grid">
-          <div className="feature-card">
-            <div className="feature-icon">🎯</div>
-            <h3>Pick Your Seats</h3>
-            <p>Choose the perfect spot with our interactive seat map.</p>
-          </div>
-          <div className="feature-card">
-            <div className="feature-icon">⚡</div>
-            <h3>Instant Booking</h3>
-            <p>Book your tickets in seconds with a simple checkout.</p>
-          </div>
-          <div className="feature-card">
-            <div className="feature-icon">🎬</div>
-            <h3>More to Discover</h3>
-            <p>Find your next favorite movie, from current hits to upcoming releases.</p>
-          </div>
-        </div>
-      </section>
-    </div>
-  );
+  const [dayIndex, setDayIndex] = useState(0);
+  const [live, setLive] = useState([]);
+  const days = Array.from({ length: 5 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() + i); return d; });
+  const day = days[dayIndex], date = dateKey(day);
+  const showing = movies.filter(m => m.status === 'now_showing');
+  const coming = movies.filter(m => m.status === 'coming_soon');
+  const featured = showing[0];
+  useEffect(() => {
+    let active = true;
+    api(`/showtimes?date=${date}&limit=200`).then(rows => { if (active) setLive(rows); }).catch(() => { if (active) setLive([]); });
+    return () => { active = false; };
+  }, [date]);
+  const rows = live.length ? live.map(s => ({
+    id: s._id, movie: movies.find(m => m._id === (s.movie?._id || s.movie)),
+    time: timeLabel(s.startTime), room: s.auditorium?.name || 'Cinema',
+    seats: s.remainingSeats ?? 0, status: s.remainingSeats > 0 && s.remainingSeats <= 10 ? 'FEW SEATS' : 'OPEN',
+  })).filter(s => s.movie) : isDemo ? showing.flatMap(m => listShowtimes(m._id).map(s => ({
+    id: s.id, movie: m, time: s.time, room: listAuditoriums().find(room => room.id === s.auditoriumId)?.name || 'Cinema',
+    seats: 80 - getBookedSeats(m._id, date, s.time).length,
+    status: new Date(`${date}T${s.time}:00`) <= new Date() ? 'STARTED' : 'OPEN',
+  }))).sort((a,b) => a.time.localeCompare(b.time)) : [];
+  return <div className="tonight-page fade-in">
+    {isDemo && <p className="demo-catalog-notice">Preview catalog · Sample movies are shown while the database is unavailable.</p>}
+    <section className="tonight-hero">
+      <div className="tonight-intro">
+        <span className="eyebrow">{day.toLocaleDateString('en-PH',{weekday:'long',day:'numeric',month:'long'})} · {rows.filter(r => r.status !== 'STARTED' && r.seats).length} showings open</span>
+        <h1>Tonight at<br/>FILME</h1>
+        <p>Pick a film, choose your own seats, and keep the ticket. Everything on today's board can be booked in a minute.</p>
+        <div className="hero-days">{days.map((d,i) => <button type="button" key={dateKey(d)} className={dayIndex === i ? 'active' : ''} aria-pressed={dayIndex === i} onClick={() => setDayIndex(i)}><span>{d.toLocaleDateString('en-PH',{weekday:'short'})}</span><strong>{d.getDate()}</strong></button>)}</div>
+        <a href="#todays-board" className="btn btn-dark">See today's board ↓</a>
+      </div>
+      <div className="featured-film">
+        <div className="filmstrip-frame"><div className="filmstrip-art">{featured?.trailerId && <HeroTrailer key={featured.trailerId} videoId={featured.trailerId}/>}<span className="trailer-chip">● Trailer · muted</span>{!featured?.trailerId && <span className="sound-chip" aria-hidden="true">◀×</span>}</div></div>
+        <div className="featured-caption"><div><span className="eyebrow">On our screen now</span><h2>{featured?.title || 'Your next film'}</h2><p>{featured ? `${featured.genre.join(' · ')} · ${featured.duration} min · ${featured.rating}` : 'Discover what is on at FILME'}</p></div>{featured && <Link className="btn btn-primary" to={`/movie/${featured._id}`}>Book {featured.title}</Link>}</div>
+      </div>
+    </section>
+    <section className="board-section" id="todays-board"><div className="section-title"><div><span className="eyebrow">Today's board</span><h2>Showing {dayIndex === 0 ? 'today' : day.toLocaleDateString('en-PH',{weekday:'long'})}</h2></div><p>All times are Manila time. Seats left update as people book.</p></div>
+      {loading ? <div className="loading"><div className="spinner"/></div> : error ? <div className="empty-state"><p>{error}</p><button className="btn btn-primary" onClick={reload}>Try again</button></div> : rows.length ? <div className="departure-board"><div className="board-head"><span>Time</span><span>Film</span><span>Room</span><span>Seats left</span><span>Status</span><span/></div>{rows.map(r => <div className="board-row" key={r.id}><Clock value={r.time}/><strong>{r.movie.title}</strong><span>{r.room}</span><span className="seat-digits">{String(r.seats).padStart(2,'0').split('').map((v,i)=><b key={i}>{v}</b>)}</span><span className={`board-status ${r.status === 'FEW SEATS' ? 'few' : r.status === 'OPEN' && r.seats ? 'open' : 'closed'}`}>{r.status === 'OPEN' && !r.seats ? 'SOLD OUT' : r.status}</span>{r.status !== 'STARTED' && r.seats ? <Link className="btn btn-primary btn-small" to={`/movie/${r.movie._id}?date=${date}&time=${r.time}&showtime=${r.id}`}>Book</Link> : <span/>}</div>)}</div> : <div className="empty-state">No showings are scheduled for this day. <Link to="/movies">Browse all movies</Link></div>}
+    </section>
+    <section className="opening-section"><div className="section-title"><div><span className="eyebrow">Mark your calendar</span><h2>Opening soon</h2></div></div><div className="opening-grid">{coming.length ? coming.map(m => { const d = new Date(m.releaseDate); return <Link className="calendar-card" to={`/movie/${m._id}`} key={m._id}><span className="calendar-icon"><small>{d.toLocaleDateString('en-PH',{month:'short'})}</small><strong>{d.getDate()}</strong></span><span className="calendar-copy"><strong>{m.title}</strong><small>{m.genre.join(' · ')} · {m.duration} min</small></span><span className="rating-pill">{m.rating}</span></Link>; }) : <p>More films are on their way.</p>}</div></section>
+    <section className="how-strip"><div><small>Step 1</small><h3>Pick a showing</h3><p>Find your film on the board and see how many seats are left.</p></div><div><small>Step 2</small><h3>Choose your seats</h3><p>The seat chart shows what is free, taken and yours.</p></div><div><small>Step 3</small><h3>Show your code</h3><p>Your ticket is kept in My tickets.</p></div></section>
+  </div>;
 }

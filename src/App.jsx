@@ -12,6 +12,10 @@ import MyBookings from './pages/MyBookings';
 import Admin from './pages/Admin';
 import Profile from './pages/Profile';
 import './App.css';
+import '@fontsource-variable/bricolage-grotesque/wght.css';
+import '@fontsource-variable/instrument-sans/wght.css';
+import '@fontsource-variable/jetbrains-mono/wght.css';
+import './filme.css';
 
 function App() {
   return (
@@ -35,21 +39,7 @@ function App() {
             </Routes>
           </main>
           <BackToTop />
-          <footer className="footer">
-            <div className="footer-content">
-              <div className="footer-brand">
-                <h3>🎬 FILME</h3>
-                <p>Your premium movie experience</p>
-              </div>
-              <div className="footer-links">
-                <a href="/movies">Movies</a>
-                <a href="#">About</a>
-                <a href="#">Contact</a>
-                <a href="#">Terms</a>
-              </div>
-              <p className="footer-copy">&copy; 2026 FILME. All rights reserved.</p>
-            </div>
-          </footer>
+          <footer className="footer"><div className="footer-content"><div className="footer-brand"><img src="/filme-mark.svg" alt="" /><strong>FILME</strong></div><p>Pick a film, choose your seats, show your code at the door.</p></div></footer>
         </div>
       </Router>
     </AuthProvider>
