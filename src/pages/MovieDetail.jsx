@@ -425,7 +425,7 @@ export default function MovieDetail() {
                 disabled={booking || selectedSeats.length === 0 || showtimeUnavailable}
                 aria-busy={booking}
               >
-                {booking ? 'Processing...' : bookingSuccess ? 'Book another showing' : reviewing ? `Confirm booking · ₱${(selectedSeats.length * ticketPrice).toLocaleString('en-PH')}` : 'Review booking'}
+                {booking ? 'Processing...' : bookingSuccess ? 'Book another showing' : reviewing ? `Confirm Booking · ₱${(selectedSeats.length * ticketPrice).toLocaleString('en-PH')}` : 'Continue to Confirmation'}
               </button>
               {bookingError && <p className="booking-submit-error" role="alert">{bookingError}</p>}
             </div>
@@ -441,7 +441,7 @@ export default function MovieDetail() {
             <span>{selectedSeats.length} {selectedSeats.length === 1 ? 'seat' : 'seats'} selected</span>
             <strong>₱{(selectedSeats.length * ticketPrice).toLocaleString('en-PH')}</strong>
           </div>
-          <button type="button" className="btn btn-primary" onClick={reviewBooking} disabled={selectedSeats.length === 0 || showtimeUnavailable || booking}>Review Booking</button>
+          <button type="button" className="btn btn-primary" onClick={reviewBooking} disabled={selectedSeats.length === 0 || showtimeUnavailable || booking}>Continue to Confirmation</button>
         </div>
       )}
 

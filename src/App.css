@@ -2260,7 +2260,7 @@ input, select {
   .booking-mobile-total { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
   .booking-mobile-total span { color: var(--text-secondary); font-size: .75rem; }
   .booking-mobile-total strong { color: var(--gold); font-size: 1.15rem; }
-  .booking-mobile-bar .btn { min-height: 44px; flex: none; padding: .65rem .9rem; white-space: nowrap; }
+  .booking-mobile-bar .btn { min-height: 44px; min-width: 0; max-width: 65%; flex: 0 1 auto; justify-content: center; padding: .65rem .75rem; line-height: 1.15; text-align: center; white-space: normal; }
   .booking-mobile-bar .btn:disabled { opacity: .55; cursor: not-allowed; }
 }
 @media (max-width: 800px) {
