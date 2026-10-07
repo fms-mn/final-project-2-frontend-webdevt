@@ -439,3 +439,43 @@ body,.navbar,.theme-toggle,.movie-card,.auth-card,.admin-panel,.admin-row,.booki
 @media(prefers-reduced-motion:reduce) {
   body,.navbar,.theme-toggle,.calendar-card,.seat {transition:none!important}
 }
+
+.confirmation-overlay {display:grid;place-items:center;overflow:hidden;padding:20px;background:rgba(18,22,58,.72);backdrop-filter:blur(5px)}
+:root[data-theme='dark'] .confirmation-overlay {background:rgba(2,5,20,.82)}
+.confirmation-overlay .confirmation-modal {display:flex;flex-direction:column;width:min(970px,calc(100vw - 32px));max-width:970px;max-height:calc(100dvh - 40px);min-height:0;margin:0;overflow:hidden;background:var(--bg-primary);border:1px solid var(--border-color);border-radius:20px;box-shadow:var(--shadow-lg);color:var(--text-primary)}
+.confirmation-modal-header {position:relative;flex:none;padding:24px 28px 0}
+.confirmation-modal-header .booking-eyebrow {color:var(--text-muted)}
+.confirmation-modal-header h2 {margin:8px 42px 8px;font-size:clamp(32px,4vw,56px);line-height:1.05}
+.confirmation-modal-header h2:focus {outline:none}
+.confirmation-modal-header .booking-modal-reference {max-width:none;margin:0 0 18px;color:var(--text-secondary);font-size:15px;line-height:1.4}
+.confirmation-close {position:absolute;top:17px;right:20px;display:grid;place-items:center;width:40px;height:40px;border:1px solid var(--border-color);border-radius:50%;background:var(--bg-card);color:var(--text-primary);font-size:27px;line-height:1}
+.confirmation-close:hover {background:var(--bg-card-hover)}
+.confirmation-close:disabled {opacity:.55;cursor:not-allowed}
+.confirmation-close:focus-visible {outline:3px solid var(--chair-focus);outline-offset:2px}
+.confirmation-modal-content {min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:0 28px 20px}
+.confirmation-modal-content .confirmation-ticket {min-height:0}
+.confirmation-modal-content .confirmation-main,.confirmation-modal-content .confirmation-stub {min-width:0}
+.confirmation-modal-content .confirmation-main h3,.confirmation-modal-content .confirmation-main dd {overflow-wrap:anywhere}
+.confirmation-review-stub {gap:16px}
+.confirmation-review-stub .confirmation-review-unit {font:600 16px 'Instrument Sans Variable';color:#fff}
+.confirmation-review-stub .confirmation-price {margin-top:auto}
+.confirmation-review-stub .confirmation-price span {font-size:13px}
+.confirmation-modal .confirmation-modal-actions {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;flex:none;margin:0;padding:16px 28px 24px;border-top:1px solid var(--border-color);background:var(--bg-primary)}
+.confirmation-modal-actions .btn {width:100%;min-width:0;min-height:46px;justify-content:center;padding:.7rem 1rem;white-space:normal}
+.confirmation-modal-actions .btn:disabled {opacity:.55;cursor:not-allowed}
+.confirmation-error {grid-column:1/-1;padding:10px 12px;border:1px solid var(--danger-text);border-radius:8px;background:var(--bg-card);color:var(--danger-text);font-size:14px;text-align:left;overflow-wrap:anywhere}
+@media(max-width:800px) {
+  .confirmation-overlay {padding:calc(10px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom))}
+  .confirmation-overlay .confirmation-modal {width:min(480px,calc(100vw - 20px));max-height:calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom));margin:0;overflow:hidden}
+  .confirmation-modal-header {padding:18px 14px 0}
+  .confirmation-modal-header h2 {margin:6px 38px 6px;font-size:clamp(27px,8vw,36px)}
+  .confirmation-modal-header .booking-modal-reference {margin:0 0 12px;font-size:13px}
+  .confirmation-close {top:12px;right:12px;width:36px;height:36px;font-size:24px}
+  .confirmation-modal-content {padding:0 14px 12px}
+  .confirmation-review-stub {gap:5px}
+  .confirmation-review-stub .confirmation-review-unit {grid-column:1/-1;font-size:14px}
+  .confirmation-review-stub .confirmation-price {grid-column:1/-1;margin-top:8px}
+  .confirmation-modal .confirmation-modal-actions {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:12px 14px calc(12px + env(safe-area-inset-bottom))}
+  .confirmation-modal-actions .btn {width:100%;min-height:44px;padding:.6rem .4rem;font-size:13px;line-height:1.2}
+  .confirmation-modal .confirmation-modal-actions .btn-secondary {border:1px solid var(--filme-ink);color:var(--filme-ink)}
+}

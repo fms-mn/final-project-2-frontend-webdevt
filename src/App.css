@@ -2098,10 +2098,11 @@ input, select {
 .booking-experience .booking-summary .btn-primary { background: var(--accent-gradient); color: #fff; box-shadow: var(--accent-glow); font-weight: 800; }
 .booking-submit-error { margin-top: .75rem; color: var(--danger-text); font-size: .85rem; }
 .booking-review-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: .6rem; margin-top: 1rem; }
-.booking-review-actions.has-cancel { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .booking-review-actions .btn { min-width: 0; min-height: 44px; width: 100%; justify-content: center; padding: .7rem .45rem; line-height: 1.2; text-align: center; white-space: normal; }
 .booking-review-actions .btn:focus-visible,
 .booking-mobile-actions .btn:focus-visible { outline: 3px solid var(--chair-focus); outline-offset: 2px; }
+.booking-active.modal-open .booking-summary .booking-review-actions,
+.booking-active.modal-open .booking-mobile-bar { display: none; }
 .booking-modal-overlay {
   position: fixed;
   inset: 0;
@@ -2247,7 +2248,7 @@ input, select {
   .booking-active .seat-map { padding-inline: .25rem; }
   .booking-active .seat { flex-basis: 2.8rem; width: 2.8rem; height: 3rem; }
   .booking-active .seat-scroll-hint { display: block; margin: -.5rem 0 1.25rem; color: var(--text-secondary); font-size: .8rem; text-align: center; }
-  .booking-active .booking-summary:not(.is-reviewing) { display: none; }
+  .booking-active .booking-summary { display: none; }
   .booking-active .booking-summary { scroll-margin-top: 88px; }
   .booking-mobile-bar {
     position: fixed;
@@ -2270,13 +2271,6 @@ input, select {
   .booking-mobile-bar .btn { min-height: 44px; min-width: 0; width: 100%; justify-content: center; padding: .65rem .75rem; line-height: 1.15; text-align: center; white-space: normal; }
   .booking-mobile-bar .btn:disabled { opacity: .55; cursor: not-allowed; }
   .booking-mobile-actions { min-width: 0; }
-  .booking-mobile-bar.is-reviewing { grid-template-columns: minmax(0, 1fr); gap: .5rem; }
-  .booking-mobile-bar.is-reviewing .booking-mobile-total { flex-direction: row; align-items: baseline; justify-content: space-between; gap: 1rem; }
-  .booking-mobile-bar.is-reviewing .booking-mobile-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
-  .booking-mobile-bar.is-reviewing .btn { padding-inline: .4rem; font-size: .85rem; }
-  .booking-active .booking-summary .booking-review-actions,
-  .booking-active .booking-summary .summary-total,
-  .booking-active .booking-summary .booking-submit-error { display: none; }
 }
 @media (max-width: 800px) {
   .coming-soon-detail .movie-detail-info {

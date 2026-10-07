@@ -66,12 +66,11 @@ export default function MovieDetail() {
   const [bookingError, setBookingError] = useState('');
   const [bookingSuccess, setBookingSuccess] = useState(null);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
-  const [reviewing, setReviewing] = useState(false);
   const [mobileBarHeight, setMobileBarHeight] = useState(128);
   const [seatMapScrollable, setSeatMapScrollable] = useState(false);
   const seatMapRef = useRef(null);
   const mobileBarRef = useRef(null);
-  const reviewRef = useRef(null);
+  const pageHeadingRef = useRef(null);
 
   const dates = getNextDays(7);
   const showtimes = previewBooking ? listShowtimes(id) : liveSlots;
@@ -137,7 +136,6 @@ export default function MovieDetail() {
   const toggleSeat = (seatId) => {
     if (booking || showtimeUnavailable || bookedSeats.includes(seatId)) return;
     setBookingError('');
-    setReviewing(false);
     if (bookingSuccess) {
       bookingLocked.current = false;
       setBookingSuccess(null);
@@ -147,27 +145,20 @@ export default function MovieDetail() {
     }
   };
 
-  const closeConfirmation = useCallback(() => setConfirmationOpen(false), []);
+  const closeConfirmation = useCallback(() => {
+    if (bookingLocked.current) return;
+    setConfirmationOpen(false);
+    setBookingError('');
+  }, []);
 
   const reviewBooking = () => {
     if (selectedSeats.length === 0 || showtimeUnavailable || booking || bookingSuccess) return;
-    setReviewing(true);
-    requestAnimationFrame(() => {
-      reviewRef.current?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
-      reviewRef.current?.focus({ preventScroll: true });
-    });
-  };
-
-  const cancelBooking = () => {
-    if (booking || bookingLocked.current || !reviewing || bookingSuccess) return;
-    setSelectedSeats([]);
-    setReviewing(false);
     setBookingError('');
-    window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    setConfirmationOpen(true);
   };
 
   const handleBooking = async () => {
-    if (!reviewing || bookingLocked.current || booking || bookingSuccess || showtimeUnavailable) return;
+    if (!confirmationOpen || bookingLocked.current || booking || bookingSuccess || showtimeUnavailable) return;
     if (!user || user.role !== 'user') {
       navigate(user?.role === 'admin' ? '/admin' : '/login', { state: { from: { pathname: `/movie/${id}`, search: '', hash: '' } } });
       return;
@@ -188,8 +179,8 @@ export default function MovieDetail() {
         showTime: selectedTime,
       }) : await api('/bookings', { method: 'POST', body: { showtime: selectedSlot._id, seats: selectedSeats } });
       if (!previewBooking) api(`/showtimes/${selectedSlot._id}/seats`).then(setLiveSeats).catch(() => {});
+      bookingLocked.current = false;
       setBookingSuccess(result);
-      setConfirmationOpen(true);
     } catch (error) {
       bookingLocked.current = false;
       setBookingError(error.message || 'Booking failed');
@@ -227,15 +218,15 @@ export default function MovieDetail() {
   }
 
   return (
-    <div className={`movie-detail booking-experience fade-in ${isComingSoon ? 'coming-soon-detail' : ''} ${isBookable ? 'booking-active' : ''}`} style={{ '--booking-mobile-bar-height': `${mobileBarHeight}px` }}>
+    <div className={`movie-detail booking-experience fade-in ${isComingSoon ? 'coming-soon-detail' : ''} ${isBookable ? 'booking-active' : ''} ${confirmationOpen ? 'modal-open' : ''}`} style={{ '--booking-mobile-bar-height': `${mobileBarHeight}px` }}>
       {isDemo && <p className="demo-catalog-notice">Preview catalog · This is a sample movie.</p>}
       {isBookable && (
         <nav className="booking-progress" aria-label="Booking progress">
-          <span className="booking-progress-mobile" aria-current="step">Step {confirmationOpen ? 4 : reviewing ? 3 : 2} of 4 · {confirmationOpen ? 'Complete' : reviewing ? 'Review booking' : 'Choose seats'}</span>
+          <span className="booking-progress-mobile" aria-current="step">Step {confirmationOpen ? bookingSuccess ? 4 : 3 : 2} of 4 · {confirmationOpen ? bookingSuccess ? 'Complete' : 'Review booking' : 'Choose seats'}</span>
           <Link to="/movies"><span>01</span> Choose a movie</Link>
-          <span className={confirmationOpen || reviewing ? '' : 'current'} aria-current={confirmationOpen || reviewing ? undefined : 'step'}><span>02</span> Choose seats</span>
-          <span className={reviewing && !confirmationOpen ? 'current' : ''} aria-current={reviewing && !confirmationOpen ? 'step' : undefined}><span>03</span> Review booking</span>
-          <span className={confirmationOpen ? 'current' : ''} aria-current={confirmationOpen ? 'step' : undefined}><span>04</span> Complete</span>
+          <span className={confirmationOpen ? '' : 'current'} aria-current={confirmationOpen ? undefined : 'step'}><span>02</span> Choose seats</span>
+          <span className={confirmationOpen && !bookingSuccess ? 'current' : ''} aria-current={confirmationOpen && !bookingSuccess ? 'step' : undefined}><span>03</span> Review booking</span>
+          <span className={confirmationOpen && bookingSuccess ? 'current' : ''} aria-current={confirmationOpen && bookingSuccess ? 'step' : undefined}><span>04</span> Complete</span>
         </nav>
       )}
       <div className={`booking-layout ${isBookable ? '' : 'booking-layout-single'}`}>
@@ -251,7 +242,7 @@ export default function MovieDetail() {
           <div className="movie-detail-text">
             {isComingSoon && <span className="booking-eyebrow">Coming Soon</span>}
             {isBookable && <span className="booking-eyebrow">Choose your seats</span>}
-            <h1>{movie.title}</h1>
+            <h1 ref={pageHeadingRef} tabIndex={-1}>{movie.title}</h1>
             {isBookable && <p className="booking-mobile-context">{new Date(`${selectedDate}T00:00:00`).toLocaleDateString('en-PH',{weekday:'short',day:'numeric',month:'short'})} · {auditorium?.name || 'Cinema'}</p>}
             <div className="movie-detail-tags">
               {movie.genre.map((g) => (
@@ -315,7 +306,7 @@ export default function MovieDetail() {
                 <button
                   key={dateStr}
                   className={`date-btn ${selectedDate === dateStr ? 'active' : ''}`}
-                  onClick={() => { bookingLocked.current = false; setSelectedDate(dateStr); setSelectedShowtimeId(''); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); setReviewing(false); }}
+                  onClick={() => { bookingLocked.current = false; setSelectedDate(dateStr); setSelectedShowtimeId(''); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); }}
                   disabled={booking}
                 >
                   <span className="day-name">{dayNames[date.getDay()]}</span>
@@ -337,7 +328,7 @@ export default function MovieDetail() {
               <button
                 key={slot.id}
                 className={`showtime-btn ${selectedSlot?.id === slot.id ? 'active' : ''}`}
-                onClick={() => { bookingLocked.current = false; setSelectedTime(slot.time); setSelectedShowtimeId(slot.id); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); setReviewing(false); }}
+                onClick={() => { bookingLocked.current = false; setSelectedTime(slot.time); setSelectedShowtimeId(slot.id); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); }}
                 disabled={booking || (previewBooking ? new Date(`${selectedDate}T${slot.time}:00`).getTime() <= Date.now() : new Date(slot.startTime).getTime() <= Date.now())}
               >
                 {slot.time}
@@ -411,7 +402,7 @@ export default function MovieDetail() {
 
           {/* Booking Summary */}
           {selectedSlot && (
-            <div className={`booking-summary ${reviewing ? 'is-reviewing' : ''}`} ref={reviewRef} tabIndex={-1}>
+            <div className="booking-summary">
               <span className="booking-eyebrow">Your ticket</span><h3>{movie.title}</h3>
               <div className="summary-row">
                 <span className="label">Movie</span>
@@ -441,16 +432,15 @@ export default function MovieDetail() {
                 <span className="label">Total</span>
                 <span className="value">₱{(selectedSeats.length * ticketPrice).toLocaleString('en-PH')}</span>
               </div>
-              <div className={`booking-review-actions ${reviewing && !bookingSuccess ? 'has-cancel' : ''}`}>
-                {reviewing && !bookingSuccess && <button type="button" className="btn btn-secondary booking-cancel-action" onClick={cancelBooking} disabled={booking}>Cancel Booking</button>}
+              <div className="booking-review-actions">
                 <button
                   type="button"
                   className="btn btn-primary"
-                  onClick={bookingSuccess ? () => { bookingLocked.current = false; setBookingSuccess(null); setSelectedSeats([]); setBookingError(''); } : reviewing ? handleBooking : reviewBooking}
+                  onClick={bookingSuccess ? () => { bookingLocked.current = false; setBookingSuccess(null); setSelectedSeats([]); setBookingError(''); } : reviewBooking}
                   disabled={booking || selectedSeats.length === 0 || showtimeUnavailable}
                   aria-busy={booking}
                 >
-                  {booking ? 'Processing...' : bookingSuccess ? 'Book another showing' : reviewing ? `Confirm Booking · ₱${(selectedSeats.length * ticketPrice).toLocaleString('en-PH')}` : 'Continue to Confirmation'}
+                  {bookingSuccess ? 'Book another showing' : 'Continue to Confirmation'}
                 </button>
               </div>
               {bookingError && <p className="booking-submit-error" role="alert">{bookingError}</p>}
@@ -462,16 +452,15 @@ export default function MovieDetail() {
       </div>
 
       {isBookable && !bookingSuccess && (
-        <div className={`booking-mobile-bar ${reviewing ? 'is-reviewing' : ''}`} ref={mobileBarRef}>
+        <div className="booking-mobile-bar" ref={mobileBarRef}>
           {bookingError && <p className="booking-mobile-error" role="alert">{bookingError}</p>}
           <div className="booking-mobile-total">
-            <span>{reviewing ? 'Total' : `${selectedSeats.length} ${selectedSeats.length === 1 ? 'seat' : 'seats'} selected`}</span>
+            <span>{selectedSeats.length} {selectedSeats.length === 1 ? 'seat' : 'seats'} selected</span>
             <strong>₱{(selectedSeats.length * ticketPrice).toLocaleString('en-PH')}</strong>
           </div>
           <div className="booking-mobile-actions">
-            {reviewing && <button type="button" className="btn btn-secondary booking-cancel-action" onClick={cancelBooking} disabled={booking}>Cancel Booking</button>}
-            <button type="button" className="btn btn-primary" onClick={reviewing ? handleBooking : reviewBooking} disabled={selectedSeats.length === 0 || showtimeUnavailable || booking} aria-busy={booking}>
-              {booking ? 'Processing...' : reviewing ? 'Confirm Booking' : 'Continue to Confirmation'}
+            <button type="button" className="btn btn-primary" onClick={reviewBooking} disabled={selectedSeats.length === 0 || showtimeUnavailable || booking}>
+              Continue to Confirmation
             </button>
           </div>
         </div>
@@ -490,11 +479,16 @@ export default function MovieDetail() {
           </div>
         </div>
       )}
-      {confirmationOpen && bookingSuccess && (
+      {confirmationOpen && (
         <BookingConfirmationModal
+          draft={{ movieTitle: movie.title, showDate: selectedDate, showTime: selectedTime, auditoriumName: auditorium?.name || 'Cinema', seats: selectedSeats, unitPrice: ticketPrice, totalPrice: selectedSeats.length * ticketPrice }}
           booking={bookingSuccess}
+          pending={booking}
+          error={bookingError}
+          onConfirm={handleBooking}
           onClose={closeConfirmation}
           onViewBookings={() => navigate('/my-bookings')}
+          returnFocusRef={pageHeadingRef}
         />
       )}
     </div>
