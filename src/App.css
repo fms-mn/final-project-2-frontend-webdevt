@@ -2202,8 +2202,9 @@ input, select {
   .booking-schedule { grid-template-columns: 1fr; gap: 1rem; }
   .booking-progress { overflow-x: auto; }
 }
-@media (max-width: 768px) {
+@media (max-width: 800px) {
   .booking-experience { margin-block: 0 2rem; border-radius: 0; padding: 1.2rem; }
+  .app:has(.booking-active .booking-mobile-bar) > .back-to-top { display: none; }
   .booking-layout { display: block; }
   .booking-film-panel { margin-bottom: 1.5rem; }
   .booking-experience .movie-detail-info { display: flex; align-items: stretch; gap: 0; text-align: left; }
@@ -2218,7 +2219,7 @@ input, select {
   .booking-progress { min-height: 0; margin-bottom: 1rem; padding: 0 0 .85rem; overflow: visible; font-size: .9rem; letter-spacing: 0; text-transform: none; }
   .booking-progress > :not(.booking-progress-mobile) { display: none; }
   .booking-progress > .booking-progress-mobile { display: block; color: var(--text-primary); font-weight: 700; }
-  .booking-active { padding-bottom: calc(8rem + env(safe-area-inset-bottom)); }
+  .booking-experience.booking-active { padding-bottom: calc(var(--booking-mobile-bar-height) + 1.5rem); }
   .booking-active .booking-film-panel { margin-bottom: 1.25rem; }
   .booking-active .movie-detail-info { flex-direction: row; }
   .booking-active .movie-detail-poster { flex: 0 0 76px; width: 76px; aspect-ratio: 2 / 3; border-radius: 6px 0 0 6px; }
@@ -2248,9 +2249,9 @@ input, select {
     inset-inline: 0;
     bottom: 0;
     z-index: 950;
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, min(65%, 230px));
     align-items: center;
-    justify-content: space-between;
     gap: .75rem;
     padding: .75rem max(.9rem, env(safe-area-inset-right)) calc(.75rem + env(safe-area-inset-bottom)) max(.9rem, env(safe-area-inset-left));
     border-top: 1px solid var(--border-color);
@@ -2260,8 +2261,12 @@ input, select {
   .booking-mobile-total { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
   .booking-mobile-total span { color: var(--text-secondary); font-size: .75rem; }
   .booking-mobile-total strong { color: var(--gold); font-size: 1.15rem; }
-  .booking-mobile-bar .btn { min-height: 44px; min-width: 0; max-width: 65%; flex: 0 1 auto; justify-content: center; padding: .65rem .75rem; line-height: 1.15; text-align: center; white-space: normal; }
+  .booking-mobile-error { grid-column: 1 / -1; margin: 0; color: var(--danger-text); font-size: .82rem; line-height: 1.35; overflow-wrap: anywhere; }
+  .booking-mobile-bar .btn { min-height: 44px; min-width: 0; width: 100%; justify-content: center; padding: .65rem .75rem; line-height: 1.15; text-align: center; white-space: normal; }
   .booking-mobile-bar .btn:disabled { opacity: .55; cursor: not-allowed; }
+  .booking-active .booking-summary > .btn-primary,
+  .booking-active .booking-summary .summary-total,
+  .booking-active .booking-summary .booking-submit-error { display: none; }
 }
 @media (max-width: 800px) {
   .coming-soon-detail .movie-detail-info {

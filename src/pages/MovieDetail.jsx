@@ -67,8 +67,10 @@ export default function MovieDetail() {
   const [bookingSuccess, setBookingSuccess] = useState(null);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [reviewing, setReviewing] = useState(false);
+  const [mobileBarHeight, setMobileBarHeight] = useState(128);
   const [seatMapScrollable, setSeatMapScrollable] = useState(false);
   const seatMapRef = useRef(null);
+  const mobileBarRef = useRef(null);
   const reviewRef = useRef(null);
 
   const dates = getNextDays(7);
@@ -119,6 +121,19 @@ export default function MovieDetail() {
     return () => observer.disconnect();
   }, [movie, isBookable]);
 
+  useEffect(() => {
+    const bar = mobileBarRef.current;
+    if (!bar) {
+      setMobileBarHeight(0);
+      return;
+    }
+    const update = () => setMobileBarHeight(Math.ceil(bar.getBoundingClientRect().height));
+    const observer = new ResizeObserver(update);
+    observer.observe(bar);
+    update();
+    return () => observer.disconnect();
+  }, [isBookable, bookingSuccess]);
+
   const toggleSeat = (seatId) => {
     if (booking || showtimeUnavailable || bookedSeats.includes(seatId)) return;
     setBookingError('');
@@ -135,7 +150,7 @@ export default function MovieDetail() {
   const closeConfirmation = useCallback(() => setConfirmationOpen(false), []);
 
   const reviewBooking = () => {
-    if (selectedSeats.length === 0 || showtimeUnavailable) return;
+    if (selectedSeats.length === 0 || showtimeUnavailable || booking || bookingSuccess) return;
     setReviewing(true);
     requestAnimationFrame(() => {
       reviewRef.current?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
@@ -144,7 +159,7 @@ export default function MovieDetail() {
   };
 
   const handleBooking = async () => {
-    if (bookingLocked.current || bookingSuccess) return;
+    if (!reviewing || bookingLocked.current || booking || bookingSuccess || showtimeUnavailable) return;
     if (!user || user.role !== 'user') {
       navigate(user?.role === 'admin' ? '/admin' : '/login', { state: { from: { pathname: `/movie/${id}`, search: '', hash: '' } } });
       return;
@@ -204,7 +219,7 @@ export default function MovieDetail() {
   }
 
   return (
-    <div className={`movie-detail booking-experience fade-in ${isComingSoon ? 'coming-soon-detail' : ''} ${isBookable ? 'booking-active' : ''}`}>
+    <div className={`movie-detail booking-experience fade-in ${isComingSoon ? 'coming-soon-detail' : ''} ${isBookable ? 'booking-active' : ''}`} style={{ '--booking-mobile-bar-height': `${mobileBarHeight}px` }}>
       {isDemo && <p className="demo-catalog-notice">Preview catalog · This is a sample movie.</p>}
       {isBookable && (
         <nav className="booking-progress" aria-label="Booking progress">
@@ -435,13 +450,16 @@ export default function MovieDetail() {
       </div>
       </div>
 
-      {isBookable && (
-        <div className="booking-mobile-bar">
+      {isBookable && !bookingSuccess && (
+        <div className="booking-mobile-bar" ref={mobileBarRef}>
+          {bookingError && <p className="booking-mobile-error" role="alert">{bookingError}</p>}
           <div className="booking-mobile-total">
-            <span>{selectedSeats.length} {selectedSeats.length === 1 ? 'seat' : 'seats'} selected</span>
+            <span>{reviewing ? 'Total' : `${selectedSeats.length} ${selectedSeats.length === 1 ? 'seat' : 'seats'} selected`}</span>
             <strong>₱{(selectedSeats.length * ticketPrice).toLocaleString('en-PH')}</strong>
           </div>
-          <button type="button" className="btn btn-primary" onClick={reviewBooking} disabled={selectedSeats.length === 0 || showtimeUnavailable || booking}>Continue to Confirmation</button>
+          <button type="button" className="btn btn-primary" onClick={reviewing ? handleBooking : reviewBooking} disabled={selectedSeats.length === 0 || showtimeUnavailable || booking} aria-busy={booking}>
+            {booking ? 'Processing...' : reviewing ? 'Confirm Booking' : 'Continue to Confirmation'}
+          </button>
         </div>
       )}
 

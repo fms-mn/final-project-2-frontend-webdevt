@@ -275,7 +275,7 @@ a {color:inherit}
   .how-strip {grid-template-columns:1fr}.how-strip>div {border-right:0;border-bottom:1px dashed #d3d8e8}
   .booking-experience .booking-section {display:block}.booking-schedule,.booking-seat-panel {margin-bottom:20px}
   .booking-summary {position:static;margin:20px 0!important}
-  .booking-progress {display:none}.booking-mobile-bar {display:flex}
+  .booking-progress {display:none}.booking-mobile-bar {display:grid}
   .wallet-upcoming,.wallet-history {grid-template-columns:1fr}
   .confirmation-ticket {grid-template-columns:1fr}.confirmation-main dl {grid-template-columns:repeat(2,1fr)}
   .confirmation-stub {gap:12px}.confirmation-price {margin-top:15px}
@@ -309,7 +309,7 @@ a {color:inherit}
   .booking-active .showtime-selector {display:flex;gap:8px}
   .booking-experience .showtime-btn {padding:10px 15px}
   .booking-summary {margin:20px 18px!important}
-  .booking-mobile-bar {padding:10px 18px}
+  .booking-mobile-bar {padding:10px max(18px, env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left))}
   .bookings-page,.movies-page,.admin-page {padding:30px 18px}
   .footer-content {display:block}.footer-content p {margin-top:10px}
 }
