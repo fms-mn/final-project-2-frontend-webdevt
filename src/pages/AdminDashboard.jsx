@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   FiCalendar, FiCheck, FiClock, FiDollarSign, FiDownload, FiEdit2, FiEye, FiFilm, FiPlus,
-  FiRefreshCw, FiSearch, FiShield, FiTrash2, FiTrendingUp, FiUpload, FiUserCheck, FiUsers, FiX, FiXCircle,
+  FiRefreshCw, FiSearch, FiTrash2, FiTrendingUp, FiUpload, FiUserCheck, FiUsers, FiX, FiXCircle,
 } from 'react-icons/fi';
 import { demoMovies } from '../data/demoMovies';
 import { initialCinemas, initialShowtimes } from '../data/demoAdminOperations';
@@ -32,10 +32,10 @@ const initialUsers = [
   { id: 'usr-1027', name: 'Noah Garcia', email: 'noah@example.com', phone: '0920 456 7890', role: 'Staff', active: true, joined: '2026-09-19', bookings: 6 },
 ];
 const recentBookings = [
-  { id: 'BK-1048', customer: 'Mika Santos', email: 'mika@example.com', movie: 'Midnight Signal', date: inputDate(), showtime: '6:30 PM', seats: 'D5, D6', total: 560, status: 'Confirmed', payment: 'GCash' },
-  { id: 'BK-1047', customer: 'Andre Cruz', email: 'andre@example.com', movie: 'Beyond the Tide', date: inputDate(), showtime: '3:45 PM', seats: 'F8', total: 280, status: 'Confirmed', payment: 'Card' },
-  { id: 'BK-1046', customer: 'Lena Reyes', email: 'lena@example.com', movie: 'Midnight Signal', date: inputDate(), showtime: '8:15 PM', seats: 'C3, C4', total: 560, status: 'Pending', payment: 'GCash' },
-  { id: 'BK-1045', customer: 'Noah Garcia', email: 'noah@example.com', movie: 'Oppenheimer: The Aftermath', date: shiftDate(-1), showtime: '5:00 PM', seats: 'E10', total: 320, status: 'Confirmed', payment: 'Card' },
+  { id: 'BK-1048', showtimeId: 'show-3', customer: 'Mika Santos', email: 'mika@example.com', movie: 'Midnight Signal', date: inputDate(), showtime: '3:45 PM', seats: 'D5, D6', total: 560, status: 'Confirmed', payment: 'GCash' },
+  { id: 'BK-1047', showtimeId: 'show-2', customer: 'Andre Cruz', email: 'andre@example.com', movie: 'Beyond the Tide', date: inputDate(), showtime: '1:15 PM', seats: 'F8', total: 280, status: 'Confirmed', payment: 'Card' },
+  { id: 'BK-1046', showtimeId: 'show-1', customer: 'Lena Reyes', email: 'lena@example.com', movie: 'Midnight Signal', date: inputDate(), showtime: '10:30 AM', seats: 'C3, C4', total: 560, status: 'Pending', payment: 'GCash' },
+  { id: 'BK-1045', showtimeId: 'show-4', customer: 'Noah Garcia', email: 'noah@example.com', movie: 'Oppenheimer: The Aftermath', date: inputDate(), showtime: '6:30 PM', seats: 'E10', total: 320, status: 'Confirmed', payment: 'Card' },
   { id: 'BK-1044', customer: 'Sofia Lim', email: 'sofia@example.com', movie: 'Beyond the Tide', date: shiftDate(-1), showtime: '1:15 PM', seats: 'A7, A8', total: 560, status: 'Cancelled', payment: 'Maya' },
   { id: 'BK-1043', customer: 'Ethan Tan', email: 'ethan@example.com', movie: 'Midnight Signal', date: shiftDate(-2), showtime: '10:30 AM', seats: 'B2', total: 280, status: 'Confirmed', payment: 'Cash' },
   { id: 'BK-1042', customer: 'Isla Ramos', email: 'isla@example.com', movie: 'Oppenheimer: The Aftermath', date: shiftDate(-3), showtime: '6:30 PM', seats: 'G4, G5', total: 640, status: 'Refunded', payment: 'Card' },
@@ -115,7 +115,6 @@ export default function AdminDashboard() {
   const [userDialog, setUserDialog] = useState(null);
   const [userDraft, setUserDraft] = useState(null);
   const [userNotice, setUserNotice] = useState('');
-  const [userActionHistory, setUserActionHistory] = useState([]);
   const filteredMovies = useMemo(() => movies.filter((movie) => movie.title.toLowerCase().includes(query.toLowerCase())), [movies, query]);
   const filteredUsers = useMemo(() => users.filter((item) => `${item.name} ${item.email}`.toLowerCase().includes(query.toLowerCase())), [users, query]);
   const filteredBookings = useMemo(() => bookings.filter((booking) => {
@@ -126,13 +125,11 @@ export default function AdminDashboard() {
   const totalRevenue = dashboardData.values.reduce((total, value) => total + value, 0);
   const dialogUser = userDialog ? users.find((item) => item.id === userDialog.id) : null;
   const dialogBooking = bookingDialog ? bookings.find((booking) => booking.id === bookingDialog.id) : null;
-  const recordUserAction = (description) => setUserActionHistory((items) => [{ id: `${Date.now()}-${items.length}`, description, time: new Intl.DateTimeFormat('en-PH', { hour: 'numeric', minute: '2-digit' }).format(new Date()) }, ...items]);
   const toggleUser = (id) => {
     const target = users.find((item) => item.id === id);
     if (!target) return;
     setUsers((items) => items.map((item) => item.id === id ? { ...item, active: !item.active } : item));
     setUserNotice(`${target.name} was ${target.active ? 'disabled' : 'enabled'}.`);
-    recordUserAction(`${target.active ? 'Disabled' : 'Enabled'} ${target.name}'s account`);
   };
   const openUserDetails = (user) => { setUserDialog({ type: 'view', id: user.id }); setUserNotice(''); };
   const openUserEdit = (user) => { setUserDraft({ ...user }); setUserDialog({ type: 'edit', id: user.id }); setUserNotice(''); };
@@ -140,13 +137,11 @@ export default function AdminDashboard() {
     event.preventDefault();
     setUsers((items) => items.map((item) => item.id === userDraft.id ? { ...userDraft } : item));
     setUserNotice(`${userDraft.name}'s account was updated.`);
-    recordUserAction(`Updated ${userDraft.name}'s details and role to ${userDraft.role}`);
     setUserDialog(null); setUserDraft(null);
   };
   const deleteUser = (user) => {
     setUsers((items) => items.filter((item) => item.id !== user.id));
     setUserNotice(`${user.name} was deleted from this preview.`);
-    recordUserAction(`Deleted ${user.name}'s account`);
     setUserDialog(null);
   };
   const requestBookingAction = (booking, action) => setBookingDialog({ type: 'confirm', id: booking.id, action });
@@ -156,11 +151,17 @@ export default function AdminDashboard() {
     const labels = { confirm: 'confirmed', cancel: 'cancelled', refund: 'refunded' };
     const nextStatus = statuses[bookingDialog.action];
     setBookings((items) => items.map((booking) => booking.id === dialogBooking.id ? { ...booking, status: nextStatus } : booking));
+    if ((bookingDialog.action === 'cancel' || bookingDialog.action === 'refund') && dialogBooking.showtimeId) {
+      const releasedSeats = dialogBooking.seats.split(',').map((seat) => seat.trim()).filter(Boolean).length;
+      setShowtimes((items) => items.map((showtime) => showtime.id === dialogBooking.showtimeId
+        ? { ...showtime, bookedSeats: Math.max(0, showtime.bookedSeats - releasedSeats) }
+        : showtime));
+    }
     setBookingNotice(`${dialogBooking.id} was ${labels[bookingDialog.action]}.`);
     setBookingActionHistory((items) => [{ id: `${Date.now()}-${items.length}`, description: `${dialogBooking.id} (${dialogBooking.customer}) was ${labels[bookingDialog.action]}`, time: new Intl.DateTimeFormat('en-PH', { hour: 'numeric', minute: '2-digit' }).format(new Date()) }, ...items]);
     setBookingDialog(null);
   };
-  const editMovieField = (field) => (event) => setMovieDraft((draft) => ({ ...draft, [field]: event.target.value }));
+  const editMovieField = (field) => (event) => { setMovieFormError(''); setMovieDraft((draft) => ({ ...draft, [field]: event.target.value })); };
   const openAddMovie = () => { setMovieDraft({ ...blankMovie }); setDeleteMovieId(''); setMovieNotice(''); setPosterError(''); setMovieFormError(''); };
   const openEditMovie = (movie) => {
     setMovieDraft({ ...movie, rating: RATINGS.includes(movie.rating) ? movie.rating : 'PG', releaseDate: String(movie.releaseDate).slice(0, 10) });
@@ -188,6 +189,21 @@ export default function AdminDashboard() {
     if (!movieDraft.genre.trim()) { setMovieFormError('Select at least one genre.'); return; }
     const saved = { ...movieDraft, duration: Number(movieDraft.duration) };
     if (saved._id) {
+      const scheduled = showtimes.filter((show) => show.movieId === saved._id);
+      const toMinutes = (time) => { const [hour, minute] = time.split(':').map(Number); return hour * 60 + minute; };
+      const conflict = scheduled.some((changedShow) => {
+        const changedStart = toMinutes(changedShow.startTime);
+        const changedEnd = changedStart + saved.duration;
+        return showtimes.some((otherShow) => {
+          if (otherShow.id === changedShow.id || otherShow.cinemaId !== changedShow.cinemaId || otherShow.date !== changedShow.date) return false;
+          const otherMovie = movies.find((movie) => movie._id === otherShow.movieId);
+          const otherStart = toMinutes(otherShow.startTime);
+          return changedStart < otherStart + Number(otherMovie?.duration || 120) && changedEnd > otherStart;
+        });
+      });
+      if (conflict) { setMovieFormError('This duration would overlap another screening. Adjust the affected showtime first.'); return; }
+    }
+    if (saved._id) {
       setMovies((items) => items.map((movie) => movie._id === saved._id ? saved : movie));
       setMovieNotice(`${saved.title} was updated in this preview.`);
     } else {
@@ -198,6 +214,11 @@ export default function AdminDashboard() {
     setMovieDraft(null);
   };
   const removeMovie = (movie) => {
+    if (showtimes.some((show) => show.movieId === movie._id)) {
+      setDeleteMovieId('');
+      setMovieNotice(`${movie.title} cannot be deleted while it has scheduled screenings.`);
+      return;
+    }
     if (deleteMovieId !== movie._id) { setDeleteMovieId(movie._id); return; }
     setMovies((items) => items.filter((item) => item._id !== movie._id));
     setDeleteMovieId('');
@@ -273,6 +294,7 @@ export default function AdminDashboard() {
             <div><span className="home-section-eyebrow">{movieDraft._id ? 'EDIT MOVIE' : 'ADD MOVIE'}</span><h2>{movieDraft._id ? `Update ${movieDraft.title}` : 'Create a movie'}</h2></div>
             <button type="button" className="icon-button" aria-label="Close movie form" onClick={() => setMovieDraft(null)}><FiX /></button>
           </div>
+          {movieFormError && <div className="error-message" role="alert">{movieFormError}</div>}
           <div className="movie-editor-layout">
             <div className="poster-upload-field">
               <div className="poster-preview">{movieDraft.posterUrl ? <img src={movieDraft.posterUrl} alt="Movie poster preview" /> : <div><FiFilm /><span>No poster selected</span></div>}</div>
@@ -288,7 +310,6 @@ export default function AdminDashboard() {
                   const selected = movieDraft.genre.split(',').map((item) => item.trim()).includes(genre);
                   return <button key={genre} type="button" className={selected ? 'selected' : ''} aria-pressed={selected} onClick={() => toggleGenre(genre)}>{genre}</button>;
                 })}</div>
-                {movieFormError && <span className="profile-field-error" role="alert">{movieFormError}</span>}
               </fieldset>
               <label>Rating<select value={movieDraft.rating} onChange={editMovieField('rating')}>{RATINGS.map((rating) => <option value={rating} key={rating}>{rating}</option>)}</select></label>
               <label>Duration (minutes)<input required type="number" min="1" max="500" value={movieDraft.duration} onChange={editMovieField('duration')} /></label>
@@ -330,7 +351,7 @@ export default function AdminDashboard() {
           <label className="admin-search"><FiSearch aria-hidden="true" /><span className="sr-only">Search bookings</span><input value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Search bookings" /></label>
           <label>Status<select value={bookingStatus} onChange={(event) => setBookingStatus(event.target.value)}><option value="all">All statuses</option><option>Confirmed</option><option>Pending</option><option>Cancelled</option><option>Refunded</option></select></label>
           <label>Movie<select value={bookingMovie} onChange={(event) => setBookingMovie(event.target.value)}><option value="all">All movies</option>{[...new Set(bookings.map((booking) => booking.movie))].map((movie) => <option key={movie}>{movie}</option>)}</select></label>
-          <label>Screening date<input type="date" value={bookingDate} max={inputDate()} onChange={(event) => setBookingDate(event.target.value)} /></label>
+          <label>Screening date<input type="date" value={bookingDate} onChange={(event) => setBookingDate(event.target.value)} /></label>
           <button type="button" className="booking-clear-filters" onClick={() => { setQuery(''); setBookingStatus('all'); setBookingMovie('all'); setBookingDate(''); }}>Clear filters</button>
         </div>
         <div className="booking-table-wrap booking-management-table">
@@ -387,11 +408,6 @@ export default function AdminDashboard() {
           </article>)}</div>
           {filteredUsers.length === 0 && <div className="admin-empty"><FiUsers /><strong>No users found</strong><span>Try another search.</span></div>}
           <p className="admin-local-note">User changes are frontend-only and reset when the page is refreshed.</p>
-        </section>
-
-        <section className="admin-panel user-action-history">
-          <div className="admin-card-heading"><div><span className="home-section-eyebrow">ADMIN ACTIONS</span><h2>Action history</h2></div><FiShield /></div>
-          {userActionHistory.length === 0 ? <div className="history-empty">No user-management actions have been made in this session.</div> : <ol>{userActionHistory.map((entry) => <li key={entry.id}><span>{entry.description}</span><time>{entry.time}</time></li>)}</ol>}
         </section>
 
         {userDialog && dialogUser && <div className="user-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setUserDialog(null); }}>
