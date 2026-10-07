@@ -234,6 +234,10 @@ a {color:inherit}
 .confirmation-price {display:flex;justify-content:space-between;align-items:end;gap:8px;margin-top:auto}
 .confirmation-price span {font:600 11px 'JetBrains Mono Variable'}
 .confirmation-price b {font:bold 40px 'Bricolage Grotesque Variable'}
+.confirmation-copy {align-self:flex-start;border:1px solid #ffffffa6;border-radius:7px;background:transparent;color:#fff;padding:7px 11px;font:600 12px 'Instrument Sans Variable';cursor:pointer}
+.confirmation-copy:hover {background:#ffffff26}
+.confirmation-copy:focus-visible {outline:3px solid #fff;outline-offset:2px}
+.confirmation-copy-feedback {min-height:1em;color:#fff;font:600 11px 'Instrument Sans Variable'}
 .booking-modal-actions {margin-top:35px}
 .wallet-heading {display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:55px}
 .wallet-heading h1 {margin:8px 0 0}.wallet-heading .btn {margin-bottom:6px}
@@ -281,6 +285,39 @@ a {color:inherit}
   .confirmation-stub {gap:12px}.confirmation-price {margin-top:15px}
   .booking-experience:not(.booking-active) .movie-detail-info {grid-template-columns:1fr}
   .booking-experience:not(.booking-active) .movie-detail-poster {max-width:260px}
+}
+@media(max-width:800px) {
+  .confirmation-overlay {align-items:flex-start;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:calc(16px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom));}
+  .confirmation-modal {width:100%;max-width:480px;max-height:none;overflow:visible;margin:0 auto;padding:0;min-width:0;}
+  .confirmation-modal:focus {outline:none;}
+  .confirmation-modal h2 {font-size:clamp(29px,8vw,38px);line-height:1.05;margin:7px 0 0;}
+  .confirmation-modal .booking-eyebrow {font-size:11px;}
+  .confirmation-modal .booking-modal-reference {max-width:36ch;margin:8px auto 18px;font-size:14px;line-height:1.4;}
+  .confirmation-ticket {min-height:0;grid-template-columns:minmax(0,1fr);overflow:hidden;border-radius:15px;}
+  .confirmation-main {min-width:0;padding:20px 20px 22px;}
+  .confirmation-brand {font-size:18px;gap:4px;}
+  .confirmation-brand img {width:21px;}
+  .confirmation-brand span {font-size:10px;letter-spacing:0;}
+  .confirmation-main h3 {font-size:clamp(29px,8vw,40px);line-height:1.05;margin:18px 0 22px;overflow-wrap:anywhere;}
+  .confirmation-main dl {grid-template-columns:repeat(2,minmax(0,1fr));gap:15px 12px;margin:0;}
+  .confirmation-main dl>div {min-width:0;}
+  .confirmation-main dt {font-size:10px;}
+  .confirmation-main dd {font-size:16px;line-height:1.2;margin:5px 0 0;overflow-wrap:anywhere;}
+  .confirmation-stub {position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 12px;min-width:0;padding:17px 20px 20px;border-left:0;border-top:2px dashed #ffffffa6;}
+  .confirmation-stub::before,.confirmation-stub::after {content:'';position:absolute;top:-9px;width:16px;height:16px;border-radius:50%;background:#E8EBF4;}
+  .confirmation-stub::before {left:-8px;}
+  .confirmation-stub::after {right:-8px;}
+  .confirmation-stub small {grid-column:1;align-self:end;}
+  .confirmation-stub>strong {grid-column:1;min-width:0;margin:0;font-size:clamp(14px,4.5vw,18px);overflow-wrap:anywhere;}
+  .confirmation-copy {grid-column:2;grid-row:1/3;align-self:center;min-height:36px;white-space:nowrap;}
+  .confirmation-copy-feedback {grid-column:1/-1;min-height:13px;}
+  .ticket-bars {grid-column:1/-1;height:49px;margin-top:3px;border-width:6px;}
+  .confirmation-price {grid-column:1/-1;align-items:end;margin-top:9px;}
+  .confirmation-price span {font-size:11px;}
+  .confirmation-price b {font-size:29px;line-height:1;}
+  .confirmation-modal .booking-modal-actions {display:flex;flex-direction:column;gap:8px;margin:18px 0 0;}
+  .confirmation-modal .booking-modal-actions .btn {width:100%;min-height:44px;flex:none;}
+  .confirmation-modal .booking-modal-actions .btn-secondary {background:transparent;border:0;box-shadow:none;color:#525d83;}
 }
 @media(max-width:500px) {
   .main-content {margin-top:68px}.navbar {height:68px;padding:0 18px}.nav-brand {font-size:23px}.nav-brand img {width:28px}
