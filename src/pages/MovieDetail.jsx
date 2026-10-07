@@ -381,11 +381,9 @@ export default function MovieDetail() {
               <span>Booked</span>
             </div>
           </div>
-          {selectedSeats.length > 0 && (
-            <p className="seat-selection-summary">
-              Selected: {[...selectedSeats].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).join(', ')}
-            </p>
-          )}
+          <p className="seat-selection-summary" aria-live="polite">
+            Selected: {selectedSeats.length ? [...selectedSeats].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).join(', ') : 'None'}
+          </p>
           </div>
 
           {/* Booking Summary */}
