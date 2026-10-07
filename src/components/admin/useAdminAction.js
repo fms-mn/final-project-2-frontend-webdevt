@@ -25,5 +25,5 @@ export default function useAdminAction() {
     }
   }, []);
 
-  return { busy: busyAction !== '', busyAction, error, notice, setError, clear, run };
+  return { busy: busyAction !== '', busyAction, error, notice, setError, setNotice, clear, run };
 }
