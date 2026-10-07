@@ -2521,6 +2521,27 @@ input, select {
 .admin-seat-legend i.unavailable { background: #3b4350; }
 .admin-seat-legend i.maintenance { background: #9b7221; }
 .seat-layout-help { margin-top: .65rem; color: var(--text-muted); font-size: .65rem; text-align: center; }
+.booking-view-button { display: inline-flex; align-items: center; gap: .3rem; padding: .35rem .55rem; border: 1px solid var(--border-color); border-radius: var(--radius-full); background: var(--surface-tint); color: var(--text-secondary); font-size: .66rem; font-weight: 700; }
+.booking-view-button:hover { border-color: var(--border-glow); color: var(--text-primary); }
+.booking-action-history ol { display: grid; list-style: none; }
+.booking-action-history li { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .7rem 0; border-top: 1px solid var(--border-color); color: var(--text-secondary); font-size: .75rem; }
+.booking-action-history li:first-child { border-top: 0; }
+.booking-action-history time { flex: none; color: var(--text-muted); font-size: .66rem; }
+.booking-detail-hero { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-primary); }
+.booking-detail-hero > div { display: flex; flex-direction: column; }
+.booking-detail-hero > div > span { color: var(--text-muted); font-size: .62rem; text-transform: uppercase; letter-spacing: .06em; }
+.booking-detail-hero strong { margin-top: .15rem; }
+.booking-detail-hero small { color: var(--text-secondary); }
+.booking-detail-content dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
+.booking-detail-content dl > div { padding: .75rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-primary); }
+.booking-detail-content dt { color: var(--text-muted); font-size: .62rem; text-transform: uppercase; letter-spacing: .05em; }
+.booking-detail-content dd { margin: .18rem 0 0; overflow-wrap: anywhere; font-size: .78rem; font-weight: 700; }
+.booking-detail-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: .55rem; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border-color); }
+.booking-confirm-action { text-align: center; }
+.booking-action-icon { display: grid; place-items: center; width: 58px; height: 58px; margin: .25rem auto 1rem; border-radius: 50%; background: rgba(220, 38, 38, .12); color: var(--danger-text); font-size: 1.4rem; }
+.booking-action-icon.confirm { background: rgba(34, 197, 94, .12); color: var(--success-text); }
+.booking-action-icon.refund { background: rgba(124, 58, 237, .12); color: #b596ff; }
+.booking-confirm-action p { color: var(--text-secondary); font-size: .85rem; line-height: 1.65; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .demo-login .btn + .btn { margin-top: .65rem; }
 
@@ -2576,4 +2597,7 @@ input, select {
   .cinema-room-list { grid-template-columns: 1fr; }
   .seat-layout-panel { padding: .75rem .4rem; }
   .admin-seat-map { justify-content: start; }
+  .booking-detail-content dl { grid-template-columns: 1fr; }
+  .booking-detail-actions { flex-direction: column; }
+  .booking-detail-actions .btn { justify-content: center; }
 }

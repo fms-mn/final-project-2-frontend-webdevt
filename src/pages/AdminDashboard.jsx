@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
-  FiCalendar, FiClock, FiDollarSign, FiDownload, FiEdit2, FiEye, FiFilm, FiPlus,
-  FiSearch, FiShield, FiTrash2, FiTrendingUp, FiUpload, FiUserCheck, FiUsers, FiX,
+  FiCalendar, FiCheck, FiClock, FiDollarSign, FiDownload, FiEdit2, FiEye, FiFilm, FiPlus,
+  FiRefreshCw, FiSearch, FiShield, FiTrash2, FiTrendingUp, FiUpload, FiUserCheck, FiUsers, FiX, FiXCircle,
 } from 'react-icons/fi';
 import { demoMovies } from '../data/demoMovies';
 import { initialCinemas, initialShowtimes } from '../data/demoAdminOperations';
@@ -108,19 +108,24 @@ export default function AdminDashboard() {
   const [bookingStatus, setBookingStatus] = useState('all');
   const [bookingMovie, setBookingMovie] = useState('all');
   const [bookingDate, setBookingDate] = useState('');
+  const [bookings, setBookings] = useState(() => recentBookings.map((booking) => ({ ...booking })));
+  const [bookingDialog, setBookingDialog] = useState(null);
+  const [bookingNotice, setBookingNotice] = useState('');
+  const [bookingActionHistory, setBookingActionHistory] = useState([]);
   const [userDialog, setUserDialog] = useState(null);
   const [userDraft, setUserDraft] = useState(null);
   const [userNotice, setUserNotice] = useState('');
   const [userActionHistory, setUserActionHistory] = useState([]);
   const filteredMovies = useMemo(() => movies.filter((movie) => movie.title.toLowerCase().includes(query.toLowerCase())), [movies, query]);
   const filteredUsers = useMemo(() => users.filter((item) => `${item.name} ${item.email}`.toLowerCase().includes(query.toLowerCase())), [users, query]);
-  const filteredBookings = useMemo(() => recentBookings.filter((booking) => {
+  const filteredBookings = useMemo(() => bookings.filter((booking) => {
     const matchesSearch = `${booking.id} ${booking.customer} ${booking.email} ${booking.movie} ${booking.seats}`.toLowerCase().includes(query.toLowerCase());
     return matchesSearch && (bookingStatus === 'all' || booking.status === bookingStatus) && (bookingMovie === 'all' || booking.movie === bookingMovie) && (!bookingDate || booking.date === bookingDate);
-  }), [query, bookingStatus, bookingMovie, bookingDate]);
+  }), [bookings, query, bookingStatus, bookingMovie, bookingDate]);
   const dashboardData = useMemo(() => period === 'custom' ? buildCustomRange(customFrom, customTo) : RANGE_DATA[period], [period, customFrom, customTo]);
   const totalRevenue = dashboardData.values.reduce((total, value) => total + value, 0);
   const dialogUser = userDialog ? users.find((item) => item.id === userDialog.id) : null;
+  const dialogBooking = bookingDialog ? bookings.find((booking) => booking.id === bookingDialog.id) : null;
   const recordUserAction = (description) => setUserActionHistory((items) => [{ id: `${Date.now()}-${items.length}`, description, time: new Intl.DateTimeFormat('en-PH', { hour: 'numeric', minute: '2-digit' }).format(new Date()) }, ...items]);
   const toggleUser = (id) => {
     const target = users.find((item) => item.id === id);
@@ -143,6 +148,17 @@ export default function AdminDashboard() {
     setUserNotice(`${user.name} was deleted from this preview.`);
     recordUserAction(`Deleted ${user.name}'s account`);
     setUserDialog(null);
+  };
+  const requestBookingAction = (booking, action) => setBookingDialog({ type: 'confirm', id: booking.id, action });
+  const applyBookingAction = () => {
+    if (!dialogBooking || bookingDialog?.type !== 'confirm') return;
+    const statuses = { confirm: 'Confirmed', cancel: 'Cancelled', refund: 'Refunded' };
+    const labels = { confirm: 'confirmed', cancel: 'cancelled', refund: 'refunded' };
+    const nextStatus = statuses[bookingDialog.action];
+    setBookings((items) => items.map((booking) => booking.id === dialogBooking.id ? { ...booking, status: nextStatus } : booking));
+    setBookingNotice(`${dialogBooking.id} was ${labels[bookingDialog.action]}.`);
+    setBookingActionHistory((items) => [{ id: `${Date.now()}-${items.length}`, description: `${dialogBooking.id} (${dialogBooking.customer}) was ${labels[bookingDialog.action]}`, time: new Intl.DateTimeFormat('en-PH', { hour: 'numeric', minute: '2-digit' }).format(new Date()) }, ...items]);
+    setBookingDialog(null);
   };
   const editMovieField = (field) => (event) => setMovieDraft((draft) => ({ ...draft, [field]: event.target.value }));
   const openAddMovie = () => { setMovieDraft({ ...blankMovie }); setDeleteMovieId(''); setMovieNotice(''); setPosterError(''); setMovieFormError(''); };
@@ -246,7 +262,7 @@ export default function AdminDashboard() {
           </article>
           <article className="admin-panel">
             <div className="admin-card-heading"><div><span className="home-section-eyebrow">LATEST</span><h2>Recent bookings</h2></div><FiUserCheck /></div>
-            <div className="booking-table-wrap"><table className="admin-table"><thead><tr><th>Booking</th><th>Customer</th><th>Movie / seats</th><th>Total</th><th>Status</th></tr></thead><tbody>{recentBookings.slice(0, 4).map((booking) => <tr key={booking.id}><td>{booking.id}</td><td>{booking.customer}</td><td><strong>{booking.movie}</strong><small>{booking.seats}</small></td><td>₱{booking.total}</td><td><span className={`status-pill ${booking.status.toLowerCase()}`}>{booking.status}</span></td></tr>)}</tbody></table></div>
+            <div className="booking-table-wrap"><table className="admin-table"><thead><tr><th>Booking</th><th>Customer</th><th>Movie / seats</th><th>Total</th><th>Status</th></tr></thead><tbody>{bookings.slice(0, 4).map((booking) => <tr key={booking.id}><td>{booking.id}</td><td>{booking.customer}</td><td><strong>{booking.movie}</strong><small>{booking.seats}</small></td><td>₱{booking.total}</td><td><span className={`status-pill ${booking.status.toLowerCase()}`}>{booking.status}</span></td></tr>)}</tbody></table></div>
           </article>
         </section>
       </>}
@@ -303,21 +319,23 @@ export default function AdminDashboard() {
 
       {tab === 'showtimes' && <AdminShowtimes movies={movies} cinemas={cinemas} showtimes={showtimes} setShowtimes={setShowtimes} />}
 
-      {tab === 'bookings' && <section className="admin-panel admin-management booking-management">
+      {tab === 'bookings' && <>
+      <section className="admin-panel admin-management booking-management">
         <div className="admin-card-heading booking-heading-row">
-          <div><span className="home-section-eyebrow">BOOKING MANAGEMENT</span><h2>Bookings</h2><p>{filteredBookings.length} of {recentBookings.length} bookings shown</p></div>
+          <div><span className="home-section-eyebrow">BOOKING MANAGEMENT</span><h2>Bookings</h2><p>{filteredBookings.length} of {bookings.length} bookings shown</p></div>
           <button type="button" className="btn btn-primary btn-small" onClick={exportBookings} disabled={filteredBookings.length === 0}><FiDownload /> Export CSV</button>
         </div>
+        {bookingNotice && <div className="admin-notice" role="status">{bookingNotice}</div>}
         <div className="booking-admin-filters" aria-label="Booking filters">
           <label className="admin-search"><FiSearch aria-hidden="true" /><span className="sr-only">Search bookings</span><input value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Search bookings" /></label>
           <label>Status<select value={bookingStatus} onChange={(event) => setBookingStatus(event.target.value)}><option value="all">All statuses</option><option>Confirmed</option><option>Pending</option><option>Cancelled</option><option>Refunded</option></select></label>
-          <label>Movie<select value={bookingMovie} onChange={(event) => setBookingMovie(event.target.value)}><option value="all">All movies</option>{[...new Set(recentBookings.map((booking) => booking.movie))].map((movie) => <option key={movie}>{movie}</option>)}</select></label>
+          <label>Movie<select value={bookingMovie} onChange={(event) => setBookingMovie(event.target.value)}><option value="all">All movies</option>{[...new Set(bookings.map((booking) => booking.movie))].map((movie) => <option key={movie}>{movie}</option>)}</select></label>
           <label>Screening date<input type="date" value={bookingDate} max={inputDate()} onChange={(event) => setBookingDate(event.target.value)} /></label>
           <button type="button" className="booking-clear-filters" onClick={() => { setQuery(''); setBookingStatus('all'); setBookingMovie('all'); setBookingDate(''); }}>Clear filters</button>
         </div>
         <div className="booking-table-wrap booking-management-table">
           <table className="admin-table">
-            <thead><tr><th>Booking</th><th>Customer</th><th>Movie</th><th>Schedule</th><th>Seats</th><th>Payment</th><th>Total</th><th>Status</th></tr></thead>
+            <thead><tr><th>Booking</th><th>Customer</th><th>Movie</th><th>Schedule</th><th>Seats</th><th>Payment</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody>{filteredBookings.map((booking) => <tr key={booking.id}>
               <td><strong>{booking.id}</strong></td>
               <td><strong>{booking.customer}</strong><small>{booking.email}</small></td>
@@ -325,12 +343,38 @@ export default function AdminDashboard() {
               <td>{new Intl.DateTimeFormat('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(`${booking.date}T00:00:00`))}<small>{booking.showtime}</small></td>
               <td>{booking.seats}</td><td>{booking.payment}</td><td>{currency.format(booking.total)}</td>
               <td><span className={`status-pill ${booking.status.toLowerCase()}`}>{booking.status}</span></td>
+              <td><button type="button" className="booking-view-button" onClick={() => { setBookingDialog({ type: 'view', id: booking.id }); setBookingNotice(''); }}><FiEye /> View</button></td>
             </tr>)}</tbody>
           </table>
           {filteredBookings.length === 0 && <div className="admin-empty"><FiCalendar /><strong>No bookings found</strong><span>Try changing or clearing the current filters.</span></div>}
         </div>
-        <p className="admin-local-note">The booking table and CSV export use frontend mock data only. Exporting downloads the currently filtered rows.</p>
-      </section>}
+        <p className="admin-local-note">Booking actions, filters and CSV export use frontend mock data only and reset when the page is refreshed.</p>
+      </section>
+
+      <section className="admin-panel booking-action-history">
+        <div className="admin-card-heading"><div><span className="home-section-eyebrow">BOOKING ACTIONS</span><h2>Action history</h2></div><FiClock /></div>
+        {bookingActionHistory.length === 0 ? <div className="history-empty">No booking changes have been made in this session.</div> : <ol>{bookingActionHistory.map((entry) => <li key={entry.id}><span>{entry.description}</span><time>{entry.time}</time></li>)}</ol>}
+      </section>
+
+      {bookingDialog && dialogBooking && <div className="user-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setBookingDialog(null); }}>
+        <div className="user-modal booking-action-modal" role="dialog" aria-modal="true" aria-labelledby="booking-dialog-title">
+          <div className="admin-card-heading"><div><span className="home-section-eyebrow">{bookingDialog.type === 'confirm' ? 'CONFIRM BOOKING ACTION' : 'BOOKING DETAILS'}</span><h2 id="booking-dialog-title">{bookingDialog.type === 'confirm' ? `${bookingDialog.action[0].toUpperCase()}${bookingDialog.action.slice(1)} booking?` : dialogBooking.id}</h2></div><button type="button" className="icon-button" aria-label="Close booking dialog" onClick={() => setBookingDialog(null)}><FiX /></button></div>
+
+          {bookingDialog.type === 'view' && <div className="booking-detail-content">
+            <div className="booking-detail-hero"><div><span>Customer</span><strong>{dialogBooking.customer}</strong><small>{dialogBooking.email}</small></div><span className={`status-pill ${dialogBooking.status.toLowerCase()}`}>{dialogBooking.status}</span></div>
+            <dl><div><dt>Movie</dt><dd>{dialogBooking.movie}</dd></div><div><dt>Schedule</dt><dd>{new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium' }).format(new Date(`${dialogBooking.date}T00:00:00`))} · {dialogBooking.showtime}</dd></div><div><dt>Seats</dt><dd>{dialogBooking.seats}</dd></div><div><dt>Payment method</dt><dd>{dialogBooking.payment}</dd></div><div><dt>Total paid</dt><dd>{currency.format(dialogBooking.total)}</dd></div><div><dt>Booking ID</dt><dd>{dialogBooking.id}</dd></div></dl>
+            <div className="booking-detail-actions">
+              {dialogBooking.status === 'Pending' && <button type="button" className="btn btn-primary btn-small" onClick={() => requestBookingAction(dialogBooking, 'confirm')}><FiCheck /> Confirm booking</button>}
+              {(dialogBooking.status === 'Pending' || dialogBooking.status === 'Confirmed') && <button type="button" className="btn btn-danger btn-small" onClick={() => requestBookingAction(dialogBooking, 'cancel')}><FiXCircle /> Cancel booking</button>}
+              {dialogBooking.status === 'Confirmed' && <button type="button" className="btn btn-secondary btn-small" onClick={() => requestBookingAction(dialogBooking, 'refund')}><FiRefreshCw /> Refund booking</button>}
+              <button type="button" className="btn btn-secondary btn-small" onClick={() => setBookingDialog(null)}>Close</button>
+            </div>
+          </div>}
+
+          {bookingDialog.type === 'confirm' && <div className="booking-confirm-action"><div className={`booking-action-icon ${bookingDialog.action}`} >{bookingDialog.action === 'confirm' ? <FiCheck /> : bookingDialog.action === 'refund' ? <FiRefreshCw /> : <FiXCircle />}</div><p>{bookingDialog.action === 'confirm' ? `Confirm ${dialogBooking.customer}'s pending booking?` : bookingDialog.action === 'refund' ? `Mark ${dialogBooking.id} as refunded? This returns the booking to the customer record as refunded.` : `Cancel ${dialogBooking.id}? The selected seats will be treated as released in this preview.`}</p><div className="user-modal-actions"><button type="button" className="btn btn-secondary btn-small" onClick={() => setBookingDialog({ type: 'view', id: dialogBooking.id })}>Go back</button><button type="button" className={bookingDialog.action === 'confirm' ? 'btn btn-primary btn-small' : 'btn btn-danger btn-small'} onClick={applyBookingAction}>{bookingDialog.action === 'confirm' ? 'Confirm booking' : bookingDialog.action === 'refund' ? 'Confirm refund' : 'Confirm cancellation'}</button></div></div>}
+        </div>
+      </div>}
+      </>}
 
       {tab === 'users' && <>
         <section className="admin-panel admin-management user-management">
