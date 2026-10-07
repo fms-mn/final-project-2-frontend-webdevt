@@ -71,7 +71,7 @@ export default function Navbar() {
         {user?.role === 'admin' && <Link to="/admin" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/admin') ? 'active' : ''}`}>Dashboard</Link>}
         <div className="nav-mobile-account">
           {loading ? null : user ? <>
-            <span className="nav-mobile-name">Hi, {user.name}</span>
+            <span className="nav-mobile-name">{user.role === 'admin' ? 'Admin' : `Hi, ${user.name}`}</span>
             <button type="button" className="nav-logout" disabled={signingOut} aria-busy={signingOut} onClick={handleLogout}><ActionPending pending={signingOut}>{signingOut ? 'Signing out...' : 'Logout'}</ActionPending></button>
           </> : <Link to="/login" className="nav-link" onClick={() => setMenuOpen(false)}>Sign In</Link>}
         </div>
@@ -90,7 +90,7 @@ export default function Navbar() {
         </button>
         {loading ? null : user ? (
           <>
-            <span className="nav-user-name">Hi, {user.name}</span>
+            <span className="nav-user-name">{user.role === 'admin' ? 'Admin' : `Hi, ${user.name}`}</span>
             <button type="button" className="nav-logout" disabled={signingOut} aria-busy={signingOut} onClick={handleLogout}>
               <ActionPending pending={signingOut}>{signingOut ? 'Signing out...' : 'Logout'}</ActionPending>
             </button>
