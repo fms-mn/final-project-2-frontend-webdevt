@@ -49,7 +49,7 @@ export default function Admin() {
     setLoading(true);
     setLoadError('');
     Promise.all([
-      api('/movies/manage/all', { signal: controller.signal }),
+      api('/admin/movies', { signal: controller.signal }),
       api('/users?limit=200', { signal: controller.signal }),
     ])
       .then(([movieList, userList]) => {
@@ -90,8 +90,8 @@ export default function Admin() {
     const { _id, ...fields } = movieDraft;
     const body = { ...fields, duration: Number(fields.duration) };
     act(async () => {
-      if (_id) await api(`/movies/${_id}`, { method: 'PUT', body });
-      else await api('/movies', { method: 'POST', body });
+      if (_id) await api(`/admin/movies/${_id}`, { method: 'PATCH', body });
+      else await api('/admin/movies', { method: 'POST', body });
       setMovieDraft(blankMovie);
     }, _id ? 'Movie updated' : 'Movie added', 'save');
   };
