@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
 import {
-  FiCalendar, FiClock, FiDollarSign, FiEdit2, FiFilm, FiPlus,
+  FiCalendar, FiClock, FiDollarSign, FiDownload, FiEdit2, FiFilm, FiPlus,
   FiSearch, FiTrash2, FiTrendingUp, FiUpload, FiUserCheck, FiUsers, FiX,
 } from 'react-icons/fi';
 import { demoMovies } from '../data/demoMovies';
 
-const TABS = ['overview', 'movies', 'users'];
+const TABS = ['overview', 'movies', 'bookings', 'users'];
 const RATINGS = ['G', 'PG', 'R'];
 const GENRES = ['Action', 'Adventure', 'Animation', 'Comedy', 'Crime', 'Documentary', 'Drama', 'Fantasy', 'Horror', 'Romance', 'Sci-Fi', 'Thriller'];
 const RANGE_DATA = {
@@ -30,10 +30,14 @@ const initialUsers = [
   { id: 'usr-1027', name: 'Noah Garcia', email: 'noah@example.com', role: 'Customer', active: true },
 ];
 const recentBookings = [
-  { id: 'BK-1048', customer: 'Mika Santos', movie: 'Midnight Signal', seats: 'D5, D6', total: 560, status: 'Confirmed' },
-  { id: 'BK-1047', customer: 'Andre Cruz', movie: 'Beyond the Tide', seats: 'F8', total: 280, status: 'Confirmed' },
-  { id: 'BK-1046', customer: 'Lena Reyes', movie: 'Midnight Signal', seats: 'C3, C4', total: 560, status: 'Pending' },
-  { id: 'BK-1045', customer: 'Noah Garcia', movie: 'Oppenheimer: The Aftermath', seats: 'E10', total: 320, status: 'Confirmed' },
+  { id: 'BK-1048', customer: 'Mika Santos', email: 'mika@example.com', movie: 'Midnight Signal', date: inputDate(), showtime: '6:30 PM', seats: 'D5, D6', total: 560, status: 'Confirmed', payment: 'GCash' },
+  { id: 'BK-1047', customer: 'Andre Cruz', email: 'andre@example.com', movie: 'Beyond the Tide', date: inputDate(), showtime: '3:45 PM', seats: 'F8', total: 280, status: 'Confirmed', payment: 'Card' },
+  { id: 'BK-1046', customer: 'Lena Reyes', email: 'lena@example.com', movie: 'Midnight Signal', date: inputDate(), showtime: '8:15 PM', seats: 'C3, C4', total: 560, status: 'Pending', payment: 'GCash' },
+  { id: 'BK-1045', customer: 'Noah Garcia', email: 'noah@example.com', movie: 'Oppenheimer: The Aftermath', date: shiftDate(-1), showtime: '5:00 PM', seats: 'E10', total: 320, status: 'Confirmed', payment: 'Card' },
+  { id: 'BK-1044', customer: 'Sofia Lim', email: 'sofia@example.com', movie: 'Beyond the Tide', date: shiftDate(-1), showtime: '1:15 PM', seats: 'A7, A8', total: 560, status: 'Cancelled', payment: 'Maya' },
+  { id: 'BK-1043', customer: 'Ethan Tan', email: 'ethan@example.com', movie: 'Midnight Signal', date: shiftDate(-2), showtime: '10:30 AM', seats: 'B2', total: 280, status: 'Confirmed', payment: 'Cash' },
+  { id: 'BK-1042', customer: 'Isla Ramos', email: 'isla@example.com', movie: 'Oppenheimer: The Aftermath', date: shiftDate(-3), showtime: '6:30 PM', seats: 'G4, G5', total: 640, status: 'Refunded', payment: 'Card' },
+  { id: 'BK-1041', customer: 'Lucas Chua', email: 'lucas@example.com', movie: 'Beyond the Tide', date: shiftDate(-4), showtime: '3:45 PM', seats: 'H9', total: 280, status: 'Confirmed', payment: 'GCash' },
 ];
 const schedule = [
   { time: '10:30 AM', movie: 'Midnight Signal', room: 'Cinema 1', sold: 64, capacity: 80 },
@@ -97,8 +101,15 @@ export default function AdminDashboard() {
   const [movieNotice, setMovieNotice] = useState('');
   const [posterError, setPosterError] = useState('');
   const [movieFormError, setMovieFormError] = useState('');
+  const [bookingStatus, setBookingStatus] = useState('all');
+  const [bookingMovie, setBookingMovie] = useState('all');
+  const [bookingDate, setBookingDate] = useState('');
   const filteredMovies = useMemo(() => movies.filter((movie) => movie.title.toLowerCase().includes(query.toLowerCase())), [movies, query]);
   const filteredUsers = useMemo(() => users.filter((item) => `${item.name} ${item.email}`.toLowerCase().includes(query.toLowerCase())), [users, query]);
+  const filteredBookings = useMemo(() => recentBookings.filter((booking) => {
+    const matchesSearch = `${booking.id} ${booking.customer} ${booking.email} ${booking.movie} ${booking.seats}`.toLowerCase().includes(query.toLowerCase());
+    return matchesSearch && (bookingStatus === 'all' || booking.status === bookingStatus) && (bookingMovie === 'all' || booking.movie === bookingMovie) && (!bookingDate || booking.date === bookingDate);
+  }), [query, bookingStatus, bookingMovie, bookingDate]);
   const dashboardData = useMemo(() => period === 'custom' ? buildCustomRange(customFrom, customTo) : RANGE_DATA[period], [period, customFrom, customTo]);
   const totalRevenue = dashboardData.values.reduce((total, value) => total + value, 0);
   const toggleUser = (id) => setUsers((items) => items.map((item) => item.id === id ? { ...item, active: !item.active } : item));
@@ -145,6 +156,24 @@ export default function AdminDashboard() {
     setDeleteMovieId('');
     setMovieNotice(`${movie.title} was deleted from this preview.`);
   };
+  const exportBookings = () => {
+    const safeCell = (value) => {
+      const text = String(value ?? '');
+      const protectedText = /^[=+\-@]/.test(text) ? `'${text}` : text;
+      return `"${protectedText.replaceAll('"', '""')}"`;
+    };
+    const headings = ['Booking ID', 'Customer', 'Email', 'Movie', 'Date', 'Showtime', 'Seats', 'Total PHP', 'Status', 'Payment'];
+    const rows = filteredBookings.map((booking) => [booking.id, booking.customer, booking.email, booking.movie, booking.date, booking.showtime, booking.seats, booking.total, booking.status, booking.payment]);
+    const csv = [headings, ...rows].map((row) => row.map(safeCell).join(',')).join('\r\n');
+    const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `filme-bookings-${inputDate()}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="admin-page admin-dashboard fade-in">
@@ -186,7 +215,7 @@ export default function AdminDashboard() {
           </article>
           <article className="admin-panel">
             <div className="admin-card-heading"><div><span className="home-section-eyebrow">LATEST</span><h2>Recent bookings</h2></div><FiUserCheck /></div>
-            <div className="booking-table-wrap"><table className="admin-table"><thead><tr><th>Booking</th><th>Customer</th><th>Movie / seats</th><th>Total</th><th>Status</th></tr></thead><tbody>{recentBookings.map((booking) => <tr key={booking.id}><td>{booking.id}</td><td>{booking.customer}</td><td><strong>{booking.movie}</strong><small>{booking.seats}</small></td><td>₱{booking.total}</td><td><span className={`status-pill ${booking.status.toLowerCase()}`}>{booking.status}</span></td></tr>)}</tbody></table></div>
+            <div className="booking-table-wrap"><table className="admin-table"><thead><tr><th>Booking</th><th>Customer</th><th>Movie / seats</th><th>Total</th><th>Status</th></tr></thead><tbody>{recentBookings.slice(0, 4).map((booking) => <tr key={booking.id}><td>{booking.id}</td><td>{booking.customer}</td><td><strong>{booking.movie}</strong><small>{booking.seats}</small></td><td>₱{booking.total}</td><td><span className={`status-pill ${booking.status.toLowerCase()}`}>{booking.status}</span></td></tr>)}</tbody></table></div>
           </article>
         </section>
       </>}
@@ -240,6 +269,35 @@ export default function AdminDashboard() {
           <p className="admin-local-note">Add, edit, delete and poster upload actions are frontend-only and reset when the page is refreshed.</p>
         </section>
       </>}
+
+      {tab === 'bookings' && <section className="admin-panel admin-management booking-management">
+        <div className="admin-card-heading booking-heading-row">
+          <div><span className="home-section-eyebrow">BOOKING MANAGEMENT</span><h2>Bookings</h2><p>{filteredBookings.length} of {recentBookings.length} bookings shown</p></div>
+          <button type="button" className="btn btn-primary btn-small" onClick={exportBookings} disabled={filteredBookings.length === 0}><FiDownload /> Export CSV</button>
+        </div>
+        <div className="booking-admin-filters" aria-label="Booking filters">
+          <label className="admin-search"><FiSearch aria-hidden="true" /><span className="sr-only">Search bookings</span><input value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Search bookings" /></label>
+          <label>Status<select value={bookingStatus} onChange={(event) => setBookingStatus(event.target.value)}><option value="all">All statuses</option><option>Confirmed</option><option>Pending</option><option>Cancelled</option><option>Refunded</option></select></label>
+          <label>Movie<select value={bookingMovie} onChange={(event) => setBookingMovie(event.target.value)}><option value="all">All movies</option>{[...new Set(recentBookings.map((booking) => booking.movie))].map((movie) => <option key={movie}>{movie}</option>)}</select></label>
+          <label>Screening date<input type="date" value={bookingDate} max={inputDate()} onChange={(event) => setBookingDate(event.target.value)} /></label>
+          <button type="button" className="booking-clear-filters" onClick={() => { setQuery(''); setBookingStatus('all'); setBookingMovie('all'); setBookingDate(''); }}>Clear filters</button>
+        </div>
+        <div className="booking-table-wrap booking-management-table">
+          <table className="admin-table">
+            <thead><tr><th>Booking</th><th>Customer</th><th>Movie</th><th>Schedule</th><th>Seats</th><th>Payment</th><th>Total</th><th>Status</th></tr></thead>
+            <tbody>{filteredBookings.map((booking) => <tr key={booking.id}>
+              <td><strong>{booking.id}</strong></td>
+              <td><strong>{booking.customer}</strong><small>{booking.email}</small></td>
+              <td><strong>{booking.movie}</strong></td>
+              <td>{new Intl.DateTimeFormat('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(`${booking.date}T00:00:00`))}<small>{booking.showtime}</small></td>
+              <td>{booking.seats}</td><td>{booking.payment}</td><td>{currency.format(booking.total)}</td>
+              <td><span className={`status-pill ${booking.status.toLowerCase()}`}>{booking.status}</span></td>
+            </tr>)}</tbody>
+          </table>
+          {filteredBookings.length === 0 && <div className="admin-empty"><FiCalendar /><strong>No bookings found</strong><span>Try changing or clearing the current filters.</span></div>}
+        </div>
+        <p className="admin-local-note">The booking table and CSV export use frontend mock data only. Exporting downloads the currently filtered rows.</p>
+      </section>}
 
       {tab === 'users' && <section className="admin-panel admin-management">
         <div className="admin-card-heading"><div><span className="home-section-eyebrow">MANAGEMENT</span><h2>Customer accounts</h2></div><label className="admin-search"><FiSearch aria-hidden="true" /><span className="sr-only">Search users</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search users..." /></label></div>

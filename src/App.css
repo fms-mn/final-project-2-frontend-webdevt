@@ -2412,6 +2412,22 @@ input, select {
 .admin-empty svg { font-size: 2rem; }
 .admin-empty strong { color: var(--text-primary); }
 .admin-empty span { font-size: .76rem; }
+.booking-management .booking-heading-row { align-items: center; }
+.booking-heading-row p { margin-top: .25rem; color: var(--text-muted); font-size: .72rem; }
+.booking-heading-row .btn:disabled { opacity: .45; cursor: not-allowed; }
+.booking-admin-filters { display: grid; grid-template-columns: minmax(220px, 1.5fr) repeat(3, minmax(145px, .75fr)) auto; align-items: end; gap: .75rem; margin-bottom: 1.25rem; padding: 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-primary); }
+.booking-admin-filters .admin-search { width: 100%; }
+.booking-admin-filters .admin-search input { min-height: 38px; padding: .35rem .5rem; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.booking-admin-filters > label:not(.admin-search) { display: flex; flex-direction: column; gap: .3rem; color: var(--text-muted); font-size: .64rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+.booking-admin-filters select, .booking-admin-filters input { width: 100%; min-height: 40px; padding: .45rem .65rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-secondary); color: var(--text-primary); font: inherit; text-transform: none; letter-spacing: normal; }
+.booking-clear-filters { min-height: 40px; padding: .45rem .7rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--surface-tint); color: var(--text-secondary); font-size: .7rem; font-weight: 700; white-space: nowrap; }
+.booking-clear-filters:hover { border-color: var(--border-glow); color: var(--text-primary); }
+.booking-management-table { border: 1px solid var(--border-color); border-radius: var(--radius-md); }
+.booking-management-table .admin-table th { padding-block: .75rem; background: var(--bg-primary); }
+.booking-management-table .admin-table td { padding-block: .85rem; }
+.booking-management-table .admin-table td:first-child strong { color: var(--accent-secondary); }
+.status-pill.cancelled { background: rgba(239, 68, 68, .1); color: var(--danger-text); }
+.status-pill.refunded { background: rgba(124, 58, 237, .12); color: #b596ff; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .demo-login .btn + .btn { margin-top: .65rem; }
 
@@ -2419,6 +2435,8 @@ input, select {
   .admin-dashboard .admin-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .admin-dashboard-grid, .admin-dashboard-lower { grid-template-columns: 1fr; }
   .admin-sales-card .donut-wrap { grid-template-columns: auto minmax(180px, 1fr); justify-items: stretch; }
+  .booking-admin-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .booking-admin-filters .admin-search { grid-column: 1 / -1; }
 }
 @media (max-width: 600px) {
   .admin-dashboard .admin-stats { grid-template-columns: 1fr; }
@@ -2441,4 +2459,8 @@ input, select {
   .movie-admin-row { grid-template-columns: 58px minmax(0, 1fr); align-items: start; }
   .movie-admin-poster { width: 58px; }
   .movie-admin-actions { grid-column: 1 / -1; flex-wrap: wrap; }
+  .booking-heading-row { align-items: stretch; }
+  .booking-heading-row .btn { justify-content: center; }
+  .booking-admin-filters { grid-template-columns: 1fr; }
+  .booking-admin-filters .admin-search { grid-column: auto; }
 }
