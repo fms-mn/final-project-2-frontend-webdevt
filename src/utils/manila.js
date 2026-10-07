@@ -37,3 +37,10 @@ export const minutesOfDay = (value) => {
   const [hours, minutes] = manilaClock(value).split(':').map(Number);
   return hours * 60 + minutes;
 };
+
+// Every day from `from` to `to`, both included, as 'YYYY-MM-DD'. Empty when `to` is before `from`.
+export function daysBetween(from, to) {
+  const days = [];
+  for (let day = from; day && day <= to && days.length < 400; day = shiftDay(day, 1)) days.push(day);
+  return days;
+}

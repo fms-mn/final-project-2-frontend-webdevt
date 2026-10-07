@@ -34,3 +34,16 @@ export const describeError = (error) => {
   const details = error.errors ? Object.values(error.errors).join(' ') : '';
   return details ? `${error.message} ${details}` : error.message || 'Something went wrong';
 };
+
+// "10:00, 13:30 18:00" -> ['10:00', '13:30', '18:00']; null when any part is not a clock time.
+export function parseTimes(text) {
+  const parts = String(text).split(/[\s,;]+/).filter(Boolean);
+  if (parts.length === 0) return null;
+  const times = [];
+  for (const part of parts) {
+    const match = /^(\d{1,2}):(\d{2})$/.exec(part);
+    if (!match || Number(match[1]) > 23 || Number(match[2]) > 59) return null;
+    times.push(`${match[1].padStart(2, '0')}:${match[2]}`);
+  }
+  return [...new Set(times)].sort();
+}

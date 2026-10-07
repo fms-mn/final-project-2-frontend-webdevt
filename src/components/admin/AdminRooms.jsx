@@ -3,6 +3,7 @@ import { api } from '../../api';
 import ActionPending from '../ActionPending';
 import { describeError } from '../../utils/adminTools';
 import Feedback from './Feedback';
+import SeatGrid from './SeatGrid';
 import useAdminAction from './useAdminAction';
 
 const blankRoom = { name: '', rows: 8, seatsPerRow: 10, isActive: true };
@@ -13,6 +14,7 @@ export default function AdminRooms() {
   const [draft, setDraft] = useState(blankRoom);
   const [confirmRemove, setConfirmRemove] = useState('');
   const [revision, setRevision] = useState(0);
+  const [blocked, setBlocked] = useState([]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -32,6 +34,14 @@ export default function AdminRooms() {
       draft._id ? 'Room updated' : 'Room added', 'save',
     );
     if (done) { setDraft(blankRoom); setRevision((value) => value + 1); }
+  };
+
+  const saveBlocked = async () => {
+    const done = await run(
+      () => api(`/auditoriums/${draft._id}/blocked-seats`, { method: 'PUT', body: { seats: blocked } }),
+      blocked.length ? `${blocked.length} seat${blocked.length === 1 ? '' : 's'} blocked in ${draft.name}` : `No seats are blocked in ${draft.name}`, 'blocked',
+    );
+    if (done) setRevision((value) => value + 1);
   };
 
   const remove = async (room) => {
@@ -54,6 +64,14 @@ export default function AdminRooms() {
           <button className="btn btn-primary btn-small" type="submit" disabled={busy} aria-busy={busyAction === 'save'}><ActionPending pending={busyAction === 'save'}>{busyAction === 'save' ? 'Saving...' : 'Save room'}</ActionPending></button>
           {draft._id && <button type="button" className="btn btn-secondary btn-small" onClick={() => { setDraft(blankRoom); clear(); }}>Cancel edit</button>}
         </div>
+        {draft._id && (
+          <div className="blocked-editor">
+            <h3>Blocked seats</h3>
+            <p className="profile-help">Seats that can never be booked in this room, for example a broken seat. Click a seat to block or unblock it, then save. A seat a customer holds at a coming showing cannot be blocked.</p>
+            <SeatGrid rows={Number(draft.rows)} seatsPerRow={Number(draft.seatsPerRow)} selected={blocked} onChange={setBlocked} disabled={busy} />
+            <div className="admin-actions"><button type="button" className="btn btn-secondary btn-small" disabled={busy} aria-busy={busyAction === 'blocked'} onClick={saveBlocked}><ActionPending pending={busyAction === 'blocked'}>{busyAction === 'blocked' ? 'Saving...' : 'Save blocked seats'}</ActionPending></button></div>
+          </div>
+        )}
       </form>
       <div className="admin-list">
         {rooms.length === 0 && <div className="admin-panel">No rooms yet. Add one to start scheduling showings.</div>}
@@ -61,10 +79,10 @@ export default function AdminRooms() {
           <div className="admin-row" key={room._id}>
             <div>
               <strong>{room.name}</strong>
-              <small>{room.rows} rows · {room.seatsPerRow} seats per row · {room.rows * room.seatsPerRow} seats · {room.isActive ? 'active' : 'inactive'}</small>
+              <small>{room.rows} rows · {room.seatsPerRow} seats per row · {room.rows * room.seatsPerRow} seats{room.blockedSeats?.length ? ` (${room.blockedSeats.length} blocked)` : ''} · {room.isActive ? 'active' : 'inactive'}</small>
             </div>
             <div className="admin-actions">
-              <button type="button" className="btn btn-secondary btn-small" onClick={() => { setDraft({ _id: room._id, name: room.name, rows: room.rows, seatsPerRow: room.seatsPerRow, isActive: room.isActive }); clear(); }}>Edit</button>
+              <button type="button" className="btn btn-secondary btn-small" onClick={() => { setDraft({ _id: room._id, name: room.name, rows: room.rows, seatsPerRow: room.seatsPerRow, isActive: room.isActive }); setBlocked(room.blockedSeats || []); clear(); }}>Edit</button>
               <button type="button" className="btn btn-danger btn-small" disabled={busy} aria-busy={busyAction === `remove:${room._id}`} onClick={() => remove(room)}>
                 <ActionPending pending={busyAction === `remove:${room._id}`}>{busyAction === `remove:${room._id}` ? 'Deleting...' : confirmRemove === room._id ? 'Confirm delete' : 'Delete'}</ActionPending>
               </button>

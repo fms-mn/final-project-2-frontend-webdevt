@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { fromInputValue, manilaClock, manilaDay, minutesOfDay, shiftDay, toInputValue } from './manila.js';
+import { daysBetween, fromInputValue, manilaClock, manilaDay, minutesOfDay, shiftDay, toInputValue } from './manila.js';
 
 test('a Manila wall-clock time round-trips through the datetime-local input', () => {
   const instant = fromInputValue('2026-10-08T16:00');
@@ -25,4 +25,10 @@ test('shiftDay moves by calendar days across month ends', () => {
 test('a bad input value gives null instead of throwing', () => {
   assert.equal(fromInputValue(''), null);
   assert.equal(fromInputValue('not a date'), null);
+});
+
+test('daysBetween lists every day, both ends included', () => {
+  assert.deepEqual(daysBetween('2026-10-30', '2026-11-02'), ['2026-10-30', '2026-10-31', '2026-11-01', '2026-11-02']);
+  assert.deepEqual(daysBetween('2026-10-30', '2026-10-30'), ['2026-10-30']);
+  assert.deepEqual(daysBetween('2026-10-31', '2026-10-30'), []);
 });

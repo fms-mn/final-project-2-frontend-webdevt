@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { csvCell, describeError, pesos, sparseLabels, toCsv, trend } from './adminTools.js';
+import { csvCell, describeError, parseTimes, pesos, sparseLabels, toCsv, trend } from './adminTools.js';
 
 test('pesos shows whole pesos plainly and centavos only when there are some', () => {
   assert.equal(pesos(40000), '₱400');
@@ -40,4 +40,13 @@ test('server validation errors are joined into one readable message', () => {
   assert.equal(describeError({ message: 'Validation failed', errors: { title: 'Required', genre: 'Too long.' } }), 'Validation failed Required Too long.');
   assert.equal(describeError({ message: 'Nope' }), 'Nope');
   assert.equal(describeError({}), 'Something went wrong');
+});
+
+test('start times can be typed with commas or spaces and come back tidy', () => {
+  assert.deepEqual(parseTimes('13:30, 9:00 21:15'), ['09:00', '13:30', '21:15']);
+  assert.deepEqual(parseTimes('10:00;10:00'), ['10:00'], 'a time is listed once');
+  assert.equal(parseTimes(''), null);
+  assert.equal(parseTimes('25:00'), null);
+  assert.equal(parseTimes('10:60'), null);
+  assert.equal(parseTimes('10am'), null);
 });
