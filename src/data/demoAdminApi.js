@@ -1,4 +1,4 @@
-import { demoMovies } from './demoMovies';
+import { demoMovies } from './demoMovies.js';
 
 const SESSION_KEY = 'filme_preview_user';
 const OFFSET = '+08:00';
