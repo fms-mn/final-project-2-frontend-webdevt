@@ -2,8 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import ActionPending from '../components/ActionPending';
+import AdminShowings from '../components/AdminShowings';
+import { AdminRooms, AdminTickets } from '../components/AdminOperations';
 
-const TABS = ['overview', 'movies', 'users'];
+const TABS = ['overview', 'movies', 'showings', 'rooms', 'users', 'tickets'];
 const STATUSES = ['draft', 'published', 'archived'];
 const RATINGS = ['G', 'PG', 'PG-13', 'R'];
 
@@ -32,7 +34,7 @@ function describe(error) {
 }
 
 export default function Admin() {
-  const [tab, setTab] = useState('overview');
+  const [tab, setTab] = useState('showings');
   const [movies, setMovies] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -119,9 +121,8 @@ export default function Admin() {
     <div className="admin-page fade-in">
       <div className="admin-heading">
         <div>
-          <span className="home-section-eyebrow">FILME operations</span>
-          <h1>Admin dashboard</h1>
-          <p>Manage the live movie catalog and customer accounts.</p>
+          <span className="home-section-eyebrow">Box office · back room</span>
+          <h1>Dashboard</h1>
         </div>
       </div>
       <div className="admin-tabs" role="tablist" aria-label="Admin sections">
@@ -155,12 +156,13 @@ export default function Admin() {
               <div className="admin-stat" key={label}><strong>{value}</strong><span>{label}</span></div>
             ))}
           </div>
-          <div className="admin-panel">
-            <h2>Coming next</h2>
-            <p>Auditoriums, showtimes and bookings are managed here once the backend for them is ready.</p>
-          </div>
+          <div className="admin-panel"><h2>Box office</h2><p>Use Showings to manage the cinema schedule, Movies for the catalog, and Users for accounts.</p></div>
         </>
       )}
+
+      {!loading && !loadError && tab === 'showings' && <AdminShowings movies={movies} />}
+      {!loading && !loadError && tab === 'rooms' && <AdminRooms />}
+      {!loading && !loadError && tab === 'tickets' && <AdminTickets />}
 
       {!loading && !loadError && tab === 'movies' && (
         <>

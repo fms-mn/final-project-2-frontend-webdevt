@@ -7,6 +7,7 @@ import { useMovies } from '../hooks/useMovies';
 export default function Movies() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState('');
+  const [genre, setGenre] = useState('all');
   const requestedStatus = searchParams.get('status');
   const filter = ['now_showing', 'coming_soon'].includes(requestedStatus)
     ? requestedStatus
@@ -14,15 +15,18 @@ export default function Movies() {
 
   const { movies: allMovies, loading, error, reload, isDemo } = useMovies();
   const query = search.trim().toLowerCase();
+  const genres = [...new Set(allMovies.flatMap(movie => movie.genre))].sort();
   const movies = allMovies.filter((movie) =>
     (filter === 'all' || movie.status === filter) &&
+    (genre === 'all' || movie.genre.includes(genre)) &&
     (!query || movie.title.toLowerCase().includes(query))
   );
 
   return (
     <div className="movies-page fade-in">
-      <h1>All Movies</h1>
-      <p>Browse our complete catalog of movies</p>
+      <span className="eyebrow">The lineup</span>
+      <h1>All movies</h1>
+      <p>Find your film, then pick a showing and seats.</p>
       {isDemo && <p className="demo-catalog-notice">Preview catalog · Sample movies are shown while the database is unavailable.</p>}
 
       <div className="search-bar">
@@ -50,6 +54,9 @@ export default function Movies() {
           </button>
         ))}
       </div>
+      {genres.length > 1 && <div className="genre-filters" aria-label="Filter by genre">
+        {['all', ...genres].map(item => <button key={item} type="button" className={`filter-btn ${genre === item ? 'active' : ''}`} aria-pressed={genre === item} onClick={() => setGenre(item)}>{item === 'all' ? 'All genres' : item}</button>)}
+      </div>}
 
       {loading ? (
         <div className="loading"><div className="spinner" /></div>
