@@ -67,6 +67,8 @@ export default function Navbar() {
       <div id="primary-navigation" className={`nav-links ${menuOpen ? 'is-open' : ''}`}>
         {user?.role === 'user' && (
           <>
+            <Link to="/home" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/home') ? 'active' : ''}`}>Home</Link>
+            <Link to="/movies" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/movies') ? 'active' : ''}`}>Movies</Link>
             <Link to="/my-bookings" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/my-bookings') ? 'active' : ''}`}>My Tickets</Link>
             <Link to="/profile" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/profile') ? 'active' : ''}`}>Profile</Link>
           </>
