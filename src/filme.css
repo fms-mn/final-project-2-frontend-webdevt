@@ -134,10 +134,12 @@ a {color:inherit}
 .opening-title:hover {text-decoration:underline;text-decoration-color:#ed3863;text-underline-offset:4px}
 .opening-details {margin-top:12px;color:var(--opening-muted);font-size:17px}
 .opening-card-footer {display:flex;align-items:end;justify-content:space-between;gap:16px;width:100%;margin-top:auto}
+.opening-calendar-action {display:flex;flex-direction:column;align-items:flex-end;gap:8px;min-width:0}
+.opening-calendar-hint {max-width:230px;color:var(--opening-muted);font-size:12px;line-height:1.35;text-align:right}
 .opening-rating {display:inline-flex;align-items:center;justify-content:center;min-width:42px;min-height:31px;padding:3px 12px;border:1px solid var(--opening-rule);border-radius:999px;color:var(--opening-text);font-size:14px;font-weight:700}
-.opening-remind {display:inline-flex;align-items:center;justify-content:center;gap:11px;min-width:175px;min-height:51px;padding:9px 18px;border:1px solid var(--opening-button);border-radius:999px;background:var(--opening-button);color:var(--opening-button-text);font-size:16px;font-weight:700;white-space:nowrap}
+.opening-remind {display:inline-flex;align-items:center;justify-content:center;gap:11px;min-width:175px;min-height:51px;padding:9px 18px;border:1px solid var(--opening-button);border-radius:999px;background:var(--opening-button);color:var(--opening-button-text);font-size:16px;font-weight:700;text-decoration:none;white-space:nowrap}
 .opening-remind svg {font-size:19px}
-.opening-remind:hover:not(:disabled) {background:#f5a9b8;border-color:#f5a9b8;color:#12163a}
+.opening-remind:hover:not(:disabled) {background:#f5a9b8;border-color:#f5a9b8;color:#12163a;text-decoration:none}
 .opening-remind:disabled {opacity:.55;cursor:not-allowed}
 .opening-section a:focus-visible,.opening-section button:focus-visible {outline:3px solid #ffcf5d;outline-offset:3px}
 .opening-empty {margin-top:32px;color:var(--opening-muted)}
@@ -406,6 +408,7 @@ a {color:inherit}
   .opening-rating {min-width:34px;min-height:28px;padding:2px 8px;font-size:12px}
   .opening-remind {min-width:0;min-height:40px;padding:7px 11px;gap:6px;font-size:12px}
   .opening-remind svg {font-size:15px}
+  .opening-calendar-hint {font-size:11px}
   .booking-experience {padding:10px 0 100px}.booking-film-panel {padding:0 18px}
   .booking-experience .movie-detail-text h1 {font-size:34px;margin:0 0 3px}
   .booking-active .movie-detail-info {display:block}

@@ -1,7 +1,16 @@
 import { manilaDay, shiftDay, today } from './manila.js';
 
 export function openingDate(movie) {
-  const release = new Date(movie.releaseDate);
+  const value = movie?.releaseDate;
+  if (!value) return null;
+  const calendarDay = typeof value === 'string' ? /^(\d{4})-(\d{2})-(\d{2})/.exec(value) : null;
+  if (calendarDay) {
+    const [, year, month, day] = calendarDay.map(Number);
+    const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+    if (month < 1 || month > 12 || day < 1 || day > daysInMonth) return null;
+    if (value.length === 10) return value;
+  }
+  const release = new Date(value);
   return Number.isNaN(release.getTime()) ? null : manilaDay(release);
 }
 
@@ -10,20 +19,15 @@ export function daysUntilOpening(day, currentDay = today()) {
   return Math.max(0, Math.round((stamp(day) - stamp(currentDay)) / 86400000));
 }
 
-const escapeCalendarText = value => String(value).replace(/\\/g, '\\\\').replace(/\r?\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
-
-export function calendarReminder(movie, day, createdAt = new Date()) {
+export function googleCalendarLink(movie, day, origin) {
   const start = day.replaceAll('-', '');
   const end = shiftDay(day, 1).replaceAll('-', '');
-  const stamp = createdAt.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-  return [
-    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//FILME//Opening Soon//EN',
-    'BEGIN:VEVENT', `UID:${encodeURIComponent(movie._id)}-${start}@filme.local`, `DTSTAMP:${stamp}`,
-    `DTSTART;VALUE=DATE:${start}`, `DTEND;VALUE=DATE:${end}`,
-    `SUMMARY:${escapeCalendarText(movie.title)} opens at FILME`,
-    `DESCRIPTION:${escapeCalendarText(`See ${movie.title} at FILME.`)}`,
-    'BEGIN:VALARM', 'TRIGGER:-P1D', 'ACTION:DISPLAY',
-    `DESCRIPTION:${escapeCalendarText(`${movie.title} opens tomorrow at FILME.`)}`,
-    'END:VALARM', 'END:VEVENT', 'END:VCALENDAR', '',
-  ].join('\r\n');
+  const movieUrl = new URL(`/movie/${encodeURIComponent(movie._id)}`, origin).href;
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: `${movie.title} releases today.`,
+    dates: `${start}/${end}`,
+    details: `Release reminder for ${movie.title} at FILME.\nMovie details: ${movieUrl}\nRelease dates may change. Check FILME for updates.`,
+  });
+  return `https://calendar.google.com/calendar/render?${params}`;
 }

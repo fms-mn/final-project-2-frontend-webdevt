@@ -1,26 +1,14 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FiBell, FiCheck } from 'react-icons/fi';
-import { calendarReminder, daysUntilOpening, openingDate } from '../utils/openingSoon';
+import { FiCalendar } from 'react-icons/fi';
+import { daysUntilOpening, googleCalendarLink, openingDate } from '../utils/openingSoon';
 
 function OpeningCard({ movie, currentDay }) {
-  const [downloaded, setDownloaded] = useState(false);
   const [posterFailed, setPosterFailed] = useState(false);
   const day = openingDate(movie);
   const date = day ? new Date(`${day}T12:00:00+08:00`) : null;
   const daysLeft = day ? daysUntilOpening(day, currentDay) : null;
-  const downloadReminder = () => {
-    const file = new Blob([calendarReminder(movie, day)], { type: 'text/calendar;charset=utf-8' });
-    const url = URL.createObjectURL(file);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `filme-${movie._id}-opening.ics`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    setDownloaded(true);
-  };
+  const calendarUrl = day ? googleCalendarLink(movie, day, window.location.origin) : null;
 
   return <article className="opening-card">
     <Link className="opening-poster" to={`/movie/${movie._id}`} aria-label={`Preview ${movie.title}`}>
@@ -31,7 +19,10 @@ function OpeningCard({ movie, currentDay }) {
       <div className="opening-date-line"><span className="opening-date-pill">{date ? date.toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', month: 'short', day: 'numeric' }).toUpperCase() : 'TBA'}</span><span className="opening-countdown">{daysLeft === null ? 'DATE TO BE ANNOUNCED' : daysLeft === 0 ? 'OPENS TODAY' : `IN ${daysLeft} ${daysLeft === 1 ? 'DAY' : 'DAYS'}`}</span></div>
       <Link className="opening-title" to={`/movie/${movie._id}`}>{movie.title}</Link>
       <p className="opening-details">{movie.genre.join(' · ')} · {movie.duration} min</p>
-      <div className="opening-card-footer"><span className="opening-rating">{movie.rating}</span><button type="button" className="opening-remind" onClick={downloadReminder} disabled={!day} aria-label={`Download a calendar reminder for ${movie.title}`} title="Download a calendar reminder">{downloaded ? <FiCheck aria-hidden="true" /> : <FiBell aria-hidden="true" />}{downloaded ? 'Downloaded' : 'Remind me'}</button></div>
+      <div className="opening-card-footer"><span className="opening-rating">{movie.rating}</span><div className="opening-calendar-action">{calendarUrl
+        ? <a className="opening-remind" href={calendarUrl} target="_blank" rel="noopener noreferrer" aria-label={`Add ${movie.title} release to Google Calendar`}><FiCalendar aria-hidden="true" />Add to Calendar</a>
+        : <button type="button" className="opening-remind" disabled><FiCalendar aria-hidden="true" />Add to Calendar</button>}
+        <span className="opening-calendar-hint">{calendarUrl ? 'Save in Google Calendar and choose your reminder.' : 'Release date to be announced.'}</span></div></div>
     </div>
   </article>;
 }
