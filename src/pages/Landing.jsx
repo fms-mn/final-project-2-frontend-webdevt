@@ -86,17 +86,17 @@ export default function Landing() {
   return <div className="landing-page">
     <header className="landing-header"><div className="landing-header-inner">
       <Link className="landing-brand" to="/" aria-label="FILME home"><img src="/filme-mark.svg" alt="" />FILME</Link>
-      <nav className="landing-header-nav" aria-label="Landing navigation"><a href="#how-it-works">How It Works</a><Link to="/login">Log In</Link><Link className="landing-button landing-button-primary landing-nav-signup" to="/register">Create Account</Link><button type="button" className="landing-theme-toggle" onClick={toggleTheme} aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}>{theme === 'light' ? <FiMoon aria-hidden="true" /> : <FiSun aria-hidden="true" />}</button></nav>
+      <nav className="landing-header-nav" aria-label="Landing navigation"><a href="#how-it-works">How It Works</a><Link to="/login">Log In</Link><button type="button" className="landing-theme-toggle" onClick={toggleTheme} aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}>{theme === 'light' ? <FiMoon aria-hidden="true" /> : <FiSun aria-hidden="true" />}</button></nav>
     </div></header>
 
     <section className="landing-hero" aria-labelledby="landing-title"><div className="landing-hero-inner">
       <h1 id="landing-title">Your next cinema experience <span className="landing-headline-ending">starts here.</span></h1>
       <p>Discover what&apos;s showing, choose your seats, and manage your tickets, all in one place.</p>
-      <div className="landing-hero-actions"><Link className="landing-button landing-button-primary" to="/register">Create Account</Link><Link className="landing-button landing-button-outline" to="/login">Log In</Link></div>
+      <div className="landing-hero-actions"><Link className="landing-button landing-button-primary" to="/register">Create Account</Link><a className="landing-button landing-button-outline" href="#how-it-works">How It Works</a></div>
       <CinemaIllustration />
     </div></section>
 
-    <section className="landing-steps-section" id="how-it-works" aria-label="How it works"><div className="landing-container"><ol className="landing-steps">
+    <section className="landing-steps-section" id="how-it-works" tabIndex={-1} aria-label="How it works"><div className="landing-container"><ol className="landing-steps">
       <li><span className="landing-step-number">1</span><div><h2>Create an account</h2><p>Sign up in a minute to get started.</p></div></li>
       <li><span className="landing-step-number">2</span><div><h2>Choose a movie and seats</h2><p>Browse what&apos;s showing and pick where you sit.</p></div></li>
       <li><span className="landing-step-number">3</span><div><h2>Receive your ticket</h2><p>Your digital ticket is ready right after you book.</p></div></li>
@@ -113,6 +113,6 @@ export default function Landing() {
 
     <section className="landing-closing" aria-labelledby="landing-closing-title"><h2 id="landing-closing-title">Ready for your next movie?</h2><p>Create your free FILME account and book in a few taps.</p><Link className="landing-button landing-button-primary" to="/register">Create Account</Link></section>
 
-    <footer className="landing-footer"><div className="landing-container landing-footer-inner"><Link className="landing-brand" to="/" aria-label="FILME home"><img src="/filme-mark.svg" alt="" />FILME</Link><nav aria-label="Footer navigation"><a href="#how-it-works">How It Works</a><Link to="/login">Log In</Link><Link to="/register">Create Account</Link></nav><small>© FILME</small></div></footer>
+    <footer className="landing-footer"><div className="landing-container landing-footer-inner"><Link className="landing-brand" to="/" aria-label="FILME home"><img src="/filme-mark.svg" alt="" />FILME</Link><nav aria-label="Footer navigation"><a href="#how-it-works">How It Works</a><Link to="/login">Log In</Link></nav><small>© FILME</small></div></footer>
   </div>;
 }
