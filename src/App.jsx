@@ -34,11 +34,11 @@ function AppContent() {
       <main className={isLanding ? 'landing-main' : 'main-content'}>
         <Routes>
           <Route path="/" element={<RootEntry />} />
-          <Route path="/home" element={<ProtectedRoute role="user"><Home /></ProtectedRoute>} />
+          <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
           <Route path="/tonight" element={<Navigate to="/home" replace />} />
           <Route path="/showtimes" element={<Navigate to="/home" replace />} />
           <Route path="/movies" element={<Movies />} />
-          <Route path="/movie/:id" element={<ProtectedRoute role="user"><MovieDetail /></ProtectedRoute>} />
+          <Route path="/movie/:id" element={<ProtectedRoute><MovieDetail /></ProtectedRoute>} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/my-bookings" element={<ProtectedRoute role="user"><MyBookings /></ProtectedRoute>} />

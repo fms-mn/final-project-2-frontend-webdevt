@@ -73,7 +73,13 @@ export default function Navbar() {
             <Link to="/profile" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/profile') ? 'active' : ''}`}>Profile</Link>
           </>
         )}
-        {user?.role === 'admin' && <Link to="/admin" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/admin') ? 'active' : ''}`}>Dashboard</Link>}
+        {user?.role === 'admin' && (
+          <>
+            <Link to="/home" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/home') ? 'active' : ''}`}>Customer View</Link>
+            <Link to="/movies" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/movies') ? 'active' : ''}`}>All movies</Link>
+            <Link to="/admin" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/admin') ? 'active' : ''}`}>Dashboard</Link>
+          </>
+        )}
         <div className="nav-mobile-account">
           {loading ? null : user ? <>
             <span className="nav-mobile-name">Hi, {user.name}</span>

@@ -126,6 +126,27 @@ export function isDemoAdminSession() {
 
 export function demoAdminRequest(path, { method = 'GET', body } = {}) {
   const pathname = path.split('?')[0];
+  if (method === 'GET' && pathname === '/movies') {
+    return Promise.resolve(structuredClone(readMovies().filter((movie) => movie.status === 'published')));
+  }
+  const publicMovieId = pathname.match(/^\/movies\/(.+)$/)?.[1];
+  if (method === 'GET' && publicMovieId) {
+    const movie = readMovies().find((item) => item._id === publicMovieId && item.status === 'published');
+    return movie ? Promise.resolve(structuredClone(movie)) : Promise.reject(Object.assign(new Error('Movie not found'), { status: 404 }));
+  }
+  if (method === 'GET' && pathname === '/showtimes') {
+    const params = new URLSearchParams(path.split('?')[1] || '');
+    const dates = params.get('date') ? [params.get('date')]
+      : Array.from({ length: 5 }, (_, index) => day(new Date(Date.now() + index * 86400000)));
+    const showings = dates.flatMap(showingsFor)
+      .filter((showing) => showing.status === 'scheduled' && showing.published && showing.movie.status === 'published'
+        && new Date(showing.startTime).getTime() > Date.now() + 15 * 60000
+        && (!params.get('movie') || showing.movie._id === params.get('movie')))
+      .sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+    const limit = Math.min(200, Math.max(1, Number(params.get('limit')) || 100));
+    const page = Math.max(1, Number(params.get('page')) || 1);
+    return Promise.resolve(structuredClone(showings.slice((page - 1) * limit, page * limit)));
+  }
   if (pathname === '/admin/movies' && method === 'GET') return Promise.resolve(structuredClone(readMovies()));
   if (pathname === '/admin/movies' && method === 'POST') {
     const movie = Object.fromEntries(movieFields.map((field) => [field, body?.[field]]));

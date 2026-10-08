@@ -102,12 +102,12 @@ export default function MovieDetail() {
   }, [previewBooking, liveSlots, selectedTime]);
 
   useEffect(() => {
-    if (previewBooking || !selectedSlot) { setLiveSeats(null); return; }
+    if (user?.role === 'admin' || previewBooking || !selectedSlot) { setLiveSeats(null); return; }
     const controller = new AbortController();
     api(`/showtimes/${selectedSlot._id}/seats`, { signal: controller.signal })
       .then(setLiveSeats).catch(error => { if (error.name !== 'AbortError') setBookingError(error.message); });
     return () => controller.abort();
-  }, [previewBooking, selectedSlot?._id]);
+  }, [user?.role, previewBooking, selectedSlot?._id]);
 
   useEffect(() => {
     const viewport = seatMapRef.current;
