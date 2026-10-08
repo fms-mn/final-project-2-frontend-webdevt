@@ -445,7 +445,23 @@ a {color:inherit}
 .cinema-feature-copy .eyebrow,.cinema-picks>.eyebrow {color:#b7c9f2;font-size:12px;letter-spacing:.24em}
 .cinema-feature-copy h1 {font-size:clamp(42px,4.1vw,62px);line-height:1.04;margin:10px 0 6px;color:#fff;overflow-wrap:anywhere}
 .cinema-feature-copy p {display:flex;align-items:center;flex-wrap:wrap;gap:7px;font-size:15px;color:#fff}
+.cinema-watch-trailer {position:absolute;z-index:4;top:17px;right:18px;min-height:36px;padding:7px 14px;border:1px solid #ffffffa8;border-radius:999px;background:#080c2dcc;color:#fff;font-size:13px;font-weight:700}
+.cinema-watch-trailer:hover {background:#ed3863;border-color:#ed3863}
 .cinema-rating {display:inline-block;border:1px solid #dbe9ff;border-radius:5px;padding:2px 8px;font-size:13px}
+.poster-carousel {min-width:0;margin-top:28px}
+.poster-carousel-top {display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+.poster-carousel-top h2 {font-size:18px;line-height:1.25;color:inherit}
+.poster-carousel-arrows {display:flex;gap:8px}
+.poster-carousel-arrows button {display:grid;place-items:center;width:36px;height:36px;border:1px solid #59658e;border-radius:50%;background:transparent;color:inherit;font-size:19px}
+.poster-carousel-arrows button:hover:not(:disabled) {border-color:#ed3863;background:#ed3863;color:#fff}
+.poster-carousel-arrows button:disabled {opacity:.35;cursor:not-allowed}
+.poster-carousel-track {display:flex;gap:14px;min-width:0;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x mandatory;scroll-behavior:smooth;scrollbar-width:thin;padding:8px 4px 12px}
+.poster-carousel-card {flex:0 0 clamp(108px,10vw,138px);min-width:0;padding:0;border:0;background:transparent;color:inherit;text-align:left;scroll-snap-align:start;cursor:pointer}
+.poster-carousel-image {display:block;width:100%;aspect-ratio:2/3;overflow:hidden;border:3px solid transparent;border-radius:12px;background:#202951;transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}
+.poster-carousel-image img {display:block;width:100%;height:100%;object-fit:cover}
+.poster-carousel-card.selected .poster-carousel-image {border-color:#ed3863;box-shadow:0 5px 15px #ed386355;transform:scale(1.045)}
+.poster-carousel-title {display:block;margin-top:8px;font-size:13px;font-weight:700;line-height:1.25;overflow-wrap:anywhere}
+.poster-carousel-empty {margin-top:25px;padding:16px;border:1px solid #59658e;border-radius:12px;color:#b7c9f2}
 .cinema-pick-times {display:flex;flex-wrap:wrap;gap:7px}
 .cinema-outline-btn {border:1px solid #eef1ff;color:#fff;background:transparent}
 .cinema-outline-btn:hover {background:#232b5b;color:#fff}
@@ -484,6 +500,9 @@ a {color:inherit}
 :root[data-theme='light'] .cinema-hero-days button {border-color:#b9c2dc;color:#525d83}
 :root[data-theme='light'] .cinema-hero-days button.active {border-color:#e94560;color:#fff}
 :root[data-theme='light'] .cinema-pick-empty {border-color:#d3d8e8}
+:root[data-theme='light'] .poster-carousel-arrows button {border-color:#b9c2dc}
+:root[data-theme='light'] .poster-carousel-image {background:#e5e8f2}
+:root[data-theme='light'] .poster-carousel-empty {border-color:#d3d8e8;color:#525d83}
 :root[data-theme='light'] .cinema-hero a:focus-visible,:root[data-theme='light'] .cinema-hero button:focus-visible {outline-color:#7c2a9a}
 @media(max-width:1050px) {
   .cinema-hero-inner {grid-template-columns:minmax(0,1fr) minmax(290px,.8fr);gap:20px}
@@ -494,6 +513,8 @@ a {color:inherit}
   .cinema-hero-inner {grid-template-columns:1fr}
   .cinema-feature-screen {height:clamp(330px,76vw,480px);border-radius:20px;box-shadow:8px 8px 0 #ed3863}
   .cinema-feature-copy h1 {font-size:clamp(37px,9vw,52px)}
+  .poster-carousel {margin-top:22px}
+  .poster-carousel-card {flex-basis:clamp(96px,27vw,124px)}
   .cinema-picks {margin-top:20px}
   .cinema-pick {min-height:130px}
 }
@@ -515,6 +536,10 @@ body,.navbar,.theme-toggle,.movie-card,.auth-card,.admin-panel,.admin-row,.booki
 }
 @media(prefers-reduced-motion:reduce) {
   body,.navbar,.theme-toggle,.calendar-card,.seat {transition:none!important}
+  .poster-carousel-track {scroll-behavior:auto}
+  .poster-carousel-image {transition:none!important}
+  .poster-carousel-card.selected .poster-carousel-image {transform:none}
+  .cinema-feature-screen .hero-trailer {transition:none}
 }
 
 .confirmation-overlay {display:grid;place-items:center;overflow:hidden;padding:20px;background:rgba(18,22,58,.72);backdrop-filter:blur(5px)}

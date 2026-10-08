@@ -5,6 +5,8 @@ import { listAuditoriums, listShowtimes } from '../data/demoSchedule';
 import { getBookedSeats } from '../data/demoBookings';
 import { useMovies } from '../hooks/useMovies';
 import HeroTrailer from '../components/HeroTrailer';
+import PosterCarousel from '../components/PosterCarousel';
+import { activeCarouselMovie, eligibleMovies } from '../utils/bookingCarousel';
 
 const dateKey = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const timeLabel = value => new Date(value).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -15,6 +17,8 @@ export default function Home() {
   const { movies, loading, error, reload, isDemo } = useMovies();
   const [dayIndex, setDayIndex] = useState(0);
   const [selectedShowingId, setSelectedShowingId] = useState(null);
+  const [activeMovieId, setActiveMovieId] = useState(null);
+  const [watchingMovieId, setWatchingMovieId] = useState(null);
   const [live, setLive] = useState({ date: '', rows: [], loading: true });
   const days = Array.from({ length: 5 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() + i); return d; });
   const day = days[dayIndex], date = dateKey(day);
@@ -40,22 +44,34 @@ export default function Home() {
   rows.sort((a,b) => a.time.localeCompare(b.time));
   const visibleRows = rows.filter(row => row.movie);
   const availableRows = visibleRows.filter(row => row.status !== 'STARTED' && row.seats > 0);
-  const featured = showing[0];
+  const carouselMovies = eligibleMovies(showing, availableRows);
+  const featured = activeCarouselMovie(carouselMovies, activeMovieId);
   const featuredRows = availableRows.filter(row => row.movie._id === featured?._id);
   const selectedShowing = featuredRows.find(row => row.id === selectedShowingId);
   const scheduleLoading = loading || (!isDemo && (live.date !== date || live.loading));
+  useEffect(() => {
+    if (!scheduleLoading && activeMovieId !== featured?._id) setActiveMovieId(featured?._id || null);
+  }, [scheduleLoading, activeMovieId, featured?._id]);
   const showingLink = row => `/movie/${row.movie._id}?date=${date}&time=${row.time}&showtime=${row.id}`;
+  const selectMovie = id => {
+    if (id === featured?._id) return;
+    setWatchingMovieId(null);
+    setSelectedShowingId(null);
+    setActiveMovieId(id);
+  };
   return <div className="tonight-page cinematic-home fade-in">
     {isDemo && <p className="demo-catalog-notice">Preview catalog · Sample movies are shown while the database is unavailable.</p>}
     <section className="cinema-hero" aria-label="Featured films and showtimes">
       <div className="cinema-hero-inner">
         <div className="cinema-feature">
           <div className="cinema-feature-screen">
-            {featured?.backdropUrl && <img className="cinema-feature-backdrop" src={featured.backdropUrl} alt="" />}
-            {featured?.trailerId && <HeroTrailer key={featured.trailerId} videoId={featured.trailerId} />}
-            <span className="cinema-feature-chip"><span aria-hidden="true">●</span> {featured?.trailerId ? 'Trailer · muted' : 'Featured film'}</span>
+            {(featured?.backdropUrl || featured?.posterUrl) && <img className="cinema-feature-backdrop" src={featured.backdropUrl || featured.posterUrl} alt="" onError={event => { event.currentTarget.onerror = null; event.currentTarget.src = '/filme-mark.svg'; }} />}
+            {featured?.trailerId && watchingMovieId === featured._id && <HeroTrailer key={featured._id} videoId={featured.trailerId} />}
+            <span className="cinema-feature-chip"><span aria-hidden="true">●</span> Featured film</span>
+            {featured?.trailerId && <button type="button" className="cinema-watch-trailer" onClick={() => setWatchingMovieId(watchingMovieId === featured._id ? null : featured._id)}>{watchingMovieId === featured._id ? 'Stop Trailer' : 'Watch Trailer'}</button>}
             <div className="cinema-feature-copy"><span className="eyebrow">On our screen now</span><h1>{featured?.title || 'Your next film'}</h1><p>{featured ? <>{featured.genre.join(' · ')} <span aria-hidden="true">·</span> {featured.duration} min <span className="cinema-rating">{featured.rating}</span></> : 'Discover what is on at FILME'}</p></div>
           </div>
+          {!scheduleLoading && (carouselMovies.length ? <PosterCarousel movies={carouselMovies} selectedId={featured?._id} onSelect={selectMovie} /> : <p className="poster-carousel-empty">No movies have available showtimes for this date. Try another day.</p>)}
         </div>
         <div className="cinema-picks">
           <h2 className="cinema-picks-heading">Choose your showtime</h2>
@@ -64,7 +80,7 @@ export default function Home() {
             <div className="cinema-pick-art"><img src={featured.posterUrl || '/filme-mark.svg'} alt="" onError={event => { event.currentTarget.onerror = null; event.currentTarget.src = '/filme-mark.svg'; }} /></div>
             <div className="cinema-pick-copy"><h3>{featured.title}</h3><p>{featured.genre.join(' · ')} · {featured.duration} min · {featured.rating}</p></div>
             {scheduleLoading ? <p className="cinema-pick-empty">Loading showtimes…</p> : featuredRows.length ? <div className="cinema-pick-times" role="group" aria-label={`Available showtimes for ${featured.title}`}>{featuredRows.map(row => <button type="button" key={row.id} className={selectedShowingId === row.id ? 'selected' : ''} aria-pressed={selectedShowingId === row.id} onClick={() => setSelectedShowingId(row.id)}>{row.time}</button>)}</div> : <p className="cinema-pick-empty">No showtimes are available for this film on the selected date. Try another day.</p>}
-          </article> : <p className="cinema-pick-empty">No films are showing yet. <Link to="/movies">Explore Movies</Link> for upcoming releases.</p>}
+          </article> : <p className="cinema-pick-empty">{scheduleLoading ? 'Loading showtimes…' : 'No movies have available showtimes on this date. Choose another date or explore upcoming films.'}</p>}
           <div className="cinema-booking-actions"><button type="button" className="btn btn-primary" disabled={!selectedShowing} onClick={() => navigate(showingLink(selectedShowing))}>Book Tickets</button><Link className="btn cinema-outline-btn" to="/movies">Explore Movies</Link></div>
         </div>
       </div>
