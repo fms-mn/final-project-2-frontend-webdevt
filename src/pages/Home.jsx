@@ -95,7 +95,7 @@ export default function Home() {
       </div>
     </section>
     <section className="board-section" id="todays-board" aria-label={`Showing ${manilaDate(date)}`}><div className="board-section-inner">
-      <div className="board-heading"><div><span className="board-eyebrow">{date === currentDay ? "TODAY'S BOARD" : 'SHOWING ON'}</span><h2>Showing {new Date(`${date}T12:00:00+08:00`).toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', weekday: 'long' })}</h2></div><p>All times are Manila time. Seats left update as people book.</p></div>
+      <div className="board-heading"><div><span className="board-eyebrow">TODAY'S BOARD</span><h2>Showing {new Date(`${date}T12:00:00+08:00`).toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', weekday: 'long' })}</h2></div><p>All times are Manila time. Seats left update as people book.</p></div>
       {scheduleLoading ? <div className="loading"><div className="spinner"/></div> : error ? <div className="showtime-board-empty"><p>{error}</p><button className="btn btn-primary" onClick={reload}>Try again</button></div> : visibleRows.length ? <>
         {boardGroups.length ? <ShowtimeBoard groups={boardGroups} dateLabel={manilaDate(date)} showingLink={showingLink} /> : <p className="showtime-board-empty">No more showtimes are available today. Review earlier sessions below or choose another date.</p>}
         {earlierGroups.length > 0 && <details className="showtime-earlier"><summary>Earlier today <span>{earlierRows.length} {earlierRows.length === 1 ? 'showing' : 'showings'}</span></summary><ShowtimeBoard groups={earlierGroups} dateLabel={manilaDate(date)} showingLink={showingLink} /></details>}

@@ -4,12 +4,13 @@ import { isBookableShowing } from '../utils/showtimesBoard';
 function FilmShowing({ row, dateLabel, showingLink }) {
   const available = isBookableShowing(row);
   const status = row.status === 'FEW SEATS' ? 'Few seats' : row.status === 'SOLD OUT' ? 'Sold out' : row.status === 'STARTED' ? 'Started' : row.status === 'CANCELLED' ? 'Cancelled' : 'Open';
-  const label = `${row.movie.title}, ${dateLabel}, ${row.time}, ${row.room}: ${available ? `${row.seats} seats left. Book now` : status}`;
+  const label = `${row.movie.title}, ${dateLabel}, ${row.time}, ${row.room}: ${available ? `${row.seats} seats left. Book` : status}`;
   return <article className="board-film-option">
-    <h4>{row.movie.title}</h4>
-    <p className="board-film-room">{row.room}</p>
-    <p className={`board-film-availability ${available ? '' : 'is-unavailable'}`}>{row.seats} {row.seats === 1 ? 'seat' : 'seats'} left · {status}</p>
-    {available ? <Link className="board-book" to={showingLink(row)} aria-label={label}>Book now</Link> : <button type="button" className="board-book" aria-label={label} disabled>{status}</button>}
+    <div className="board-film-copy"><h4>{row.movie.title}</h4>
+      <p className="board-film-room">{row.room}</p>
+      <p className={`board-film-availability ${available ? '' : 'is-unavailable'}`}><span aria-hidden="true">●</span> {status} · {row.seats} {row.seats === 1 ? 'seat' : 'seats'} left</p>
+    </div>
+    {available ? <Link className="board-book" to={showingLink(row)} aria-label={label}>Book</Link> : <button type="button" className="board-book" aria-label={label} disabled>{status}</button>}
   </article>;
 }
 
