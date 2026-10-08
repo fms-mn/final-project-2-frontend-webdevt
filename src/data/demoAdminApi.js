@@ -7,7 +7,7 @@ const day = (value = new Date()) => value.toLocaleDateString('en-CA', { timeZone
 const instant = (date, clock) => new Date(`${date}T${clock}:00${OFFSET}`).toISOString();
 const addMinutes = (value, minutes) => new Date(new Date(value).getTime() + minutes * 60000).toISOString();
 
-const movies = [
+const seedMovies = [
   ...demoMovies,
   {
     _id: 'demo-neon-harbor', title: 'Neon Harbor', synopsis: 'A courier uncovers a secret beneath a rain-soaked city.',
@@ -20,6 +20,32 @@ const movies = [
     releaseDate: new Date(Date.now() - 120 * 86400000).toISOString(), status: 'archived', trailerUrl: '',
   },
 ];
+
+const MOVIES_KEY = 'filme_preview_admin_movies_v1';
+const readMovies = () => {
+  try {
+    const saved = JSON.parse(localStorage.getItem(MOVIES_KEY));
+    if (Array.isArray(saved)) return saved;
+  } catch { /* Use the bundled catalog if storage is unavailable. */ }
+  return structuredClone(seedMovies);
+};
+const writeMovies = (catalog) => {
+  localStorage.setItem(MOVIES_KEY, JSON.stringify(catalog));
+  return structuredClone(catalog);
+};
+const movieError = (message) => { throw new Error(message); };
+const movieFields = ['title', 'synopsis', 'genre', 'rating', 'posterUrl', 'trailerUrl', 'duration', 'releaseDate', 'status'];
+const validateMovie = (movie) => {
+  for (const field of ['title', 'synopsis', 'genre', 'rating', 'posterUrl', 'releaseDate']) {
+    if (!String(movie[field] ?? '').trim()) movieError(`${field} is required.`);
+  }
+  if (!Number.isInteger(Number(movie.duration)) || Number(movie.duration) < 1) movieError('Duration must be a positive number of minutes.');
+  if (!['draft', 'published', 'archived'].includes(movie.status)) movieError('Choose a valid status.');
+  if (!/^(https?:\/\/|\/)[^\s]+$/i.test(movie.posterUrl)) movieError('Enter a valid poster URL.');
+  if (Number.isNaN(Date.parse(movie.releaseDate))) movieError('Choose a valid release date.');
+  if (movie.trailerUrl && !/^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(movie.trailerUrl)) movieError('Enter a YouTube trailer link.');
+};
+const hasUpcomingShowtime = (id) => seedMovies.slice(0, 3).some((movie) => movie._id === id);
 
 const rooms = [
   { _id: 'demo-room-1', name: 'Cinema One', rows: 8, seatsPerRow: 10, isActive: true, blockedSeats: ['C5', 'C6'] },
@@ -35,6 +61,7 @@ const users = [
 ];
 
 function showingsFor(date) {
+  const catalog = readMovies();
   const slots = [
     ['demo-show-1', 0, 0, '10:30', 40000, 12, true, 'scheduled'],
     ['demo-show-2', 1, 1, '13:30', 45000, 19, true, 'scheduled'],
@@ -42,7 +69,7 @@ function showingsFor(date) {
     ['demo-show-4', 0, 1, '20:00', 50000, 0, false, 'scheduled'],
   ];
   return slots.map(([id, movieIndex, roomIndex, clock, ticketPrice, sold, published, status]) => {
-    const movie = movies[movieIndex];
+    const movie = catalog.find((item) => item._id === seedMovies[movieIndex]._id) || seedMovies[movieIndex];
     const auditorium = rooms[roomIndex];
     const startTime = instant(date, clock);
     const totalSeats = auditorium.rows * auditorium.seatsPerRow - auditorium.blockedSeats.length;
@@ -97,10 +124,40 @@ export function isDemoAdminSession() {
   try { return JSON.parse(localStorage.getItem(SESSION_KEY))?.account === 'admin'; } catch { return false; }
 }
 
-export function demoAdminRequest(path, { method = 'GET' } = {}) {
-  if (method !== 'GET' && method !== 'HEAD') throw new Error('Demo admin is a read-only preview. Sign in with a real admin account to save changes.');
+export function demoAdminRequest(path, { method = 'GET', body } = {}) {
   const pathname = path.split('?')[0];
-  if (pathname === '/admin/movies') return Promise.resolve(structuredClone(movies));
+  if (pathname === '/admin/movies' && method === 'GET') return Promise.resolve(structuredClone(readMovies()));
+  if (pathname === '/admin/movies' && method === 'POST') {
+    const movie = Object.fromEntries(movieFields.map((field) => [field, body?.[field]]));
+    movie._id = `demo-movie-${crypto.randomUUID()}`;
+    movie.duration = Number(movie.duration);
+    validateMovie(movie);
+    writeMovies([movie, ...readMovies()]);
+    return Promise.resolve(structuredClone(movie));
+  }
+  const editId = pathname.match(/^\/admin\/movies\/(.+)$/)?.[1];
+  if (editId && method === 'PATCH') {
+    const catalog = readMovies();
+    const index = catalog.findIndex((movie) => movie._id === editId);
+    if (index < 0) movieError('Movie not found.');
+    const changes = Object.fromEntries(movieFields.filter((field) => body?.[field] !== undefined).map((field) => [field, body[field]]));
+    const next = { ...catalog[index], ...changes, duration: Number(changes.duration ?? catalog[index].duration) };
+    validateMovie(next);
+    if (hasUpcomingShowtime(editId) && catalog[index].status === 'published' && next.status !== 'published') movieError('This movie has upcoming showtimes. Cancel them before archiving or unpublishing it.');
+    if (hasUpcomingShowtime(editId) && next.duration !== catalog[index].duration) movieError('The duration cannot change while the movie has upcoming showtimes.');
+    catalog[index] = next;
+    writeMovies(catalog);
+    return Promise.resolve(structuredClone(next));
+  }
+  const removeId = pathname.match(/^\/movies\/(.+)$/)?.[1];
+  if (removeId && method === 'DELETE') {
+    if (hasUpcomingShowtime(removeId)) movieError('This movie has showtimes, so it cannot be deleted. Archive it instead.');
+    const catalog = readMovies();
+    if (!catalog.some((movie) => movie._id === removeId)) movieError('Movie not found.');
+    writeMovies(catalog.filter((movie) => movie._id !== removeId));
+    return Promise.resolve({ message: 'Movie deleted' });
+  }
+  if (method !== 'GET' && method !== 'HEAD') throw new Error('This action is not available in the demo preview.');
   if (pathname === '/users') return Promise.resolve({ users: structuredClone(users), total: users.length });
   if (pathname === '/auditoriums') return Promise.resolve(structuredClone(rooms));
   if (pathname === '/admin/settings') return Promise.resolve({ turnaroundMinutes: 15, salesCutoffMinutes: 15 });
