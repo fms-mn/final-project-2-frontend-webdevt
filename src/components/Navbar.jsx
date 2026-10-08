@@ -62,13 +62,9 @@ export default function Navbar() {
   const homePath = user?.role === 'admin' ? '/admin' : user ? '/home' : '/';
   return (
     <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
-      <Link to={homePath} className="nav-brand" aria-label="FILME home"><img src="/filme-mark.svg" alt="" />FILME</Link>
+      <Link to={['/login', '/register'].includes(location.pathname) ? '/' : homePath} className="nav-brand" aria-label="FILME home"><img src="/filme-mark.svg" alt="" />FILME</Link>
 
       <div id="primary-navigation" className={`nav-links ${menuOpen ? 'is-open' : ''}`}>
-        {user?.role !== 'admin' && <Link to={homePath} onClick={() => setMenuOpen(false)} className={`nav-link ${isActive(homePath) ? 'active' : ''}`}>Home</Link>}
-        <Link to="/movies" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/movies') ? 'active' : ''}`}>
-          Movies
-        </Link>
         {user?.role === 'user' && (
           <>
             <Link to="/my-bookings" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/my-bookings') ? 'active' : ''}`}>My Tickets</Link>
@@ -80,7 +76,7 @@ export default function Navbar() {
           {loading ? null : user ? <>
             <span className="nav-mobile-name">Hi, {user.name}</span>
             <button type="button" className="nav-logout" disabled={signingOut} aria-busy={signingOut} onClick={handleLogout}><ActionPending pending={signingOut}>{signingOut ? 'Signing out...' : 'Logout'}</ActionPending></button>
-          </> : <Link to="/login" className="nav-link" onClick={() => setMenuOpen(false)}>Sign In</Link>}
+          </> : null}
         </div>
       </div>
 
@@ -93,18 +89,14 @@ export default function Navbar() {
               <ActionPending pending={signingOut}>{signingOut ? 'Signing out...' : 'Log out'}</ActionPending>
             </button>
           </>
-        ) : (
-          <Link to="/login" className="nav-btn">
-            Sign In
-          </Link>
-        )}
+        ) : null}
         <button type="button" className="theme-toggle" onClick={toggleTheme} aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'} title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}>
           {theme === 'light' ? <FiMoon aria-hidden="true" /> : <FiSun aria-hidden="true" />}
         </button>
       </div>
-      <button type="button" className="nav-menu-toggle" aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'} aria-expanded={menuOpen} aria-controls="primary-navigation" onClick={() => setMenuOpen((open) => !open)}>
+      {user && <button type="button" className="nav-menu-toggle" aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'} aria-expanded={menuOpen} aria-controls="primary-navigation" onClick={() => setMenuOpen((open) => !open)}>
         {menuOpen ? <FiX aria-hidden="true" /> : <FiMenu aria-hidden="true" />}
-      </button>
+      </button>}
     </nav>
   );
 }

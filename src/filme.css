@@ -170,6 +170,9 @@ a {color:inherit}
 .auth-card h1 {font-size:46px}
 .auth-card .subtitle {color:#525d83}
 .auth-card a {color:#E94560}
+.auth-card .auth-back-link {display:inline-flex;align-items:center;gap:8px;min-height:44px;margin-bottom:16px;padding:8px 12px;border:1px solid var(--border-color);border-radius:8px;color:var(--text-primary);font-size:14px;font-weight:600}
+.auth-card .auth-back-link:hover {background:var(--surface-tint)}
+.auth-card .auth-back-link:focus-visible {outline:3px solid var(--chair-focus);outline-offset:3px}
 .profile-email {background:#f5f6fa;color:#12163A}
 .admin-stat {background:#fff;border:1px solid #d3d8e8;border-radius:12px}
 .admin-stat strong {font-family:'Bricolage Grotesque Variable';font-size:38px;color:#12163A}
