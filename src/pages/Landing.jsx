@@ -10,13 +10,15 @@ function CinemaIllustration() {
     <defs>
       <linearGradient id="landing-screen" x1="0" x2="1" y1="0" y2="1"><stop stopColor="#f3e6f4" /><stop offset="1" stopColor="#ffc0cb" /></linearGradient>
       <linearGradient id="landing-ticket" x1="0" x2="1" y1="0" y2="1"><stop stopColor="#faf9ff" /><stop offset="1" stopColor="#ebeaff" /></linearGradient>
+      <filter id="landing-screen-glow" x="-10%" y="-30%" width="120%" height="160%"><feGaussianBlur stdDeviation="10" /></filter>
     </defs>
     <rect width="1200" height="630" rx="24" fill="#1b2050" />
     <path d="M340 240H850L1170 630H30Z" fill="#41305e" opacity=".76" />
+    <rect x="225" y="54" width="630" height="188" rx="14" fill="#ffc0cb" opacity=".16" filter="url(#landing-screen-glow)" />
     <rect x="225" y="54" width="630" height="188" rx="14" fill="url(#landing-screen)" />
     <path d="M202 258H879" stroke="#414c9b" strokeWidth="12" strokeLinecap="round" />
-    {seats.map(index => <g key={`back-${index}`} transform={`translate(${197 + index * 150} 383)`} fill="#3b4b9b"><rect x="0" y="0" width="52" height="45" rx="17" /><rect x="-9" y="32" width="70" height="23" rx="9" /></g>)}
-    {seats.map(index => <g key={`front-${index}`} transform={`translate(${167 + index * 159} 497)`} fill="#ff657d"><rect x="0" y="0" width="72" height="57" rx="19" /><rect x="-13" y="45" width="98" height="30" rx="12" /></g>)}
+    {seats.map(index => <g key={`back-${index}`} transform={`translate(${197 + index * 150} 383)`} fill="#3b4b9b"><rect width="52" height="45" rx="13" /><path d="M9 11Q26 6 43 11" fill="none" stroke="#6b78bc" strokeWidth="2" opacity=".5" /><rect x="-4" y="34" width="60" height="21" rx="8" fill="#34428d" /><rect x="-9" y="25" width="12" height="28" rx="5" /><rect x="49" y="25" width="12" height="28" rx="5" /></g>)}
+    {seats.map(index => <g key={`front-${index}`} transform={`translate(${167 + index * 159} 497)`} fill="#ff657d"><rect width="72" height="57" rx="17" /><path d="M12 12Q36 6 60 12" fill="none" stroke="#ffb1bf" strokeWidth="3" opacity=".5" /><rect x="-7" y="46" width="86" height="26" rx="10" fill="#ed5671" /><rect x="-13" y="35" width="16" height="39" rx="6" /><rect x="69" y="35" width="16" height="39" rx="6" /></g>)}
     <g transform="translate(932 158) rotate(8 110 62)">
       <rect x="0" y="0" width="224" height="124" rx="15" fill="url(#landing-ticket)" />
       <circle cx="0" cy="62" r="13" fill="#1b2050" /><circle cx="224" cy="62" r="13" fill="#1b2050" />
@@ -30,16 +32,16 @@ function CinemaIllustration() {
 
 function SeatPreview() {
   return <div className="landing-preview landing-seat-preview" aria-hidden="true"><div className="landing-seat-grid">
-    {Array.from({ length: 32 }, (_, index) => <span key={index} className={index === 11 || index === 12 || index === 19 || index === 20 ? 'occupied' : index === 27 || index === 28 ? 'selected' : ''} />)}
+    {Array.from({ length: 24 }, (_, index) => <span key={index} className={`landing-preview-chair ${[8, 9, 14, 15].includes(index) ? 'occupied' : [20, 21].includes(index) ? 'selected' : ''}`}><i className="landing-preview-backrest" /><i className="landing-preview-cushion" /></span>)}
   </div></div>;
 }
 
 function SchedulePreview() {
-  return <div className="landing-preview landing-schedule-preview" aria-hidden="true">{['7:30 PM', '9:45 PM', 'Sat'].map((time, index) => <div className="landing-schedule-row" key={time}><span className={`landing-mini-poster poster-${index}`} /><span className="landing-schedule-line" /><span className="landing-schedule-time">{time}</span></div>)}</div>;
+  return <div className="landing-preview landing-schedule-preview" aria-hidden="true">{['7:30 PM', '9:45 PM', '11:00 AM'].map((time, index) => <div className="landing-schedule-row" key={time}><span className={`landing-mini-poster poster-${index}`} /><span className="landing-schedule-line" /><span className="landing-schedule-time">{time}</span></div>)}</div>;
 }
 
 function TicketPreview() {
-  return <div className="landing-preview landing-ticket-preview" aria-hidden="true"><div className="landing-ticket-mini"><strong>Your ticket</strong><small>Seats · Showing · Screen</small><span>Cancel booking</span><small>Eligible bookings only</small></div></div>;
+  return <div className="landing-preview landing-ticket-preview" aria-hidden="true"><div className="landing-ticket-mini"><strong>Your ticket</strong><small>Seats A4 · A5</small><small>7:30 PM · Screen 2</small><span>Cancellation eligible</span></div></div>;
 }
 
 export default function Landing() {
@@ -69,9 +71,9 @@ export default function Landing() {
     </div></header>
 
     <section className="landing-hero" aria-labelledby="landing-title"><div className="landing-hero-inner">
-      <h1 id="landing-title">Your next cinema experience starts here.</h1>
+      <h1 id="landing-title">Your next cinema experience <span className="landing-headline-ending">starts here.</span></h1>
       <p>Discover what&apos;s showing, choose your seats, and manage your tickets, all in one place.</p>
-      <div className="landing-hero-actions"><Link className="landing-button landing-button-primary" to="/register">Get Started</Link><Link className="landing-button landing-button-outline" to="/login">Log In</Link></div>
+      <div className="landing-hero-actions"><Link className="landing-button landing-button-primary" to="/register">Create Account</Link><Link className="landing-button landing-button-outline" to="/login">Log In</Link></div>
       <CinemaIllustration />
     </div></section>
 
