@@ -39,7 +39,7 @@ export default function Landing() {
   };
   return <div className="landing-page">
     <header className="landing-header landing-container">
-      <Link className="landing-brand" to="/" aria-label="FILME home"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="currentColor" /><circle cx="16" cy="16" r="8" fill="white" /><text x="16" y="20" textAnchor="middle" fontFamily="sans-serif" fontSize="11" fontWeight="900" fill="currentColor">F</text></svg><span>FILME</span></Link>
+      <Link className="landing-brand" to="/" aria-label="FILME home"><img src="/filme-mark.svg" alt="" /><span>FILME</span></Link>
       <nav className="landing-header-nav" aria-label="Landing navigation"><a href="#how-it-works">How It Works</a><Link to="/login">Log In</Link><button type="button" className="landing-theme-toggle" onClick={toggleTheme} aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}>{theme === 'light' ? <FiMoon aria-hidden="true" /> : <FiSun aria-hidden="true" />}</button></nav>
     </header>
     <section className="landing-hero landing-container" aria-labelledby="landing-title"><div className="landing-hero-copy"><h1 id="landing-title"><span>Your next</span><span><mark>cinema</mark></span><span>night starts</span><span>here.</span></h1><p>Discover what's showing, choose your seats, and manage your tickets, all in one place.</p><CreateAccount /></div><SampleTicket /></section>
