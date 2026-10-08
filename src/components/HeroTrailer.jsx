@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { FiVolume2, FiVolumeX } from 'react-icons/fi';
+import { canAutoplayTrailer } from '../utils/trailer';
 
 // Loads YouTube's player script once for the whole app.
 let apiPromise;
@@ -25,7 +26,10 @@ function loadYouTubeApi() {
   return apiPromise;
 }
 
-// Mounted only after the visitor asks to watch. The poster stays visible until playback begins.
+// A muted, looping trailer that plays behind the banner text. The poster stays visible until the
+// video is really playing, so a slow connection, a blocked script or a video that cannot be
+// embedded simply leaves the normal banner. It pauses when scrolled out of view or when the tab
+// is hidden, and a button turns the sound on.
 export default function HeroTrailer({ videoId }) {
   const shellRef = useRef(null);
   const mountRef = useRef(null);
@@ -34,6 +38,7 @@ export default function HeroTrailer({ videoId }) {
   const [muted, setMuted] = useState(true);
 
   useEffect(() => {
+    if (!canAutoplayTrailer()) return undefined;
     const shell = shellRef.current;
     const mount = mountRef.current;
     let cancelled = false;

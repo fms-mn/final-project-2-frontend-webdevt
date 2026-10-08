@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useState, useEffect } from 'react';
 import { FiMenu, FiMoon, FiSun, FiX } from 'react-icons/fi';
@@ -7,7 +7,6 @@ import ActionPending from './ActionPending';
 export default function Navbar() {
   const { user, loading, logout } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
@@ -38,7 +37,6 @@ export default function Navbar() {
     if (signingOut) return;
     setSigningOut(true);
     await logout();
-    navigate('/', { replace: true });
     setSigningOut(false);
     setMenuOpen(false);
   };
@@ -59,15 +57,20 @@ export default function Navbar() {
   }, [menuOpen]);
 
   const isActive = (path) => location.pathname === path;
-  const homePath = user?.role === 'admin' ? '/admin' : user ? '/home' : '/';
   return (
     <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
-      <Link to={['/login', '/register'].includes(location.pathname) ? '/' : homePath} className="nav-brand" aria-label="FILME home"><img src="/filme-mark.svg" alt="" />FILME</Link>
+      <Link to="/" className="nav-brand" aria-label="FILME home"><img src="/filme-mark.svg" alt="" />FILME</Link>
 
       <div id="primary-navigation" className={`nav-links ${menuOpen ? 'is-open' : ''}`}>
+        <Link to="/" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/') ? 'active' : ''}`}>
+          Tonight
+        </Link>
+        <Link to="/movies" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/movies') ? 'active' : ''}`}>
+          All movies
+        </Link>
         {user?.role === 'user' && (
           <>
-            <Link to="/my-bookings" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/my-bookings') ? 'active' : ''}`}>My Tickets</Link>
+            <Link to="/my-bookings" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/my-bookings') ? 'active' : ''}`}>My tickets</Link>
             <Link to="/profile" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/profile') ? 'active' : ''}`}>Profile</Link>
           </>
         )}
@@ -76,7 +79,7 @@ export default function Navbar() {
           {loading ? null : user ? <>
             <span className="nav-mobile-name">Hi, {user.name}</span>
             <button type="button" className="nav-logout" disabled={signingOut} aria-busy={signingOut} onClick={handleLogout}><ActionPending pending={signingOut}>{signingOut ? 'Signing out...' : 'Logout'}</ActionPending></button>
-          </> : null}
+          </> : <Link to="/login" className="nav-link" onClick={() => setMenuOpen(false)}>Sign In</Link>}
         </div>
       </div>
 
@@ -89,14 +92,18 @@ export default function Navbar() {
               <ActionPending pending={signingOut}>{signingOut ? 'Signing out...' : 'Log out'}</ActionPending>
             </button>
           </>
-        ) : null}
+        ) : (
+          <Link to="/login" className="nav-btn">
+            Sign In
+          </Link>
+        )}
         <button type="button" className="theme-toggle" onClick={toggleTheme} aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'} title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}>
           {theme === 'light' ? <FiMoon aria-hidden="true" /> : <FiSun aria-hidden="true" />}
         </button>
       </div>
-      {user && <button type="button" className="nav-menu-toggle" aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'} aria-expanded={menuOpen} aria-controls="primary-navigation" onClick={() => setMenuOpen((open) => !open)}>
+      <button type="button" className="nav-menu-toggle" aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'} aria-expanded={menuOpen} aria-controls="primary-navigation" onClick={() => setMenuOpen((open) => !open)}>
         {menuOpen ? <FiX aria-hidden="true" /> : <FiMenu aria-hidden="true" />}
-      </button>}
+      </button>
     </nav>
   );
 }
