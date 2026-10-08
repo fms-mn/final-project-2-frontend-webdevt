@@ -41,7 +41,24 @@ function SchedulePreview() {
 }
 
 function TicketPreview() {
-  return <div className="landing-preview landing-ticket-preview" aria-hidden="true"><div className="landing-ticket-mini"><strong>Your ticket</strong><small>Seats A4 · A5</small><small>7:30 PM · Screen 2</small><span>Cancellation eligible</span></div></div>;
+  return <div className="landing-preview landing-ticket-preview" aria-hidden="true">
+    <div className="landing-ticket-mini">
+      <div className="landing-ticket-banner"><span>NEXT UP · TODAY</span><span>CINEMA</span></div>
+      <div className="landing-ticket-content">
+        <strong className="landing-ticket-title">Midnight Signal</strong>
+        <div className="landing-ticket-meta">
+          <span><small>Date</small> <b>Thu, Oct 8</b></span>
+          <span><small>Time</small> <b>21:30</b></span>
+          <span><small>Seats</small> <b>A7, A6</b></span>
+        </div>
+        <div className="landing-ticket-bottom">
+          <div className="landing-ticket-code"><small>CODE</small><span>FLM-C191196E</span></div>
+          <strong className="landing-ticket-price">₱800</strong>
+          <span className="landing-ticket-cancel">Cancel ticket</span>
+        </div>
+      </div>
+    </div>
+  </div>;
 }
 
 export default function Landing() {

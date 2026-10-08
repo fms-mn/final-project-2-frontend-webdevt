@@ -57,10 +57,22 @@
 .landing-mini-poster.poster-2 {background:linear-gradient(135deg,#441b50,#ff968a)}
 .landing-schedule-line {flex:1;height:8px;border-radius:9px;background:#dbd8f0}
 .landing-schedule-time {padding:6px 9px;border-radius:12px;background:#eeecfa;color:#263263;font-size:14px;font-weight:700;white-space:nowrap}
-.landing-ticket-mini {display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:calc(100% - 40px);max-width:270px;padding:6px 0 6px 17px;border-left:6px solid #ff657d;color:#1b2050}
-.landing-ticket-mini strong {font-size:18px}
-.landing-ticket-mini small {color:#535d83;font-size:14px;line-height:1.4}
-.landing-ticket-mini span {padding:4px 8px;border:1px solid #747da0;border-radius:12px;font-size:13px;font-weight:700}
+.landing-ticket-preview {--ticket-surround:#e8ebf4;container-type:inline-size;background:var(--ticket-surround);padding:10px;pointer-events:none}
+.landing-ticket-mini {position:relative;width:100%;max-width:420px;overflow:hidden;border-radius:12px;background:#fff;color:#12163a;box-shadow:0 5px 16px #12163a1a}
+.landing-ticket-mini::before,.landing-ticket-mini::after {content:'';position:absolute;top:61%;width:14px;height:14px;border-radius:50%;background:var(--ticket-surround)}
+.landing-ticket-mini::before {left:-7px}.landing-ticket-mini::after {right:-7px}
+.landing-ticket-banner {display:flex;justify-content:space-between;gap:10px;padding:8px 13px;background:#ec405f;color:#fff;font:700 11px/1.2 'JetBrains Mono Variable',monospace;letter-spacing:.1em;white-space:nowrap}
+.landing-ticket-content {padding:10px 13px 12px}
+.landing-ticket-title {display:block;font:800 clamp(22px,7.5cqw,28px)/1.08 'Bricolage Grotesque Variable',sans-serif;letter-spacing:-.04em;white-space:nowrap}
+.landing-ticket-meta {display:flex;justify-content:space-between;gap:8px;margin-top:12px;font-size:11px;line-height:1.35;white-space:nowrap}
+.landing-ticket-meta small {color:#525d83;font-size:inherit}
+.landing-ticket-meta b {font-weight:700}
+.landing-ticket-bottom {display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;margin-top:13px;padding-top:11px;border-top:1px dashed #d3d8e8}
+.landing-ticket-code {display:flex;flex-direction:column;gap:4px;font-family:'JetBrains Mono Variable',monospace;white-space:nowrap}
+.landing-ticket-code small {color:#525d83;font-size:9px;letter-spacing:.16em}
+.landing-ticket-code span {font-size:11px;font-weight:700;letter-spacing:.01em}
+.landing-ticket-price {font:800 23px/1 'Instrument Sans Variable',sans-serif;white-space:nowrap}
+.landing-ticket-cancel {padding:7px 9px;border:1px solid #ec405f;border-radius:7px;color:#ec405f;font-size:11px;font-weight:700;white-space:nowrap}
 .landing-closing {padding:64px var(--landing-gutter);background:var(--landing-ink);color:#fff;text-align:center}
 .landing-closing h2 {margin:0;color:#fff;font:800 clamp(32px,3.5vw,43px)/1.15 'Bricolage Grotesque Variable',sans-serif}
 .landing-closing p {margin:12px 0 30px;color:#c8cdea;font-size:16px;line-height:1.6}
@@ -80,6 +92,7 @@
 :root[data-theme='dark'] .landing-steps,:root[data-theme='dark'] .landing-closing {background:#111638}
 :root[data-theme='dark'] .landing-feature:not(:last-child) {border-color:#3e466a}
 :root[data-theme='dark'] .landing-preview {background:#f8f7ff}
+:root[data-theme='dark'] .landing-ticket-preview {--ticket-surround:#293354;background:var(--ticket-surround)}
 :root[data-theme='dark'] .landing-page a:focus-visible,:root[data-theme='dark'] .landing-page button:focus-visible {outline-color:#ffcf5d}
 
 @media(max-width:900px) {
@@ -89,7 +102,18 @@
   .landing-schedule-preview {padding:14px;gap:12px}
   .landing-schedule-row {gap:6px}
   .landing-mini-poster {width:27px}
-  .landing-ticket-mini {width:calc(100% - 24px);padding-left:10px}
+}
+@container(max-width:280px) {
+  .landing-ticket-banner {padding:7px 10px;font-size:9px;letter-spacing:.06em}
+  .landing-ticket-content {padding:8px 10px}
+  .landing-ticket-title {font-size:clamp(18px,9cqw,22px)}
+  .landing-ticket-meta {gap:5px;margin-top:8px;font-size:11px}
+  .landing-ticket-meta small {display:block;margin-bottom:2px}
+  .landing-ticket-bottom {grid-template-columns:1fr auto;gap:6px;margin-top:10px;padding-top:9px}
+  .landing-ticket-code {grid-column:1/-1;flex-direction:row;align-items:baseline;gap:7px}
+  .landing-ticket-code span {font-size:10px}
+  .landing-ticket-price {font-size:20px}
+  .landing-ticket-cancel {padding:5px 8px;font-size:11px}
 }
 @media(max-width:650px) {
   .landing-header-inner {flex-wrap:wrap;justify-content:center;gap:7px;min-height:0;padding:13px 0}
