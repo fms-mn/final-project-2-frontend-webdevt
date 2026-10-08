@@ -16,6 +16,69 @@
   --a-warn-bg: #3a2f12; --a-warn-line: #b88a2e; --a-warn-text: #ffd98a;
   --a-block: #3b4a8a; --a-block-alt: #566ab0; --a-cancel: #8f9bbd;
 }
+.admin-page.admin-workspace {
+  width: 100%;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 32px clamp(20px, 3vw, 48px) 48px;
+  color: var(--a-ink);
+}
+.admin-workspace .admin-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  align-content: start;
+  column-gap: 16px;
+  height: 96px;
+  margin: 0 0 16px;
+}
+.admin-workspace .admin-heading h1 {
+  grid-column: 1;
+  grid-row: 1;
+  margin: 0 0 5px;
+  color: var(--a-ink);
+  font: 800 clamp(40px, 3.6vw, 48px)/1.08 'Instrument Sans Variable', sans-serif;
+  letter-spacing: -.035em;
+}
+.admin-workspace .admin-heading p {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  margin: 0;
+  color: var(--a-muted);
+  font-size: 14px;
+  line-height: 1.4;
+}
+:root[data-theme='dark'] .admin-workspace .admin-heading p { color: var(--a-muted); }
+.admin-workspace .admin-demo-badge {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
+  padding: 5px 10px;
+  border: 1px solid var(--a-line);
+  border-radius: 999px;
+  background: var(--a-paper);
+  color: var(--a-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+.admin-workspace .admin-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  min-height: 44px;
+  margin: 0 0 24px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+.admin-workspace .admin-tabs .filter-btn {
+  flex: none;
+  min-height: 44px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.admin-workspace .admin-tab-body { min-width: 0; }
 .admin-tab-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
 .admin-tab-body > *, .admin-grid-two > *, .showings-layout > * { min-width: 0; }
 .admin-page .admin-panel { margin: 0; }
@@ -98,6 +161,13 @@
 }
 @media (max-width: 480px) {
   .admin-form .admin-pair { grid-template-columns: 1fr; }
+}
+@media (max-width: 700px) {
+  .admin-page.admin-workspace { padding: 24px 18px 36px; }
+  .admin-workspace .admin-heading { height: 94px; margin-bottom: 12px; }
+  .admin-workspace .admin-heading h1 { font-size: clamp(30px, 8vw, 36px); }
+  .admin-workspace .admin-heading p { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; font-size: 12px; line-height: 1.45; }
+  .admin-workspace .admin-tabs .filter-btn { min-height: 44px; padding: 8px 12px; }
 }
 
 /* Schedule controls */

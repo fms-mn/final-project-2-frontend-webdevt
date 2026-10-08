@@ -14,6 +14,14 @@ const TABS = [
   ['overview', 'Overview'], ['movies', 'Movies'], ['showings', 'Showings'],
   ['bookings', 'Bookings'], ['rooms', 'Rooms'], ['users', 'Users'],
 ];
+const SUBTITLES = {
+  overview: 'Sales, showings, bookings, and activity at a glance.',
+  movies: "Manage your movie catalog, add new titles, and control what's published on your site.",
+  showings: 'Plan showtimes and manage the screening schedule.',
+  bookings: 'Review ticket bookings and their current status.',
+  rooms: 'Manage cinema rooms and seating layouts.',
+  users: 'Review customer and administrator accounts.',
+};
 
 export default function Admin() {
   const { user } = useAuth();
@@ -50,19 +58,12 @@ export default function Admin() {
   const retry = () => { setLoading(true); reload(); };
 
   return (
-    <div className={`admin-page fade-in ${tab === 'movies' ? 'movies-admin-page' : ''}`}>
-      {tab === 'movies' && <div className="movie-page-heading">
-        <h1>Movies</h1>
-        <p>Manage your movie catalog, add new titles, and control what&apos;s published on your site.</p>
-      </div>}
-      {tab !== 'movies' && <div className="admin-heading">
-        <div>
-          <span className="home-section-eyebrow">FILME box office · back room</span>
-          <h1>Admin dashboard</h1>
-          <p>{user?.isDemo ? 'Explore the dashboard with preview data. Movie changes are saved in this browser.' : 'Sales, the movie catalog, showings, bookings, rooms and accounts, all on live data.'}</p>
-        </div>
+    <div className="admin-page admin-workspace fade-in">
+      <div className="admin-heading">
+        <h1>{TABS.find(([id]) => id === tab)[1]}</h1>
+        <p>{SUBTITLES[tab]}</p>
         {user?.isDemo && <span className="admin-demo-badge">Demo preview</span>}
-      </div>}
+      </div>
       <div className="admin-tabs" role="tablist" aria-label="Admin sections">
         {TABS.map(([id, label]) => (
           <button key={id} type="button" role="tab" id={`admin-tab-${id}`} aria-selected={tab === id} aria-controls="admin-panel" className={`filter-btn ${tab === id ? 'active' : ''}`} onClick={() => setTab(id)}>{label}</button>

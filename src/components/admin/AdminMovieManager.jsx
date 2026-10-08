@@ -190,9 +190,9 @@ export default function AdminMovieManager({ movies, reload }) {
       <Feedback error={draft ? '' : error} notice={notice} />
       <div className="movie-manager-toolbar">
         <label className="movie-search"><span className="visually-hidden">Search movies</span><span aria-hidden="true">⌕</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search movies..." /></label>
-        <label><span className="visually-hidden">Filter by genre</span><select value={genre} onChange={(event) => setGenre(event.target.value)}><option value="all">All genres</option>{genres.map((name) => <option key={name}>{name}</option>)}</select></label>
-        <label><span className="visually-hidden">Filter by status</span><select value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">All statuses</option>{STATUSES.map((name) => <option key={name} value={name}>{name[0].toUpperCase() + name.slice(1)}</option>)}</select></label>
-        <label><span className="visually-hidden">Sort movies</span><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="title">Title A–Z</option></select></label>
+        <label className="movie-filter"><span className="visually-hidden">Filter by genre</span><select value={genre} onChange={(event) => setGenre(event.target.value)}><option value="all">All genres</option>{genres.map((name) => <option key={name}>{name}</option>)}</select></label>
+        <label className="movie-filter"><span className="visually-hidden">Filter by status</span><select value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">All statuses</option>{STATUSES.map((name) => <option key={name} value={name}>{name[0].toUpperCase() + name.slice(1)}</option>)}</select></label>
+        <label className="movie-sort"><span className="visually-hidden">Sort movies</span><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="title">Title A–Z</option></select></label>
         <span className="movie-count">{shown.length} {shown.length === 1 ? 'movie' : 'movies'}</span>
         <button type="button" className="movie-button movie-button-primary movie-add" onClick={() => openEditor(null)}><span aria-hidden="true">＋</span> Add Movie</button>
       </div>
