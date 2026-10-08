@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FiMoon, FiSun } from 'react-icons/fi';
+import { demoMovies } from '../data/demoMovies';
 import './Landing.css';
 
 function CinemaIllustration() {
@@ -37,7 +38,8 @@ function SeatPreview() {
 }
 
 function SchedulePreview() {
-  return <div className="landing-preview landing-schedule-preview" aria-hidden="true">{['7:30 PM', '9:45 PM', '11:00 AM'].map((time, index) => <div className="landing-schedule-row" key={time}><span className={`landing-mini-poster poster-${index}`} /><span className="landing-schedule-line" /><span className="landing-schedule-time">{time}</span></div>)}</div>;
+  const times = ['7:30 PM', '9:45 PM', '11:00 AM'];
+  return <div className="landing-preview landing-schedule-preview" aria-hidden="true">{demoMovies.slice(0, 3).map((movie, index) => <div className="landing-schedule-row" key={movie._id}><img className="landing-mini-poster" src={movie.posterUrl} alt="" /><strong className="landing-schedule-title">{movie.title}</strong><span className="landing-schedule-time">{times[index]}</span></div>)}</div>;
 }
 
 function TicketPreview() {
@@ -84,7 +86,7 @@ export default function Landing() {
   return <div className="landing-page">
     <header className="landing-header"><div className="landing-header-inner">
       <Link className="landing-brand" to="/" aria-label="FILME home"><img src="/filme-mark.svg" alt="" />FILME</Link>
-      <nav className="landing-header-nav" aria-label="Landing navigation"><a href="#how-it-works">How It Works</a><Link to="/login">Log In</Link><Link className="landing-button landing-button-primary landing-nav-signup" to="/register">Sign Up</Link><button type="button" className="landing-theme-toggle" onClick={toggleTheme} aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}>{theme === 'light' ? <FiMoon aria-hidden="true" /> : <FiSun aria-hidden="true" />}</button></nav>
+      <nav className="landing-header-nav" aria-label="Landing navigation"><a href="#how-it-works">How It Works</a><Link to="/login">Log In</Link><Link className="landing-button landing-button-primary landing-nav-signup" to="/register">Create Account</Link><button type="button" className="landing-theme-toggle" onClick={toggleTheme} aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}>{theme === 'light' ? <FiMoon aria-hidden="true" /> : <FiSun aria-hidden="true" />}</button></nav>
     </div></header>
 
     <section className="landing-hero" aria-labelledby="landing-title"><div className="landing-hero-inner">
@@ -105,12 +107,12 @@ export default function Landing() {
       <div className="landing-feature-grid">
         <article className="landing-feature"><SeatPreview /><h3>Choose your seats</h3><p>See the screen layout and pick the seats you want.</p></article>
         <article className="landing-feature"><SchedulePreview /><h3>Discover movies and schedules</h3><p>Find what&apos;s playing and when.</p></article>
-        <article className="landing-feature"><TicketPreview /><h3>Manage tickets and eligible cancellations</h3><p>View your tickets and cancel when a booking is eligible.</p></article>
+        <article className="landing-feature"><TicketPreview /><h3>Manage your tickets</h3><p>View your tickets and cancel bookings when eligible.</p></article>
       </div>
     </div></section>
 
     <section className="landing-closing" aria-labelledby="landing-closing-title"><h2 id="landing-closing-title">Ready for your next movie?</h2><p>Create your free FILME account and book in a few taps.</p><Link className="landing-button landing-button-primary" to="/register">Create Account</Link></section>
 
-    <footer className="landing-footer"><div className="landing-container landing-footer-inner"><Link className="landing-brand" to="/" aria-label="FILME home"><img src="/filme-mark.svg" alt="" />FILME</Link><nav aria-label="Footer navigation"><a href="#how-it-works">How It Works</a><Link to="/login">Log In</Link><Link to="/register">Sign Up</Link></nav><small>© FILME</small></div></footer>
+    <footer className="landing-footer"><div className="landing-container landing-footer-inner"><Link className="landing-brand" to="/" aria-label="FILME home"><img src="/filme-mark.svg" alt="" />FILME</Link><nav aria-label="Footer navigation"><a href="#how-it-works">How It Works</a><Link to="/login">Log In</Link><Link to="/register">Create Account</Link></nav><small>© FILME</small></div></footer>
   </div>;
 }
