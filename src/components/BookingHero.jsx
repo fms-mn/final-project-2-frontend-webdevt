@@ -126,6 +126,7 @@ export default function BookingHero({ movies, showings, dateOptions, selectedDat
           : movie ? <>
             <h1>{movie.title}</h1>
             <p className="cinema-meta">{[...movie.genre, movie.rating, runtime(movie.duration)].filter(Boolean).join(' · ')}</p>
+            {!trailerAvailable && <p className="cinema-no-trailer" role="status">{failedTrailerId === videoId && videoId ? 'Trailer could not be played.' : 'Trailer unavailable'}</p>}
             <div className="cinema-showing-label">Showtimes <span>·</span> {selectedDate === today() ? 'Today' : shortDay(selectedDate)}</div>
             <div className="cinema-showtimes" role="group" aria-label={'Showtimes for ' + movie.title + ' on ' + dayHeading(selectedDate)}>
               {slots.map((slot) => {
@@ -135,7 +136,7 @@ export default function BookingHero({ movies, showings, dateOptions, selectedDat
             </div>
             <p className="cinema-hint">{selectedSlot ? manilaClock(selectedSlot.startTime) + ' selected · choose your seats next.' : 'Pick a showtime to enable booking.'}</p>
             <div className="cinema-actions">
-              {trailerAvailable ? <button type="button" className="cinema-action cinema-play" onClick={() => setPlaying(true)}><FiPlay aria-hidden="true" /> Play trailer</button> : <span className="cinema-no-trailer" role="status">{failedTrailerId === videoId && videoId ? 'Trailer could not be played.' : 'Trailer unavailable.'}</span>}
+              {trailerAvailable && <button type="button" className="cinema-action cinema-play" onClick={() => setPlaying(true)}><FiPlay aria-hidden="true" /> Play trailer</button>}
               {bookingLink && user?.role !== 'admin'
                 ? <Link className="cinema-action cinema-book" to={bookingLink}>Book tickets</Link>
                 : <button type="button" className="cinema-action cinema-book" disabled>Book tickets</button>}
