@@ -18,7 +18,6 @@ export default function Home() {
   const day = days[dayIndex], date = dateKey(day);
   const showing = movies.filter(m => m.status === 'now_showing');
   const coming = movies.filter(m => m.status === 'coming_soon');
-  const featured = showing[0];
   useEffect(() => {
     let active = true;
     api(`/showtimes?date=${date}&limit=200`).then(rows => { if (active) setLive(rows); }).catch(() => { if (active) setLive([]); });
@@ -27,25 +26,37 @@ export default function Home() {
   const rows = live.length ? live.map(s => ({
     id: s._id, movie: movies.find(m => m._id === (s.movie?._id || s.movie)),
     time: timeLabel(s.startTime), room: s.auditorium?.name || 'Cinema',
-    seats: s.remainingSeats ?? 0, status: s.remainingSeats > 0 && s.remainingSeats <= 10 ? 'FEW SEATS' : 'OPEN',
+    seats: s.remainingSeats ?? 0, status: new Date(s.startTime) <= new Date() ? 'STARTED' : s.remainingSeats > 0 && s.remainingSeats <= 10 ? 'FEW SEATS' : 'OPEN',
   })).filter(s => s.movie) : isDemo ? showing.flatMap(m => listShowtimes(m._id).map(s => ({
     id: s.id, movie: m, time: s.time, room: listAuditoriums().find(room => room.id === s.auditoriumId)?.name || 'Cinema',
     seats: 80 - getBookedSeats(m._id, date, s.time).length,
     status: new Date(`${date}T${s.time}:00`) <= new Date() ? 'STARTED' : 'OPEN',
   }))).sort((a,b) => a.time.localeCompare(b.time)) : [];
-  return <div className="tonight-page fade-in">
+  const availableRows = rows.filter(row => row.status !== 'STARTED' && row.seats > 0);
+  const heroMovies = showing.filter(movie => availableRows.some(row => row.movie._id === movie._id)).slice(0, 4);
+  const featured = heroMovies[0] || showing[0];
+  const featuredRows = availableRows.filter(row => row.movie._id === featured?._id).slice(0, 4);
+  const showingLink = row => `/movie/${row.movie._id}?date=${date}&time=${row.time}&showtime=${row.id}`;
+  return <div className="tonight-page cinematic-home fade-in">
     {isDemo && <p className="demo-catalog-notice">Preview catalog · Sample movies are shown while the database is unavailable.</p>}
-    <section className="tonight-hero">
-      <div className="tonight-intro">
-        <span className="eyebrow">{day.toLocaleDateString('en-PH',{weekday:'long',day:'numeric',month:'long'})} · {rows.filter(r => r.status !== 'STARTED' && r.seats).length} showings open</span>
-        <h1>Tonight at<br/>FILME</h1>
-        <p>Pick a film, choose your own seats, and keep the ticket. Everything on today's board can be booked in a minute.</p>
-        <div className="hero-days">{days.map((d,i) => <button type="button" key={dateKey(d)} className={dayIndex === i ? 'active' : ''} aria-pressed={dayIndex === i} onClick={() => setDayIndex(i)}><span>{d.toLocaleDateString('en-PH',{weekday:'short'})}</span><strong>{d.getDate()}</strong></button>)}</div>
-        <a href="#todays-board" className="btn btn-dark">See today's board ↓</a>
-      </div>
-      <div className="featured-film">
-        <div className="filmstrip-frame"><div className="filmstrip-art">{featured?.trailerId && <HeroTrailer key={featured.trailerId} videoId={featured.trailerId}/>}<span className="trailer-chip">● Trailer · muted</span>{!featured?.trailerId && <span className="sound-chip" aria-hidden="true">◀×</span>}</div></div>
-        <div className="featured-caption"><div><span className="eyebrow">On our screen now</span><h2>{featured?.title || 'Your next film'}</h2><p>{featured ? `${featured.genre.join(' · ')} · ${featured.duration} min · ${featured.rating}` : 'Discover what is on at FILME'}</p></div>{featured && <Link className="btn btn-primary" to={`/movie/${featured._id}`}>Book {featured.title}</Link>}</div>
+    <section className="cinema-hero" aria-label="Featured films and showtimes">
+      <div className="cinema-hero-inner">
+        <div className="cinema-feature">
+          <div className="cinema-feature-screen">
+            {featured?.backdropUrl && <img className="cinema-feature-backdrop" src={featured.backdropUrl} alt="" />}
+            {featured?.trailerId && <HeroTrailer key={featured.trailerId} videoId={featured.trailerId} />}
+            <span className="cinema-feature-chip"><span aria-hidden="true">●</span> {featured?.trailerId ? 'Trailer · muted' : 'Featured film'}</span>
+            <div className="cinema-feature-copy"><span className="eyebrow">On our screen now</span><h1>{featured?.title || 'Your next film'}</h1><p>{featured ? <>{featured.genre.join(' · ')} <span aria-hidden="true">·</span> {featured.duration} min <span className="cinema-rating">{featured.rating}</span></> : 'Discover what is on at FILME'}</p></div>
+          </div>
+          <div className="cinema-feature-footer">
+            <div className="cinema-feature-times" aria-label="Featured film showtimes">{featuredRows.map(row => <Link key={row.id} to={showingLink(row)} aria-label={`${featured.title} at ${row.time}`}>{row.time}</Link>)}</div>
+            <div className="cinema-feature-actions"><Link className="btn cinema-outline-btn" to="/movies">Browse all movies</Link>{featured && <Link className="btn btn-primary" to={featuredRows.length ? showingLink(featuredRows[0]) : `/movie/${featured._id}`}>{featuredRows.length ? 'Book tickets' : 'View film'}</Link>}</div>
+          </div>
+        </div>
+        <div className="cinema-picks"><span className="eyebrow">Pick a film · {dayIndex === 0 ? 'Tonight' : day.toLocaleDateString('en-PH',{weekday:'long'})}</span>
+          {heroMovies.length ? <div className="cinema-pick-list">{heroMovies.map((movie, index) => { const slots = availableRows.filter(row => row.movie._id === movie._id).slice(0, 4); return <article className="cinema-pick" key={movie._id}><div className={`cinema-pick-art cinema-pick-art-${index + 1}`}><img src={movie.posterUrl || '/filme-mark.svg'} alt="" onError={event => { event.currentTarget.onerror = null; event.currentTarget.src = '/filme-mark.svg'; }} /></div><div className="cinema-pick-copy"><Link to={`/movie/${movie._id}`}><h2>{movie.title}</h2></Link><p>{movie.genre.join(' · ')} · {movie.duration} min · {movie.rating}</p></div><div className="cinema-pick-times">{slots.map(row => <Link key={row.id} to={showingLink(row)} aria-label={`${movie.title} at ${row.time}`}>{row.time}</Link>)}</div></article>; })}</div> : <p className="cinema-pick-empty">No upcoming showtimes today. Choose another date below.</p>}
+          <div className="cinema-hero-days" role="group" aria-label="Choose showing date">{days.map((d,i) => <button type="button" key={dateKey(d)} className={dayIndex === i ? 'active' : ''} aria-pressed={dayIndex === i} onClick={() => setDayIndex(i)}>{d.toLocaleDateString('en-PH',{weekday:'short',day:'numeric'})}</button>)}</div>
+        </div>
       </div>
     </section>
     <section className="board-section" id="todays-board"><div className="section-title"><div><span className="eyebrow">Today's board</span><h2>Showing {dayIndex === 0 ? 'today' : day.toLocaleDateString('en-PH',{weekday:'long'})}</h2></div><p>All times are Manila time. Seats left update as people book.</p></div>
