@@ -97,17 +97,17 @@ export default function Landing() {
     </div></section>
 
     <section className="landing-steps-section" id="how-it-works" tabIndex={-1} aria-label="How it works"><div className="landing-container"><ol className="landing-steps">
-      <li><span className="landing-step-number">1</span><div><h2>Create an account</h2><p>Sign up in a minute to get started.</p></div></li>
-      <li><span className="landing-step-number">2</span><div><h2>Choose a movie and seats</h2><p>Browse what&apos;s showing and pick where you sit.</p></div></li>
-      <li><span className="landing-step-number">3</span><div><h2>Receive your ticket</h2><p>Your digital ticket is ready right after you book.</p></div></li>
+      <li><span className="landing-step-number">1</span><div className="landing-step-text"><h2>Create an account</h2><p>Sign up in a minute to get started.</p></div></li>
+      <li><span className="landing-step-number">2</span><div className="landing-step-text"><h2>Choose a movie and seats</h2><p>Browse what&apos;s showing and pick where you sit.</p></div></li>
+      <li><span className="landing-step-number">3</span><div className="landing-step-text"><h2>Receive your ticket</h2><p>Your digital ticket is ready right after you book.</p></div></li>
     </ol></div></section>
 
     <section className="landing-features" aria-labelledby="landing-features-title"><div className="landing-container">
       <div className="landing-features-heading"><h2 id="landing-features-title">Built around how you watch</h2><p>Seats, schedules, and tickets, all in one place.</p></div>
       <div className="landing-feature-grid">
-        <article className="landing-feature"><SeatPreview /><h3>Choose your seats</h3><p>See the screen layout and pick the seats you want.</p></article>
-        <article className="landing-feature"><SchedulePreview /><h3>Discover movies and schedules</h3><p>Find what&apos;s playing and when.</p></article>
-        <article className="landing-feature"><TicketPreview /><h3>Manage your tickets</h3><p>View your tickets and cancel bookings when eligible.</p></article>
+        <article className="landing-feature"><SeatPreview /><div className="landing-feature-text"><h3>Choose your seats</h3><p>See the screen layout and pick the seats you want.</p></div></article>
+        <article className="landing-feature"><SchedulePreview /><div className="landing-feature-text"><h3>Discover movies and schedules</h3><p>Find what&apos;s playing and when.</p></div></article>
+        <article className="landing-feature"><TicketPreview /><div className="landing-feature-text"><h3>Manage your tickets</h3><p>View your tickets and cancel bookings when eligible.</p></div></article>
       </div>
     </div></section>
 
