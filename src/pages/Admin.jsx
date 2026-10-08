@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api';
 import AdminBookings from '../components/admin/AdminBookings';
-import AdminMovies from '../components/admin/AdminMovies';
+import AdminMovieManager from '../components/admin/AdminMovieManager';
 import AdminOverview from '../components/admin/AdminOverview';
 import AdminRooms from '../components/admin/AdminRooms';
 import AdminShowings from '../components/admin/AdminShowings';
@@ -14,6 +14,14 @@ const TABS = [
   ['overview', 'Overview'], ['movies', 'Movies'], ['showings', 'Showings'],
   ['bookings', 'Bookings'], ['rooms', 'Rooms'], ['users', 'Users'],
 ];
+const SUBTITLES = {
+  overview: 'Sales, showings, bookings, and activity at a glance.',
+  movies: "Manage your movie catalog, add new titles, and control what's published on your site.",
+  showings: 'Plan showtimes and manage the screening schedule.',
+  bookings: 'Review ticket bookings and their current status.',
+  rooms: 'Manage cinema rooms and seating layouts.',
+  users: 'Review customer and administrator accounts.',
+};
 
 export default function Admin() {
   const { user } = useAuth();
@@ -50,13 +58,10 @@ export default function Admin() {
   const retry = () => { setLoading(true); reload(); };
 
   return (
-    <div className="admin-page fade-in">
+    <div className="admin-page admin-workspace fade-in">
       <div className="admin-heading">
-        <div>
-          <span className="home-section-eyebrow">FILME box office · back room</span>
-          <h1>Admin dashboard</h1>
-          <p>{user?.isDemo ? 'Explore the complete dashboard with realistic preview data. Changes are disabled in demo mode.' : 'Sales, the movie catalog, showings, bookings, rooms and accounts, all on live data.'}</p>
-        </div>
+        <h1>{TABS.find(([id]) => id === tab)[1]}</h1>
+        <p>{SUBTITLES[tab]}</p>
         {user?.isDemo && <span className="admin-demo-badge">Demo preview</span>}
       </div>
       <div className="admin-tabs" role="tablist" aria-label="Admin sections">
@@ -76,7 +81,7 @@ export default function Admin() {
       {!loading && !loadError && (
         <div id="admin-panel" role="tabpanel" aria-labelledby={`admin-tab-${tab}`} className="admin-tab-body">
           {tab === 'overview' && <AdminOverview movies={movies} users={users} />}
-          {tab === 'movies' && <AdminMovies movies={movies} reload={reload} />}
+          {tab === 'movies' && <AdminMovieManager movies={movies} reload={reload} />}
           {tab === 'showings' && <AdminShowings movies={movies} />}
           {tab === 'bookings' && <AdminBookings />}
           {tab === 'rooms' && <AdminRooms />}
