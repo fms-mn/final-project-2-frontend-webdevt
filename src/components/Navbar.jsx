@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useState, useEffect } from 'react';
 import { FiMenu, FiMoon, FiSun, FiX } from 'react-icons/fi';
@@ -7,6 +7,7 @@ import ActionPending from './ActionPending';
 export default function Navbar() {
   const { user, loading, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
@@ -37,6 +38,7 @@ export default function Navbar() {
     if (signingOut) return;
     setSigningOut(true);
     await logout();
+    navigate('/', { replace: true });
     setSigningOut(false);
     setMenuOpen(false);
   };
@@ -57,14 +59,13 @@ export default function Navbar() {
   }, [menuOpen]);
 
   const isActive = (path) => location.pathname === path;
+  const homePath = user?.role === 'admin' ? '/admin' : user ? '/home' : '/';
   return (
     <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
-      <Link to="/" className="nav-brand" aria-label="FILME home"><img src="/filme-mark.svg" alt="" />FILME</Link>
+      <Link to={homePath} className="nav-brand" aria-label="FILME home"><img src="/filme-mark.svg" alt="" />FILME</Link>
 
       <div id="primary-navigation" className={`nav-links ${menuOpen ? 'is-open' : ''}`}>
-        <Link to="/" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/') ? 'active' : ''}`}>
-          Home
-        </Link>
+        {user?.role !== 'admin' && <Link to={homePath} onClick={() => setMenuOpen(false)} className={`nav-link ${isActive(homePath) ? 'active' : ''}`}>Home</Link>}
         <Link to="/movies" onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/movies') ? 'active' : ''}`}>
           Movies
         </Link>

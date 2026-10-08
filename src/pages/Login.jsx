@@ -16,7 +16,7 @@ export default function Login() {
     const destination = location.state?.from;
     navigate(destination && (signedInUser.role === 'admin' ? destination.pathname.startsWith('/admin') : !destination.pathname.startsWith('/admin'))
       ? `${destination.pathname}${destination.search}${destination.hash}`
-      : signedInUser.role === 'admin' ? '/admin' : '/', {
+      : signedInUser.role === 'admin' ? '/admin' : '/home', {
       replace: true,
     });
   };
