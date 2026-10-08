@@ -7,6 +7,7 @@ import { useMovies } from '../hooks/useMovies';
 import HeroTrailer from '../components/HeroTrailer';
 import PosterCarousel from '../components/PosterCarousel';
 import ShowtimeBoard from '../components/ShowtimeBoard';
+import OpeningSoon from '../components/OpeningSoon';
 import { activeCarouselMovie, eligibleMovies } from '../utils/bookingCarousel';
 import { groupShowtimesByTime, isBookableShowing, showingStatus } from '../utils/showtimesBoard';
 import { manilaClock, shiftDay, today } from '../utils/manila';
@@ -102,7 +103,7 @@ export default function Home() {
       </> : <div className="showtime-board-empty">No showings are scheduled for this day. <Link to="/movies">Explore Movies</Link></div>}
     </div>
     </section>
-    <section className="opening-section"><div className="section-title"><div><span className="eyebrow">Mark your calendar</span><h2>Opening soon</h2></div></div><div className="opening-grid">{coming.length ? coming.map(m => { const d = new Date(m.releaseDate); return <Link className="calendar-card" to={`/movie/${m._id}`} key={m._id}><span className="calendar-icon"><small>{d.toLocaleDateString('en-PH',{month:'short'})}</small><strong>{d.getDate()}</strong></span><span className="calendar-copy"><strong>{m.title}</strong><small>{m.genre.join(' · ')} · {m.duration} min</small></span><span className="rating-pill">{m.rating}</span></Link>; }) : <p>More films are on their way.</p>}</div></section>
+    <OpeningSoon movies={coming} currentDay={currentDay} />
     <section className="how-strip"><div><small>Step 1</small><h3>Pick a showing</h3><p>Find your film on the board and see how many seats are left.</p></div><div><small>Step 2</small><h3>Choose your seats</h3><p>The seat chart shows what is free, taken and yours.</p></div><div><small>Step 3</small><h3>Show your code</h3><p>Your ticket is kept in My tickets.</p></div></section>
   </div>;
 }
