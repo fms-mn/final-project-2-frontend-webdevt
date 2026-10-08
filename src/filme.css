@@ -88,21 +88,30 @@ a {color:inherit}
 .section-title {display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:16px}
 .section-title h2 {font-size:clamp(32px,3.5vw,54px);line-height:1.05;margin-top:5px}
 .section-title p {font-size:12px;color:#525d83}
-.board-section {margin-top:50px;scroll-margin-top:95px}
-.departure-board {padding:12px 8px;background:#12163A;color:#fff;border-radius:16px;overflow-x:auto}
-.board-head,.board-row {display:grid;grid-template-columns:125px minmax(170px,2fr) minmax(90px,1fr) 90px 100px 65px;align-items:center;gap:8px;min-width:680px;padding:7px 16px}
-.board-head {font-family:'JetBrains Mono Variable';font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#9ca5c4}
-.board-row {min-height:45px;border-radius:8px;font-family:'JetBrains Mono Variable';font-size:12px}
-.board-row:nth-child(5) {background:#202651}
-.board-row>strong {font-size:14px;letter-spacing:.04em;text-transform:uppercase}
-.board-row>span:nth-child(3) {color:#b8c0da}
-.board-time,.seat-digits {display:inline-flex;gap:3px;align-items:center;font-family:'JetBrains Mono Variable';color:#FFC93C}
-.board-time b,.seat-digits b {display:grid;place-items:center;min-width:17px;height:23px;border-radius:3px;background:#202651;font-weight:600}
-.board-time em {font-style:normal;margin:0 1px}
-.board-status {font-size:10px;font-weight:700;letter-spacing:.06em}
-.board-status.open {color:#59d0a5}.board-status.closed {color:#E94560}
-.board-status.few {color:#FFC93C}
-.board-row .btn-small {padding:6px 10px;font-family:'Instrument Sans Variable';font-size:11px;justify-self:start}
+.board-section {--board-bg:#0e1130;--board-text:#fff;--board-muted:#b7c9f2;--board-rule:#303760;--board-amber:#ffbd39;--board-coral:#ff496d;width:100vw;margin:50px 0 0 calc(50% - 50vw);border:1px solid var(--board-rule);box-sizing:border-box;background:var(--board-bg);color:var(--board-text);scroll-margin-top:95px}
+.board-section-inner {max-width:1440px;margin:auto;padding:54px clamp(24px,6vw,85px) 16px}
+.board-heading {display:flex;align-items:end;justify-content:space-between;gap:30px;padding-bottom:38px}
+.board-eyebrow {display:block;margin-bottom:14px;color:#ff657d;font:700 13px 'JetBrains Mono Variable',monospace;letter-spacing:.24em}
+.board-heading h2 {color:var(--board-text);font-size:clamp(42px,4.4vw,64px);line-height:1.05;letter-spacing:-.06em}
+.board-heading p {margin-bottom:3px;color:var(--board-muted);font-size:14px}
+.board-time-group {display:grid;grid-template-columns:minmax(230px,350px) minmax(0,1fr);gap:30px;min-width:0;padding:35px 0 36px;border-top:1px solid var(--board-rule)}
+.board-digital-time {margin:22px 0 0;color:var(--board-amber);font:700 clamp(64px,6.5vw,98px)/1 'JetBrains Mono Variable',monospace;letter-spacing:-.07em;white-space:nowrap}
+.board-film-list {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px 22px;min-width:0}
+.board-film-option {min-width:0}
+.board-film-option h4 {color:var(--board-text);font:700 clamp(22px,2.1vw,30px)/1.12 'Bricolage Grotesque Variable',sans-serif;letter-spacing:-.045em;overflow-wrap:anywhere}
+.board-film-room {margin-top:8px;color:var(--board-muted);font:600 12px 'JetBrains Mono Variable',monospace;text-transform:uppercase;letter-spacing:.04em}
+.board-film-availability {margin:14px 0 16px;color:var(--board-amber);font-size:14px;font-weight:700}
+.board-film-availability.is-unavailable {color:var(--board-muted)}
+.board-book {display:inline-flex;align-items:center;justify-content:center;min-width:120px;min-height:48px;padding:11px 18px;border:1px solid var(--board-coral);border-radius:10px;background:var(--board-coral);color:#10132f;font-size:14px;font-weight:800;text-decoration:none}
+.board-book:hover:not(:disabled) {background:#ff7590;border-color:#ff7590;color:#10132f}
+.board-book:focus-visible,.showtime-earlier summary:focus-visible,.board-section a:focus-visible {outline:3px solid var(--board-amber);outline-offset:3px}
+.board-book:disabled {background:transparent;border-color:var(--board-rule);color:var(--board-muted);cursor:not-allowed}
+.showtime-board-empty {padding:28px 0;border-top:1px solid var(--board-rule);color:var(--board-muted)}
+.showtime-earlier {padding:20px 0;border-top:1px solid var(--board-rule)}
+.showtime-earlier summary {width:max-content;max-width:100%;padding:9px 0;color:var(--board-text);font-weight:700;cursor:pointer}
+.showtime-earlier summary span {margin-left:8px;color:var(--board-muted);font-size:12px;font-weight:400}
+.showtime-earlier .board-time-group:first-child {border-top:0}
+:root[data-theme='light'] .board-section {--board-bg:#f1f3fa;--board-text:#12163a;--board-muted:#525d83;--board-rule:#cbd2e6;--board-amber:#916100;--board-coral:#f54d70}
 .opening-section {margin-top:64px}
 .opening-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .calendar-card {min-height:86px;display:flex;align-items:center;gap:15px;padding:10px;background:#fff;border:1px solid #12163A;border-radius:13px}
@@ -293,6 +302,10 @@ a {color:inherit}
   .tonight-hero {grid-template-columns:1fr;gap:24px}.tonight-intro h1 {font-size:clamp(55px,12vw,80px)}
   .tonight-intro>p,.hero-days,.tonight-intro>.btn {display:none}
   .board-section {margin-top:32px}.opening-grid {grid-template-columns:1fr}
+  .board-section-inner {padding:42px 28px 12px}
+  .board-time-group {grid-template-columns:minmax(170px,220px) minmax(0,1fr);gap:24px}
+  .board-film-list {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .board-digital-time {font-size:66px}
   .how-strip {grid-template-columns:1fr}.how-strip>div {border-right:0;border-bottom:1px dashed #d3d8e8}
   .booking-experience .booking-section {display:block}.booking-schedule,.booking-seat-panel {margin-bottom:20px}
   .booking-summary {position:static;margin:20px 0!important}
@@ -341,10 +354,18 @@ a {color:inherit}
   .tonight-page {padding:25px 18px 45px}.tonight-intro h1 {margin:18px 0 23px;font-size:60px}
   .filmstrip-frame {height:260px}.featured-caption h2 {font-size:27px}
   .featured-caption .btn {padding:10px 16px}
-  .section-title h2 {font-size:36px}.section-title p,.board-head,.board-row>span:nth-child(3),.board-row>.seat-digits,.board-row>.btn {display:none}
-  .departure-board {padding:12px}.board-row {min-width:0;grid-template-columns:115px 1fr 70px;min-height:48px;padding:8px 6px}
-  .board-row>strong {font-size:12px}.board-status {justify-self:end;font-size:9px}
-  .board-row>span:last-child {display:none}
+  .section-title h2 {font-size:36px}.section-title>p {display:none}
+  .board-section-inner {padding:32px 20px 8px}
+  .board-heading {display:block;padding-bottom:25px}
+  .board-heading h2 {font-size:clamp(38px,10vw,50px)}
+  .board-heading p {margin-top:12px;font-size:12px}
+  .board-time-group {display:block;padding:28px 0}
+  .board-digital-time {margin:0 0 24px;font-size:clamp(58px,15vw,76px)}
+  .board-film-list {gap:26px 18px}
+  .board-film-option h4 {font-size:22px}
+  .board-film-room {font-size:10px}
+  .board-film-availability {font-size:12px}
+  .board-book {min-width:112px;min-height:44px}
   .opening-section,.how-strip {margin-top:40px}
   .booking-experience {padding:10px 0 100px}.booking-film-panel {padding:0 18px}
   .booking-experience .movie-detail-text h1 {font-size:34px;margin:0 0 3px}
@@ -488,7 +509,6 @@ a {color:inherit}
 .cinema-booking-actions .btn {display:inline-flex;align-items:center;justify-content:center;flex:1 1 150px;min-height:52px;padding:11px 16px;font-size:15px;text-align:center}
 .cinema-booking-actions .btn-primary {background:#ed3863;color:#fff}
 .cinema-booking-actions .btn-primary:disabled {opacity:.5;cursor:not-allowed}
-.board-selected-date {display:block;margin-top:6px;font-size:15px!important;color:var(--text-secondary)!important}
 :root[data-theme='light'] .cinema-hero {background:var(--bg-primary);color:#12163a}
 :root[data-theme='light'] .cinema-pick {background:#f2f3f9;border-color:#d3d8e8}
 :root[data-theme='light'] .cinema-pick-copy h3 {color:#12163a}
@@ -524,7 +544,6 @@ a {color:inherit}
   .cinema-pick-copy h3 {font-size:18px}
   .cinema-pick-copy p {font-size:12px}
   .cinema-pick-times button {font-size:12px;padding:5px 10px}
-  .board-section .board-selected-date {display:block}
 }
 body,.navbar,.theme-toggle,.movie-card,.auth-card,.admin-panel,.admin-row,.booking-summary,.booking-mobile-bar,.booking-seat-panel,.wallet-ticket {transition:background-color .2s ease,border-color .2s ease,color .2s ease,transform .2s ease,box-shadow .2s ease}
 @media(max-width:800px) {
