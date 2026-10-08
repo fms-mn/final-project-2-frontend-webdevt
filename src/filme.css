@@ -62,29 +62,6 @@ a {color:inherit}
 
 /* Tonight */
 .tonight-page {max-width:1440px;margin:auto;padding:40px clamp(20px,4vw,72px) 55px}
-.tonight-hero {display:grid;grid-template-columns:42% 58%;gap:18px;align-items:start;min-height:385px}
-.tonight-intro {padding-top:10px}
-.tonight-intro h1 {font-size:clamp(52px,6.3vw,105px);line-height:.91;margin:22px 0 24px;font-weight:800}
-.tonight-intro>p {font-size:16px;line-height:1.52;max-width:390px;color:#525d83;margin-bottom:18px}
-.hero-days {display:flex;gap:6px;margin-bottom:16px}
-.hero-days button {min-width:48px;padding:5px 8px 4px;background:transparent;border:1.5px solid #12163A;border-radius:9px;color:#12163A;line-height:1.1}
-.hero-days button span,.hero-days button strong {display:block}
-.hero-days button span {font-size:11px}
-.hero-days button strong {font-family:'Bricolage Grotesque Variable';font-size:21px}
-.hero-days button.active {background:#12163A;color:#fff}
-.featured-film {min-width:0}
-.filmstrip-frame {position:relative;height:clamp(245px,30vw,380px);padding:15px 0;border-top:13px solid #12163A;border-bottom:13px solid #12163A;border-radius:16px;background:#12163A;box-shadow:8px 8px 0 #E94560;overflow:hidden}
-.filmstrip-frame:before,.filmstrip-frame:after {content:'';position:absolute;left:8px;right:8px;height:8px;background:repeating-linear-gradient(90deg,#E8EBF4 0 8px,transparent 8px 20px);z-index:2}
-.filmstrip-frame:before {top:-10px}.filmstrip-frame:after {bottom:-10px}
-.filmstrip-art {position:relative;width:100%;height:100%;background:radial-gradient(circle at 78% 25%,#fba16f,transparent 27%),radial-gradient(circle at 17% 90%,#58a2d7 0 22%,transparent 23%),linear-gradient(130deg,#2484c5,#143a7a 65%,#12163A);background-size:cover;background-position:center}
-.trailer-chip,.sound-chip {position:absolute;top:12px;color:#fff;background:#12163A;border-radius:20px;padding:5px 9px;font-size:11px}
-.trailer-chip {left:14px}.sound-chip {right:14px;border:1px solid #fff;border-radius:8px}
-.filmstrip-art .hero-trailer {inset:0;z-index:1}
-.filmstrip-art .hero-sound {z-index:3;top:12px;right:12px}
-.filmstrip-art .trailer-chip {z-index:2}
-.featured-caption {display:flex;align-items:center;justify-content:space-between;gap:15px;padding-top:12px}
-.featured-caption h2 {font-size:27px;line-height:1.1;margin:3px 0}
-.featured-caption p {font-size:12px;color:#525d83}
 .section-title {display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:16px}
 .section-title h2 {font-size:clamp(32px,3.5vw,54px);line-height:1.05;margin-top:5px}
 .section-title p {font-size:12px;color:#525d83}
@@ -290,8 +267,6 @@ a {color:inherit}
 @media(max-width:800px) {
   .nav-links {position:absolute;left:auto;right:16px;top:70px;transform:none;height:auto;display:none;flex-direction:column;align-items:stretch;gap:0;padding:12px;background:#fff;border:1px solid #12163A;border-radius:12px;box-shadow:var(--shadow-md)}
   .nav-links.is-open {display:flex}.nav-link {padding:12px 20px}.nav-user {display:none}.nav-menu-toggle {display:grid}
-  .tonight-hero {grid-template-columns:1fr;gap:24px}.tonight-intro h1 {font-size:clamp(55px,12vw,80px)}
-  .tonight-intro>p,.hero-days,.tonight-intro>.btn {display:none}
   .board-section {margin-top:32px}.opening-grid {grid-template-columns:1fr}
   .how-strip {grid-template-columns:1fr}.how-strip>div {border-right:0;border-bottom:1px dashed #d3d8e8}
   .booking-experience .booking-section {display:block}.booking-schedule,.booking-seat-panel {margin-bottom:20px}
@@ -339,8 +314,6 @@ a {color:inherit}
 @media(max-width:500px) {
   .main-content {margin-top:68px}.navbar {height:68px;padding:0 18px}.nav-brand {font-size:23px}.nav-brand img {width:28px}
   .tonight-page {padding:25px 18px 45px}.tonight-intro h1 {margin:18px 0 23px;font-size:60px}
-  .filmstrip-frame {height:260px}.featured-caption h2 {font-size:27px}
-  .featured-caption .btn {padding:10px 16px}
   .section-title h2 {font-size:36px}.section-title p,.board-head,.board-row>span:nth-child(3),.board-row>.seat-digits,.board-row>.btn {display:none}
   .departure-board {padding:12px}.board-row {min-width:0;grid-template-columns:115px 1fr 70px;min-height:48px;padding:8px 6px}
   .board-row>strong {font-size:12px}.board-status {justify-self:end;font-size:9px}
@@ -379,10 +352,7 @@ a {color:inherit}
 :root[data-theme='dark'] .footer {border-color:var(--border-color);color:var(--text-secondary)}
 :root[data-theme='dark'] .footer-brand strong {color:var(--text-primary)}
 :root[data-theme='dark'] .eyebrow,:root[data-theme='dark'] .home-section-eyebrow,:root[data-theme='dark'] .booking-eyebrow {color:var(--text-muted)}
-:root[data-theme='dark'] .tonight-intro>p,:root[data-theme='dark'] .featured-caption p,:root[data-theme='dark'] .section-title p,:root[data-theme='dark'] .how-strip p {color:var(--text-secondary)}
-:root[data-theme='dark'] .hero-days button {border-color:var(--filme-ink);color:var(--text-primary)}
-:root[data-theme='dark'] .hero-days button.active {background:var(--filme-ink);color:var(--filme-ink-on)}
-:root[data-theme='dark'] .filmstrip-frame:before,:root[data-theme='dark'] .filmstrip-frame:after {background:repeating-linear-gradient(90deg,var(--bg-primary) 0 8px,transparent 8px 20px)}
+:root[data-theme='dark'] .section-title p,:root[data-theme='dark'] .how-strip p {color:var(--text-secondary)}
 :root[data-theme='dark'] .calendar-card,:root[data-theme='dark'] .how-strip,:root[data-theme='dark'] .movie-card,:root[data-theme='dark'] .auth-card,:root[data-theme='dark'] .admin-panel,:root[data-theme='dark'] .booking-card,:root[data-theme='dark'] .admin-stat,:root[data-theme='dark'] .admin-row,:root[data-theme='dark'] .bookings-empty {background:var(--bg-card);border-color:var(--border-color)}
 :root[data-theme='dark'] .calendar-icon,:root[data-theme='dark'] .rating-pill {border-color:var(--border-color)}
 :root[data-theme='dark'] .calendar-copy small,:root[data-theme='dark'] .movies-page>p,:root[data-theme='dark'] .bookings-page>p,:root[data-theme='dark'] .admin-heading p,:root[data-theme='dark'] .auth-card .subtitle {color:var(--text-secondary)}

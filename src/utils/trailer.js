@@ -1,13 +1,17 @@
-// The home banner plays the featured movie's trailer by itself, so it must stay out of the
-// way of people who asked for less motion or less data.
-export function canAutoplayTrailer(win = typeof window === 'undefined' ? undefined : window) {
-  if (!win) return false;
+export function trailerVideoId(movie) {
+  const direct = movie?.trailerId;
+  if (typeof direct === 'string' && /^[\w-]{11}$/.test(direct)) return direct;
+  if (!movie?.trailerUrl) return '';
   try {
-    if (win.matchMedia && win.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
-    const connection = win.navigator && (win.navigator.connection || win.navigator.mozConnection);
-    if (connection && connection.saveData) return false;
+    const url = new URL(movie.trailerUrl);
+    const host = url.hostname.toLowerCase().replace(/^www\./, '');
+    let id = '';
+    if (host === 'youtu.be') id = url.pathname.split('/')[1];
+    if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'youtube-nocookie.com') {
+      id = url.searchParams.get('v') || url.pathname.match(/^\/(?:embed|shorts|live)\/([^/]+)/)?.[1] || '';
+    }
+    return /^[\w-]{11}$/.test(id) ? id : '';
   } catch {
-    return false;
+    return '';
   }
-  return true;
 }
