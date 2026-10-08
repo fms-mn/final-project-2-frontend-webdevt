@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api';
 import AdminBookings from '../components/admin/AdminBookings';
-import AdminMovies from '../components/admin/AdminMovies';
+import AdminMovieManager from '../components/admin/AdminMovieManager';
 import AdminOverview from '../components/admin/AdminOverview';
 import AdminRooms from '../components/admin/AdminRooms';
 import AdminShowings from '../components/admin/AdminShowings';
@@ -50,15 +50,19 @@ export default function Admin() {
   const retry = () => { setLoading(true); reload(); };
 
   return (
-    <div className="admin-page fade-in">
-      <div className="admin-heading">
+    <div className={`admin-page fade-in ${tab === 'movies' ? 'movies-admin-page' : ''}`}>
+      {tab === 'movies' && <div className="movie-page-heading">
+        <h1>Movies</h1>
+        <p>Manage your movie catalog, add new titles, and control what&apos;s published on your site.</p>
+      </div>}
+      {tab !== 'movies' && <div className="admin-heading">
         <div>
           <span className="home-section-eyebrow">FILME box office · back room</span>
           <h1>Admin dashboard</h1>
-          <p>{user?.isDemo ? 'Explore the complete dashboard with realistic preview data. Changes are disabled in demo mode.' : 'Sales, the movie catalog, showings, bookings, rooms and accounts, all on live data.'}</p>
+          <p>{user?.isDemo ? 'Explore the dashboard with preview data. Movie changes are saved in this browser.' : 'Sales, the movie catalog, showings, bookings, rooms and accounts, all on live data.'}</p>
         </div>
         {user?.isDemo && <span className="admin-demo-badge">Demo preview</span>}
-      </div>
+      </div>}
       <div className="admin-tabs" role="tablist" aria-label="Admin sections">
         {TABS.map(([id, label]) => (
           <button key={id} type="button" role="tab" id={`admin-tab-${id}`} aria-selected={tab === id} aria-controls="admin-panel" className={`filter-btn ${tab === id ? 'active' : ''}`} onClick={() => setTab(id)}>{label}</button>
@@ -76,7 +80,7 @@ export default function Admin() {
       {!loading && !loadError && (
         <div id="admin-panel" role="tabpanel" aria-labelledby={`admin-tab-${tab}`} className="admin-tab-body">
           {tab === 'overview' && <AdminOverview movies={movies} users={users} />}
-          {tab === 'movies' && <AdminMovies movies={movies} reload={reload} />}
+          {tab === 'movies' && <AdminMovieManager movies={movies} reload={reload} />}
           {tab === 'showings' && <AdminShowings movies={movies} />}
           {tab === 'bookings' && <AdminBookings />}
           {tab === 'rooms' && <AdminRooms />}
