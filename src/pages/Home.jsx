@@ -67,7 +67,7 @@ export default function Home() {
 
   return <div className="tonight-page cinematic-home fade-in">
     {isDemo && <p className="demo-catalog-notice">Preview catalog · Sample movies are shown while the database is unavailable.</p>}
-    <BookingHero movies={movies} showings={showings} dateOptions={dateOptions} selectedDate={selectedDate} onDateChange={setSelectedDate} loading={isLoading} error={pageError} onRetry={retry} />
+    <BookingHero movies={movies} showings={showings} dateOptions={dateOptions} selectedDate={selectedDate} onDateChange={setSelectedDate} loading={isLoading} error={pageError} onRetry={retry} isDemo={isDemo} />
     <section className="board-section" id="todays-board" aria-label={'Showing ' + manilaDate(selectedDate)}><div className="board-section-inner">
       <div className="board-heading"><div><span className="board-eyebrow">TODAY'S BOARD</span><h2>Showing {new Date(selectedDate + 'T12:00:00+08:00').toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', weekday: 'long' })}</h2></div><p>All times are Manila time. Seats left update as people book.</p></div>
       {isLoading ? <div className="loading"><div className="spinner" /></div> : pageError ? <div className="showtime-board-empty"><p>{pageError}</p><button className="btn btn-primary" onClick={retry}>Try again</button></div> : rows.length ? <>

@@ -25,7 +25,10 @@ const MOVIES_KEY = 'filme_preview_admin_movies_v1';
 const readMovies = () => {
   try {
     const saved = JSON.parse(localStorage.getItem(MOVIES_KEY));
-    if (Array.isArray(saved)) return saved;
+    if (Array.isArray(saved)) {
+      const ids = new Set(saved.map((movie) => movie._id));
+      return [...saved, ...demoMovies.slice(1, 4).filter((movie) => !ids.has(movie._id))];
+    }
   } catch { /* Use the bundled catalog if storage is unavailable. */ }
   return structuredClone(seedMovies);
 };
@@ -45,7 +48,7 @@ const validateMovie = (movie) => {
   if (Number.isNaN(Date.parse(movie.releaseDate))) movieError('Choose a valid release date.');
   if (movie.trailerUrl && !/^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(movie.trailerUrl)) movieError('Enter a YouTube trailer link.');
 };
-const hasUpcomingShowtime = (id) => seedMovies.slice(0, 3).some((movie) => movie._id === id);
+const hasUpcomingShowtime = (id) => seedMovies.slice(0, 4).some((movie) => movie._id === id);
 
 const rooms = [
   { _id: 'demo-room-1', name: 'Cinema One', rows: 8, seatsPerRow: 10, isActive: true, blockedSeats: ['C5', 'C6'] },
@@ -67,6 +70,7 @@ function showingsFor(date) {
     ['demo-show-2', 1, 1, '13:30', 45000, 19, true, 'scheduled'],
     ['demo-show-3', 2, 0, '16:45', 40000, 31, true, 'scheduled'],
     ['demo-show-4', 0, 1, '20:00', 50000, 0, false, 'scheduled'],
+    ['demo-show-5', 3, 1, '18:45', 40000, 8, true, 'scheduled'],
   ];
   return slots.map(([id, movieIndex, roomIndex, clock, ticketPrice, sold, published, status]) => {
     const movie = catalog.find((item) => item._id === seedMovies[movieIndex]._id) || seedMovies[movieIndex];

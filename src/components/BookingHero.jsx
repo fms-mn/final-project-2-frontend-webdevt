@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FiCheck, FiChevronDown, FiChevronUp, FiGrid, FiPlay, FiX } from 'react-icons/fi';
+import { FiCheck, FiChevronDown, FiChevronUp, FiGrid, FiX } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
+import { demoHeroMediaFor } from '../data/demoHeroMedia';
 import { dayHeading, manilaClock, today } from '../utils/manila';
 import { moviesForDay, showingAvailability, showingsForMovie } from '../utils/bookingHero';
 import { trailerVideoId } from '../utils/trailer';
@@ -15,14 +16,16 @@ const shortDay = (day) => {
 const chooserDay = (day) => new Date(day + 'T12:00:00+08:00').toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', weekday: 'short', day: 'numeric', month: 'short' });
 const runtime = (minutes) => Math.floor(minutes / 60) + 'h ' + String(minutes % 60).padStart(2, '0') + 'm';
 
-export default function BookingHero({ movies, showings, dateOptions, selectedDate, onDateChange, loading, error, onRetry }) {
+export default function BookingHero({ movies, showings, dateOptions, selectedDate, onDateChange, loading, error, onRetry, isDemo = false }) {
   const { user } = useAuth();
   const [selectedMovieId, setSelectedMovieId] = useState('');
   const [selectedShowtimeId, setSelectedShowtimeId] = useState('');
   const [chooserOpen, setChooserOpen] = useState(false);
-  const [playing, setPlaying] = useState(false);
-  const [failedTrailerId, setFailedTrailerId] = useState('');
+  const [inView, setInView] = useState(false);
+  const [pageVisible, setPageVisible] = useState(() => !document.hidden);
+  const [reducedMotion, setReducedMotion] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const [now, setNow] = useState(() => new Date());
+  const heroRef = useRef(null);
   const triggerRef = useRef(null);
   const chooserRef = useRef(null);
 
@@ -31,7 +34,24 @@ export default function BookingHero({ movies, showings, dateOptions, selectedDat
   const slots = movie ? showingsForMovie(showings, selectedDate, movie._id) : [];
   const selectedSlot = slots.find((slot) => slot._id === selectedShowtimeId && showingAvailability(slot, now) === 'available');
   const videoId = trailerVideoId(movie);
-  const trailerAvailable = Boolean(videoId) && failedTrailerId !== videoId;
+  const media = videoId ? { kind: 'youtube', videoId, title: movie.title }
+    : (isDemo || user?.isDemo) ? demoHeroMediaFor(movie?._id) : null;
+  const previewActive = inView && pageVisible && !chooserOpen && !reducedMotion;
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting && entry.intersectionRatio >= .3), { threshold: [0, .3] });
+    observer.observe(heroRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const visibility = () => setPageVisible(!document.hidden);
+    const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const motion = () => setReducedMotion(preference.matches);
+    document.addEventListener('visibilitychange', visibility);
+    preference.addEventListener('change', motion);
+    return () => { document.removeEventListener('visibilitychange', visibility); preference.removeEventListener('change', motion); };
+  }, []);
 
   useEffect(() => {
     const refresh = () => setNow(new Date());
@@ -72,8 +92,6 @@ export default function BookingHero({ movies, showings, dateOptions, selectedDat
     const nextMovies = moviesForDay(movies, showings, nextDate);
     setSelectedMovieId(nextMovies.some((item) => item._id === movie?._id) ? movie._id : nextMovies[0]?._id || '');
     setSelectedShowtimeId('');
-    setPlaying(false);
-    setFailedTrailerId('');
     setChooserOpen(false);
     onDateChange(nextDate);
   };
@@ -81,14 +99,7 @@ export default function BookingHero({ movies, showings, dateOptions, selectedDat
   const selectMovie = (nextMovie) => {
     setSelectedMovieId(nextMovie._id);
     setSelectedShowtimeId('');
-    setPlaying(false);
-    setFailedTrailerId('');
     setChooserOpen(false);
-  };
-
-  const failTrailer = () => {
-    setPlaying(false);
-    setFailedTrailerId(videoId);
   };
 
   const bookingLink = selectedSlot && movie
@@ -97,15 +108,14 @@ export default function BookingHero({ movies, showings, dateOptions, selectedDat
     })
     : '';
 
-  return <section className={'cinema-hero' + (chooserOpen ? ' chooser-open' : '') + (playing ? ' trailer-open' : '')} aria-label="Choose a movie and showing">
+  return <section ref={heroRef} className={'cinema-hero' + (chooserOpen ? ' chooser-open' : '')} aria-label="Choose a movie and showing">
     <div className="cinema-visual" aria-hidden="true">
       {movie && <div className="cinema-backdrop" key={movie._id}>
         <img className="cinema-backdrop-blur" src={movie.backdropUrl || movie.posterUrl} alt="" />
         <img className="cinema-backdrop-art" src={movie.backdropUrl || movie.posterUrl} alt="" />
       </div>}
-      <div className="cinema-visual-shade" />
     </div>
-    {playing && videoId && <HeroTrailer key={movie._id + '-' + selectedDate} videoId={videoId} onFailure={failTrailer} />}
+    <div className="cinema-visual-shade" aria-hidden="true" />
     <div className="cinema-topbar">
       <button ref={triggerRef} type="button" className="cinema-choose-trigger" aria-expanded={chooserOpen} aria-controls="cinema-movie-chooser" onClick={() => setChooserOpen((open) => !open)}>
         <FiGrid aria-hidden="true" />
@@ -119,14 +129,13 @@ export default function BookingHero({ movies, showings, dateOptions, selectedDat
         </button>)}
       </div>
     </div>
-    {playing && <button type="button" className="cinema-close-trailer" onClick={() => setPlaying(false)} aria-label="Close trailer and return to movie preview"><FiX aria-hidden="true" /> Close trailer</button>}
-    {!playing && <div className="cinema-info" key={(movie?._id || 'empty') + '-' + selectedDate} aria-live="polite">
+    <div className="cinema-info" key={(movie?._id || 'empty') + '-' + selectedDate} aria-live="polite">
       {loading ? <div className="cinema-message"><h1>Loading showings…</h1></div>
         : error ? <div className="cinema-message"><h1>Showings unavailable</h1><p>{error}</p><button type="button" className="cinema-action cinema-play" onClick={onRetry}>Try again</button></div>
           : movie ? <>
             <h1>{movie.title}</h1>
             <p className="cinema-meta">{[...movie.genre, movie.rating, runtime(movie.duration)].filter(Boolean).join(' · ')}</p>
-            {!trailerAvailable && <p className="cinema-no-trailer" role="status">{failedTrailerId === videoId && videoId ? 'Trailer could not be played.' : 'Trailer unavailable'}</p>}
+            {!media && <p className="cinema-no-trailer" role="status">Trailer unavailable</p>}
             <div className="cinema-showing-label">Showtimes <span>·</span> {selectedDate === today() ? 'Today' : shortDay(selectedDate)}</div>
             <div className="cinema-showtimes" role="group" aria-label={'Showtimes for ' + movie.title + ' on ' + dayHeading(selectedDate)}>
               {slots.map((slot) => {
@@ -136,12 +145,15 @@ export default function BookingHero({ movies, showings, dateOptions, selectedDat
             </div>
             <p className="cinema-hint">{selectedSlot ? manilaClock(selectedSlot.startTime) + ' selected · choose your seats next.' : 'Pick a showtime to enable booking.'}</p>
             <div className="cinema-actions">
-              {trailerAvailable && <button type="button" className="cinema-action cinema-play" onClick={() => setPlaying(true)}><FiPlay aria-hidden="true" /> Play trailer</button>}
               {bookingLink && user?.role !== 'admin'
                 ? <Link className="cinema-action cinema-book" to={bookingLink}>Book tickets</Link>
                 : <button type="button" className="cinema-action cinema-book" disabled>Book tickets</button>}
             </div>
           </> : <div className="cinema-message"><span className="cinema-showing-label">{dayHeading(selectedDate)}</span><h1>No movies showing</h1><p>There are no published showings for this date. Choose another day or browse all movies.</p><Link to="/movies" className="cinema-action cinema-play">Browse movies</Link></div>}
+    </div>
+    {!loading && !error && movie && <div className={'cinema-media' + (media?.kind === 'youtube' ? ' cinema-media-provider' : '')} key={movie._id}>
+      <HeroTrailer media={media} poster={movie.backdropUrl || movie.posterUrl} active={previewActive} reducedMotion={reducedMotion} />
+      {media?.credit && <p className="cinema-media-credit"><a href={media.credit.source} target="_blank" rel="noreferrer">{media.credit.name}</a> · <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">CC BY 3.0</a></p>}
     </div>}
     {chooserOpen && <>
       <button type="button" className="cinema-chooser-scrim" aria-label="Close movie chooser" onClick={() => setChooserOpen(false)} />
