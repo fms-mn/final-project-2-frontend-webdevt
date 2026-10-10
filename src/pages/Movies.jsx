@@ -76,7 +76,7 @@ export default function Movies() {
       ) : (
         <div className="movies-grid">
           {movies.map((movie) => (
-            <MovieCard key={movie._id} movie={movie} />
+            <MovieCard key={movie._id} movie={movie} previewOnHover />
           ))}
         </div>
       )}
