@@ -621,7 +621,6 @@ body,.navbar,.theme-toggle,.movie-card,.auth-card,.admin-panel,.admin-row,.booki
 .footer-content p {font-size:14px;max-width:50ch;line-height:1.5}
 .movie-fixture-note {padding:10px;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-card)}
 .movie-details-copy p {margin:12px 0;color:var(--text-secondary);font-size:15px;line-height:1.6}
-.details-trailer {display:block;width:100%;aspect-ratio:16/9;margin-top:16px;border:0;border-radius:12px}
 @media(max-width:1000px) {.movie-showing-grid,.opening-grid {grid-template-columns:1fr}.board-heading {flex-direction:column}.board-heading p {max-width:none}.opening-card {min-height:0}}
 @media(max-width:600px) {.movie-showing-card {padding:16px}.movie-showing-heading {grid-template-columns:72px minmax(0,1fr);gap:12px}.movie-showing-heading h3 {font-size:23px}.board-showtime-chips {grid-template-columns:repeat(2,minmax(0,1fr))}.board-showtime-chip {padding:10px}.opening-card {padding:16px;gap:14px}.opening-poster {width:80px;min-height:120px}.opening-title {font-size:24px}.footer-content {align-items:start}.demo-mode-banner {padding:12px 18px}}
 
