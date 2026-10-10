@@ -98,7 +98,7 @@ export default function Navbar() {
         </button>
         {loading ? null : user ? (
           <>
-            {user.role === 'user' ? <Link className="nav-account-pill" to="/profile" aria-label={`Profile for ${user.name}`}>{accountContent}</Link> : <span className="nav-account-pill">{accountContent}</span>}
+            <span className="nav-account-pill" title={user.name}>{accountContent}</span>
             <button type="button" className="nav-logout" disabled={signingOut} aria-busy={signingOut} onClick={handleLogout}>
               <FiLogOut aria-hidden="true" /><ActionPending pending={signingOut}>{signingOut ? 'Signing out...' : 'Log out'}</ActionPending>
             </button>
