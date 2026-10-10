@@ -774,6 +774,7 @@ input, select {
   background: #05060d;
 }
 
+.trailer-pop-player,
 .trailer-pop-screen iframe,
 .trailer-pop-screen video {
   position: absolute;
@@ -783,14 +784,33 @@ input, select {
   border: 0;
   object-fit: cover;
   opacity: 0;
-  transform: scale(1.3); /* crops the video site's title bar out of view */
+  transform: scale(1.3);
   transition: opacity 0.5s ease;
+}
+
+.trailer-pop-player {
+  transform: none; /* the iframe inside is what gets enlarged */
+}
+
+/* The player is drawn 1.5x the size of the screen and shifted so that only its middle shows:
+   the top edge (channel and title) and the bottom strip (logo, "More videos") fall outside.
+   A bigger frame, not a scaled one, so the video stays sharp. */
+.trailer-pop-player iframe {
+  position: absolute;
+  inset: auto;
+  left: -25%;
+  top: -17.5%;
+  width: 150%;
+  height: 150%;
+  border: 0;
+  transform: none;
 }
 
 .trailer-pop-screen video {
   transform: none;
 }
 
+.trailer-pop.is-ready .trailer-pop-player,
 .trailer-pop.is-ready .trailer-pop-screen iframe,
 .trailer-pop.is-ready .trailer-pop-screen video {
   opacity: 1;
@@ -908,6 +928,41 @@ input, select {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.trailer-pop-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 59;
+  background: rgba(4, 5, 14, 0.72);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.trailer-pop-backdrop.is-open {
+  opacity: 1;
+}
+
+.trailer-pop-hint {
+  margin-top: 0.35rem;
+  color: #8a8aa6;
+  font-size: 0.72rem;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+/* On a touch screen, holding a card must not select it or open the phone's own link menu. */
+@media (hover: none) {
+  .movie-card {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .movie-card img {
+    -webkit-user-drag: none;
+  }
 }
 
 @keyframes preview-shimmer {

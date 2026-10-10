@@ -7,7 +7,8 @@ import { trailerVideoId } from '../utils/trailer';
 import { previewMediaFor } from '../utils/trailerPreview';
 import MovieTrailerPreview from './MovieTrailerPreview';
 
-// `previewOnHover` opens a floating trailer panel beside the card while the mouse rests on it.
+// `previewOnHover` opens a floating trailer panel beside the card while the mouse rests on it,
+// or in the middle of the screen while a finger holds the card (release to close).
 // A movie without a trailer gets the same panel with a "trailer coming soon" note.
 export default function MovieCard({ movie, showShowtimes = false, previewOnHover = false }) {
   const isShowing = movie.status === 'now_showing';
@@ -51,7 +52,7 @@ export default function MovieCard({ movie, showShowtimes = false, previewOnHover
         )}
       </div>
       {previewOnHover && preview.mounted && (
-        <MovieTrailerPreview media={media} movie={movie} anchorRef={cardRef} visible={preview.visible} />
+        <MovieTrailerPreview media={media} movie={movie} anchorRef={cardRef} visible={preview.visible} mode={preview.mode} />
       )}
     </Link>
   );
