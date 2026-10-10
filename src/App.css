@@ -802,6 +802,36 @@ input, select {
   opacity: 0;
 }
 
+.movie-card-preview-still {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 25%;
+  filter: brightness(0.35) saturate(0.8);
+}
+
+.movie-card-preview-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-align: center;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
+}
+
+.movie-card-preview.is-empty .movie-card-preview-bars i {
+  animation-play-state: paused;
+  transform: scaleY(0.4);
+}
+
 .movie-card-preview-tag {
   display: inline-flex;
   align-items: center;
