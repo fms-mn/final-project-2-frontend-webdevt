@@ -930,6 +930,41 @@ input, select {
   overflow: hidden;
 }
 
+.trailer-pop-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 59;
+  background: rgba(4, 5, 14, 0.72);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.trailer-pop-backdrop.is-open {
+  opacity: 1;
+}
+
+.trailer-pop-hint {
+  margin-top: 0.35rem;
+  color: #8a8aa6;
+  font-size: 0.72rem;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+/* On a touch screen, holding a card must not select it or open the phone's own link menu. */
+@media (hover: none) {
+  .movie-card {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .movie-card img {
+    -webkit-user-drag: none;
+  }
+}
+
 @keyframes preview-shimmer {
   to { background-position: -200% 0; }
 }

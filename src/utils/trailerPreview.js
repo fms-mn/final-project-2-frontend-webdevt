@@ -46,3 +46,19 @@ export function previewPlacement(rect, viewport, size = {}, { gap = 16, margin =
   const left = Math.max(margin, Math.min(rect.left + rect.width / 2 - width / 2, viewport.width - margin - width));
   return { side: 'over', left, top: clampTop(rect.top + rect.height / 2 - height / 2), width };
 }
+
+// A finger that travels more than this many pixels is scrolling, not holding.
+export const PRESS_MOVE_TOLERANCE = 10;
+export const pressMoved = (from, to, tolerance = PRESS_MOVE_TOLERANCE) => Math.hypot(to.x - from.x, to.y - from.y) > tolerance;
+
+// Where the trailer panel goes while a finger holds a card (a "peek"): centred on the screen.
+export function peekPlacement(viewport, size = {}, { margin = 16 } = {}) {
+  const width = Math.min(size.width ?? PREVIEW_WIDTH, viewport.width - margin * 2);
+  const height = size.height ?? (width * 9) / 16 + PREVIEW_INFO_HEIGHT;
+  return {
+    side: 'over',
+    left: (viewport.width - width) / 2,
+    top: Math.max(margin, (viewport.height - height) / 2),
+    width,
+  };
+}

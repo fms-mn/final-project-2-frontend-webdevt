@@ -1,12 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { PREVIEW_WIDTH, previewLoopTarget, previewNeedsRestart, previewPlacement, previewPlayerVars, previewVideoVisible } from '../utils/trailerPreview';
+import { PREVIEW_WIDTH, peekPlacement, previewLoopTarget, previewNeedsRestart, previewPlacement, previewPlayerVars, previewVideoVisible } from '../utils/trailerPreview';
 import { loadYouTubeApi } from '../utils/youtubeApi';
 
 // The floating trailer panel that opens beside a movie card while the pointer rests on it.
 // `media` is { kind: 'youtube', videoId }, { kind: 'video', src } or null (no trailer yet).
 // It is drawn on the page itself (not inside the card) so it can be larger than the card.
-export default function MovieTrailerPreview({ media, movie, anchorRef, visible }) {
+export default function MovieTrailerPreview({ media, movie, anchorRef, visible, mode = 'hover' }) {
   const panelRef = useRef(null);
   const playerMount = useRef(null);
   const [ready, setReady] = useState(false);
@@ -62,11 +62,9 @@ export default function MovieTrailerPreview({ media, movie, anchorRef, visible }
       const card = anchorRef.current;
       const panel = panelRef.current;
       if (!card) return;
-      setPlace(previewPlacement(
-        card.getBoundingClientRect(),
-        { width: document.documentElement.clientWidth, height: window.innerHeight },
-        { width: PREVIEW_WIDTH, height: panel?.offsetHeight || undefined },
-      ));
+      const viewport = { width: document.documentElement.clientWidth, height: window.innerHeight };
+      const size = { width: PREVIEW_WIDTH, height: panel?.offsetHeight || undefined };
+      setPlace(mode === 'peek' ? peekPlacement(viewport, size) : previewPlacement(card.getBoundingClientRect(), viewport, size));
     };
     const schedule = () => { window.cancelAnimationFrame(frame); frame = window.requestAnimationFrame(update); };
     update();
@@ -77,11 +75,13 @@ export default function MovieTrailerPreview({ media, movie, anchorRef, visible }
       window.removeEventListener('scroll', schedule, { capture: true });
       window.removeEventListener('resize', schedule);
     };
-  }, [anchorRef]);
+  }, [anchorRef, mode]);
 
   const meta = [movie.duration && `${movie.duration} min`, movie.genre?.[0], movie.rating].filter(Boolean).join(' · ');
 
   return createPortal(
+    <>
+    {mode === 'peek' && <div className={`trailer-pop-backdrop${visible ? ' is-open' : ''}`} aria-hidden="true" />}
     <div
       ref={panelRef}
       className={`trailer-pop${visible && place ? ' is-open' : ''}${ready ? ' is-ready' : ''}${media ? '' : ' is-empty'} side-${place?.side || 'right'}`}
@@ -112,8 +112,10 @@ export default function MovieTrailerPreview({ media, movie, anchorRef, visible }
         <strong>{movie.title}</strong>
         {meta && <span className="trailer-pop-meta">{meta}</span>}
         {movie.description && <p>{movie.description}</p>}
+        {mode === 'peek' && <span className="trailer-pop-hint">Release to close</span>}
       </div>
-    </div>,
+    </div>
+    </>,
     document.body,
   );
 }

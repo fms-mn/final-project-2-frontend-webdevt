@@ -74,3 +74,20 @@ test('the preview loops a short window by seeking back, and never reaches the en
   assert.equal(previewLoopTarget(21, 22), 4, 'a short trailer is cut 1.5 seconds before its end');
   assert.equal(previewLoopTarget(5.2, 6), 4, 'a tiny clip never gets stuck');
 });
+
+test('a finger that slides is scrolling, not holding', async () => {
+  const { pressMoved } = await import('./trailerPreview.js');
+  assert.equal(pressMoved({ x: 100, y: 100 }, { x: 104, y: 103 }), false, 'a little wobble is fine');
+  assert.equal(pressMoved({ x: 100, y: 100 }, { x: 100, y: 125 }), true);
+  assert.equal(pressMoved({ x: 100, y: 100 }, { x: 80, y: 100 }), true);
+});
+
+test('a peek is centred on the screen and fits a phone', async () => {
+  const { peekPlacement } = await import('./trailerPreview.js');
+  const phone = peekPlacement({ width: 390, height: 800 }, { width: 460, height: 380 });
+  assert.equal(phone.width, 390 - 32);
+  assert.equal(phone.left, 16);
+  assert.equal(phone.top, (800 - 380) / 2);
+  const tall = peekPlacement({ width: 390, height: 300 }, { width: 460, height: 380 });
+  assert.equal(tall.top, 16, 'a short screen never pushes it above the top');
+});
