@@ -1,23 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { createTrailerPlayback } from '../utils/trailerPlayback';
-
-let apiPromise;
-function loadYouTubeApi() {
-  if (window.YT?.Player) return Promise.resolve(window.YT);
-  if (!apiPromise) {
-    apiPromise = new Promise((resolve, reject) => {
-      const previous = window.onYouTubeIframeAPIReady;
-      const script = document.createElement('script');
-      const timeout = setTimeout(() => { apiPromise = undefined; script.remove(); reject(new Error('Player did not respond')); }, 8000);
-      window.onYouTubeIframeAPIReady = () => { clearTimeout(timeout); previous?.(); resolve(window.YT); };
-      script.src = 'https://www.youtube.com/iframe_api';
-      script.async = true;
-      script.onerror = () => { clearTimeout(timeout); apiPromise = undefined; script.remove(); reject(new Error('Player unavailable')); };
-      document.head.appendChild(script);
-    });
-  }
-  return apiPromise;
-}
+import { loadYouTubeApi } from '../utils/youtubeApi';
 
 const HeroTrailer = forwardRef(function HeroTrailer({ media, poster, active, reducedMotion, manualPaused, muted, onManualPause, onMutedChange, onStatus, onEnded, onFailure, onFullscreenError, onFullscreenChange }, ref) {
   const videoRef = useRef(null);

@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { displayClock } from '../utils/manila';
 import { listShowtimes } from '../data/demoSchedule';
@@ -7,15 +8,17 @@ import { trailerVideoId } from '../utils/trailer';
 import { previewMediaFor } from '../utils/trailerPreview';
 import MovieTrailerPreview from './MovieTrailerPreview';
 
-// `previewOnHover` opens a small trailer screen over the poster while the mouse rests on the card.
-// A movie without a trailer gets the same screen with a "trailer coming soon" note.
+// `previewOnHover` opens a floating trailer panel beside the card while the mouse rests on it,
+// or in the middle of the screen while a finger holds the card (release to close).
+// A movie without a trailer gets the same panel with a "trailer coming soon" note.
 export default function MovieCard({ movie, showShowtimes = false, previewOnHover = false }) {
   const isShowing = movie.status === 'now_showing';
   const media = previewOnHover ? previewMediaFor(trailerVideoId(movie), demoHeroMediaFor(movie._id)) : null;
   const preview = useHoverPreview({ enabled: previewOnHover });
+  const cardRef = useRef(null);
 
   return (
-    <Link to={`/movie/${movie._id}`} className={`movie-card${preview.visible ? ' is-previewing' : ''}`} {...preview.handlers}>
+    <Link ref={cardRef} to={`/movie/${movie._id}`} className={`movie-card${preview.visible ? ' is-previewing' : ''}`} {...preview.handlers}>
       <div className="movie-card-poster">
         <img src={movie.posterUrl} alt={movie.title} loading="lazy" />
         <span className={`movie-card-badge ${isShowing ? 'badge-showing' : 'badge-coming'}`}>
@@ -26,9 +29,6 @@ export default function MovieCard({ movie, showShowtimes = false, previewOnHover
             {isShowing ? 'Book Now' : 'View Details'}
           </span>
         </div>
-        {previewOnHover && preview.mounted && (
-          <MovieTrailerPreview media={media} title={movie.title} poster={movie.posterUrl} visible={preview.visible} />
-        )}
       </div>
       <div className="movie-card-info">
         <h3>{movie.title}</h3>
@@ -52,6 +52,9 @@ export default function MovieCard({ movie, showShowtimes = false, previewOnHover
           </div>
         )}
       </div>
+      {previewOnHover && preview.mounted && (
+        <MovieTrailerPreview media={media} movie={movie} anchorRef={cardRef} visible={preview.visible} mode={preview.mode} />
+      )}
     </Link>
   );
 }
