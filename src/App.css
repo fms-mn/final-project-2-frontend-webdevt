@@ -726,50 +726,56 @@ input, select {
   font-weight: 600;
 }
 
-/* Trailer preview: a small screen that opens over the poster while the pointer rests on a card. */
-.movie-card-poster img {
-  transition: transform var(--transition-slow), filter 0.45s ease;
+/* Trailer preview: a larger panel that opens beside a movie card while the pointer rests on it.
+   It lives on the page itself (a portal), so it can be bigger than the card. */
+.movie-card.is-previewing {
+  transform: translateY(-8px) scale(1.02);
+  border-color: var(--accent-primary);
+  box-shadow: var(--shadow-glow), 0 18px 50px rgba(0, 0, 0, 0.45);
 }
 
-.movie-card.is-previewing .movie-card-poster img {
-  transform: scale(1.14);
-  filter: blur(4px) brightness(0.4);
-}
-
-.movie-card-preview {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
+.trailer-pop {
+  position: fixed;
+  z-index: 60;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 0 7% 3.5rem;
-  gap: 0.6rem;
-  pointer-events: none; /* clicks still go to the card link */
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: #0d1020;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.65), 0 0 46px rgba(233, 69, 96, 0.32);
+  color: #f0f0f5;
+  pointer-events: none; /* the card underneath keeps the hover and the click */
+  opacity: 0;
+  transform: translateX(-26px) scale(0.9);
+  transform-origin: left center;
+  transition: opacity 0.28s ease, transform 0.46s cubic-bezier(0.2, 0.9, 0.25, 1.12);
 }
 
-.movie-card-preview-screen {
+.trailer-pop.side-left {
+  transform: translateX(26px) scale(0.9);
+  transform-origin: right center;
+}
+
+.trailer-pop.side-over {
+  transform: translateY(20px) scale(0.9);
+  transform-origin: center bottom;
+}
+
+.trailer-pop.is-open {
+  opacity: 1;
+  transform: none;
+}
+
+.trailer-pop-screen {
   position: relative;
-  width: 100%;
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  border-radius: var(--radius-md);
   background: #05060d;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(0, 0, 0, 0.6), 0 0 34px rgba(233, 69, 96, 0.35);
-  opacity: 0;
-  transform: translateY(18px) scale(0.86);
-  transition: opacity 0.32s ease, transform 0.42s cubic-bezier(0.2, 0.9, 0.25, 1.15);
 }
 
-.movie-card-preview.is-open .movie-card-preview-screen {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-}
-
-.movie-card-preview-screen iframe,
-.movie-card-preview-screen video {
+.trailer-pop-screen iframe,
+.trailer-pop-screen video {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -777,20 +783,20 @@ input, select {
   border: 0;
   object-fit: cover;
   opacity: 0;
-  transform: scale(1.32); /* crops the video site's title bar out of view */
+  transform: scale(1.3); /* crops the video site's title bar out of view */
   transition: opacity 0.5s ease;
 }
 
-.movie-card-preview-screen video {
+.trailer-pop-screen video {
   transform: none;
 }
 
-.movie-card-preview.is-ready .movie-card-preview-screen iframe,
-.movie-card-preview.is-ready .movie-card-preview-screen video {
+.trailer-pop.is-ready .trailer-pop-screen iframe,
+.trailer-pop.is-ready .trailer-pop-screen video {
   opacity: 1;
 }
 
-.movie-card-preview-loader {
+.trailer-pop-loader {
   position: absolute;
   inset: 0;
   background: linear-gradient(110deg, #0b0d1c 30%, #1c2040 50%, #0b0d1c 70%) 0 0 / 200% 100%;
@@ -798,71 +804,60 @@ input, select {
   transition: opacity 0.4s ease;
 }
 
-.movie-card-preview.is-ready .movie-card-preview-loader {
+.trailer-pop.is-ready .trailer-pop-loader {
   opacity: 0;
 }
 
-.movie-card-preview-still {
+.trailer-pop-still {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center 25%;
-  filter: brightness(0.35) saturate(0.8);
+  filter: brightness(0.35) saturate(0.8) blur(2px);
+  transform: scale(1.05);
 }
 
-.movie-card-preview-empty {
+.trailer-pop-empty {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem;
   color: #fff;
-  font-size: 0.82rem;
+  font-size: 1.05rem;
   font-weight: 700;
   letter-spacing: 0.4px;
-  text-align: center;
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
 }
 
-.movie-card-preview.is-empty .movie-card-preview-bars i {
-  animation-play-state: paused;
-  transform: scaleY(0.4);
-}
-
-.movie-card-preview-tag {
+.trailer-pop-tag {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  padding: 0.25rem 0.7rem;
+  padding: 0.28rem 0.75rem;
   border-radius: var(--radius-full);
-  background: rgba(8, 10, 24, 0.82);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: #fff;
-  font-size: 0.68rem;
+  background: rgba(8, 10, 24, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.8px;
   text-transform: uppercase;
-  opacity: 0;
-  transform: translateY(8px);
-  transition: opacity 0.3s ease 0.12s, transform 0.35s ease 0.12s;
+  z-index: 1;
 }
 
-.movie-card-preview.is-open .movie-card-preview-tag {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.movie-card-preview-bars {
+.trailer-pop-bars {
   display: inline-flex;
   align-items: flex-end;
   gap: 2px;
   height: 11px;
 }
 
-.movie-card-preview-bars i {
+.trailer-pop-bars i {
   width: 3px;
   height: 100%;
   border-radius: 2px;
@@ -871,8 +866,49 @@ input, select {
   animation: preview-bars 0.9s ease-in-out infinite;
 }
 
-.movie-card-preview-bars i:nth-child(2) { animation-delay: 0.2s; }
-.movie-card-preview-bars i:nth-child(3) { animation-delay: 0.4s; }
+.trailer-pop-bars i:nth-child(2) { animation-delay: 0.2s; }
+.trailer-pop-bars i:nth-child(3) { animation-delay: 0.4s; }
+
+.trailer-pop.is-empty .trailer-pop-bars i {
+  animation-play-state: paused;
+  transform: scaleY(0.4);
+}
+
+.trailer-pop-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.9rem 1.1rem 1.1rem;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.35s ease 0.15s, transform 0.4s ease 0.15s;
+}
+
+.trailer-pop.is-open .trailer-pop-info {
+  opacity: 1;
+  transform: none;
+}
+
+.trailer-pop-info strong {
+  font-size: 1.15rem;
+  line-height: 1.25;
+}
+
+.trailer-pop-meta {
+  color: #a0a0b8;
+  font-size: 0.82rem;
+}
+
+.trailer-pop-info p {
+  margin: 0.2rem 0 0;
+  color: #c8c8d8;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 
 @keyframes preview-shimmer {
   to { background-position: -200% 0; }
@@ -884,10 +920,12 @@ input, select {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .movie-card-preview-screen,
-  .movie-card-preview-tag { transition: opacity 0.2s ease; transform: none; }
-  .movie-card-preview-loader,
-  .movie-card-preview-bars i { animation: none; }
+  .trailer-pop,
+  .trailer-pop.side-left,
+  .trailer-pop.side-over { transform: none; transition: opacity 0.2s ease; }
+  .trailer-pop-loader,
+  .trailer-pop-bars i { animation: none; }
+  .trailer-pop-info { transition: none; }
 }
 
 /* ============================
