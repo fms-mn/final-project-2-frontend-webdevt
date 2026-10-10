@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { previewMediaFor, previewPlayerVars, previewVideoVisible, previewNeedsRestart } from './trailerPreview.js';
+import { previewMediaFor, previewLoopTarget, previewPlayerVars, previewVideoVisible, previewNeedsRestart } from './trailerPreview.js';
 import { canHoverPreview } from '../hooks/useHoverPreview.js';
 
 test('a YouTube trailer wins over a demo clip; no clip means no preview', () => {
@@ -10,13 +10,13 @@ test('a YouTube trailer wins over a demo clip; no clip means no preview', () => 
   assert.equal(previewMediaFor('', { kind: 'video' }), null);
 });
 
-test('the preview player is silent, looping and without controls', () => {
+test('the preview player is silent and without controls', () => {
   const vars = previewPlayerVars('c51ND9Hdbw0', 'http://localhost:3000');
   assert.equal(vars.autoplay, 1);
   assert.equal(vars.mute, 1);
   assert.equal(vars.controls, 0);
-  assert.equal(vars.loop, 1);
-  assert.equal(vars.playlist, 'c51ND9Hdbw0', 'a single video only loops with a playlist of itself');
+  assert.equal(vars.start, 4);
+  assert.ok(!('loop' in vars) && !('playlist' in vars), 'a playlist would add previous/next arrows and "More videos"');
   assert.equal(vars.origin, 'http://localhost:3000');
 });
 
@@ -65,4 +65,12 @@ test('the trailer panel stays on screen and falls back to covering the card on a
   assert.equal(phone.side, 'over');
   assert.equal(phone.width, 390 - 16, 'shrinks to fit the screen');
   assert.ok(phone.left >= 8 && phone.left + phone.width <= 382);
+});
+
+test('the preview loops a short window by seeking back, and never reaches the end screen', () => {
+  assert.equal(previewLoopTarget(10, 150), null, 'still inside the window');
+  assert.equal(previewLoopTarget(32, 150), 4, 'window over: back to the start');
+  assert.equal(previewLoopTarget(60, 150), 4);
+  assert.equal(previewLoopTarget(21, 22), 4, 'a short trailer is cut 1.5 seconds before its end');
+  assert.equal(previewLoopTarget(5.2, 6), 4, 'a tiny clip never gets stuck');
 });

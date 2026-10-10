@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { PREVIEW_WIDTH, previewNeedsRestart, previewPlacement, previewPlayerVars, previewVideoVisible } from '../utils/trailerPreview';
+import { PREVIEW_WIDTH, previewLoopTarget, previewNeedsRestart, previewPlacement, previewPlayerVars, previewVideoVisible } from '../utils/trailerPreview';
 import { loadYouTubeApi } from '../utils/youtubeApi';
 
 // The floating trailer panel that opens beside a movie card while the pointer rests on it.
@@ -20,6 +20,7 @@ export default function MovieTrailerPreview({ media, movie, anchorRef, visible }
     if (!videoId) return undefined;
     let disposed = false;
     let player;
+    let watch = 0;
     loadYouTubeApi().then((YT) => {
       if (disposed || !playerMount.current) return;
       const target = document.createElement('div');
@@ -34,6 +35,14 @@ export default function MovieTrailerPreview({ media, movie, anchorRef, visible }
             if (disposed) return;
             setReady(previewVideoVisible(data));
             if (previewNeedsRestart(data)) p.playVideo();
+            // Keep to a short window of the trailer so the player never shows its end screen.
+            window.clearInterval(watch);
+            if (previewVideoVisible(data)) {
+              watch = window.setInterval(() => {
+                const back = previewLoopTarget(p.getCurrentTime(), p.getDuration());
+                if (back !== null) p.seekTo(back, true);
+              }, 400);
+            }
           },
           onError: () => { if (!disposed) setReady(false); },
         },
@@ -41,6 +50,7 @@ export default function MovieTrailerPreview({ media, movie, anchorRef, visible }
     }).catch(() => {});
     return () => {
       disposed = true;
+      window.clearInterval(watch);
       player?.destroy?.();
       playerMount.current?.replaceChildren();
     };

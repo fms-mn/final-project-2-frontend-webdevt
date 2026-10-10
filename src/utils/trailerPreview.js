@@ -5,11 +5,22 @@ export function previewMediaFor(videoId, demoMedia) {
   return null;
 }
 
-// Player settings for the silent, looping, control-free preview.
+export const PREVIEW_START_SECONDS = 4; // skip the studio logos at the very start
+export const PREVIEW_LENGTH_SECONDS = 28; // loop a short window, never reaching the end screen
+
+// Player settings for the silent, control-free preview. There is no `loop` or `playlist`
+// setting on purpose: a playlist adds previous/next arrows and a "More videos" strip.
+// The preview loops by seeking back itself (see previewLoopTarget).
 export const previewPlayerVars = (videoId, origin) => ({
-  autoplay: 1, mute: 1, controls: 0, loop: 1, playlist: videoId, playsinline: 1,
+  autoplay: 1, mute: 1, controls: 0, playsinline: 1, start: PREVIEW_START_SECONDS,
   rel: 0, modestbranding: 1, disablekb: 1, iv_load_policy: 3, fs: 0, origin,
 });
+
+// Where to seek to keep the preview inside its short window, or null to keep playing.
+export function previewLoopTarget(currentTime, duration, { start = PREVIEW_START_SECONDS, length = PREVIEW_LENGTH_SECONDS } = {}) {
+  const end = Math.min(start + length, Math.max(duration - 1.5, start + 1));
+  return currentTime >= end ? start : null;
+}
 
 // YouTube's own overlays (play/pause symbol, spinner, "video unavailable") show whenever the
 // video is not actually playing, so the preview shows the video only in the playing state.
