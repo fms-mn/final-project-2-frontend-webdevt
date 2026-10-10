@@ -1,0 +1,41 @@
+.booking-modal-overlay.cancel-confirm-overlay { display: flex; align-items: center; justify-content: center; padding: 24px; background: #10132d80; overflow-y: auto; }
+.cancel-confirm-overlay .booking-cancel-modal { --cancel-surface: #f4f4fc; --cancel-border: #dcdff3; --cancel-muted: #60668e; width: 100%; max-width: 720px; max-height: calc(100dvh - 48px); overflow-y: auto; margin: auto; padding: 38px 42px; border: 1px solid var(--cancel-border); border-radius: 28px; background: #fff; color: #17183e; box-shadow: 0 24px 64px #11163330; text-align: center; }
+.cancel-confirm-warning { display: grid; place-items: center; width: 64px; height: 64px; margin: 0 auto 20px; border-radius: 50%; background: #fdecf0; color: #bb2043; font-size: 28px; }
+.cancel-confirm-overlay .booking-cancel-modal h2 { margin: 0; font-size: clamp(26px, 4vw, 40px); line-height: 1.15; letter-spacing: -.035em; }
+.cancel-confirm-reference { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; margin: 20px 0 26px; color: var(--cancel-muted); font-weight: 600; }
+.cancel-confirm-reference code { max-width: 100%; padding: 8px 12px; border: 1px solid var(--cancel-border); border-radius: 24px; background: var(--cancel-surface); color: inherit; font: 600 14px/1.4 'JetBrains Mono Variable', monospace; letter-spacing: .06em; overflow-wrap: anywhere; }
+.cancel-confirm-summary { display: flex; gap: 24px; padding: 20px; border: 1px solid var(--cancel-border); border-radius: 22px; background: var(--cancel-surface); text-align: left; align-items: center; }
+.cancel-confirm-poster { flex: none; width: 100px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 12px; box-shadow: 0 8px 14px #11163325; }
+.cancel-confirm-poster-fallback { display: grid; place-items: center; background: linear-gradient(150deg, #33396a, #17183e); color: #fff; font-weight: 700; font-size: 14px; }
+.cancel-confirm-details { flex: 1; min-width: 0; margin: 0; }
+.cancel-confirm-details > div { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--cancel-border); }
+.cancel-confirm-details > div:first-child { padding-top: 0; }
+.cancel-confirm-details > div:last-child { border-bottom: 0; padding-bottom: 0; }
+.cancel-confirm-details dt { display: flex; align-items: center; gap: 8px; flex: none; font: 600 11px/1.5 'JetBrains Mono Variable', monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--cancel-muted); }
+.cancel-confirm-details dt svg { width: 17px; height: 17px; }
+.cancel-confirm-details dd { margin: 0; min-width: 0; text-align: right; font-weight: 700; font-size: 15px; line-height: 1.4; overflow-wrap: anywhere; }
+.cancel-confirm-seats { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.cancel-confirm-seats span { padding: 7px 10px; background: #fff; border: 1px solid var(--cancel-border); border-radius: 10px; font-family: 'JetBrains Mono Variable', monospace; }
+.cancel-confirm-explanation { display: flex; align-items: flex-start; gap: 12px; margin: 22px 0 28px; text-align: left; color: var(--cancel-muted); font-size: 15px; line-height: 1.5; }
+.cancel-confirm-explanation svg { flex: none; width: 18px; height: 18px; margin-top: 3px; }
+.cancel-confirm-overlay .booking-modal-actions { display: flex; gap: 14px; }
+.cancel-confirm-overlay .booking-modal-actions .btn { flex: 1; min-height: 52px; border-radius: 14px; font-size: 16px; }
+.cancel-confirm-overlay .booking-modal-actions .btn-secondary { background: transparent; border: 1px solid currentColor; color: inherit; }
+.cancel-confirm-overlay .booking-modal-actions .btn-danger { background: #b82043; border: 1px solid #b82043; color: #fff; }
+.cancel-confirm-overlay .booking-modal-actions .btn-danger:hover:not(:disabled) { background: #9e1737; }
+:root[data-theme='dark'] .cancel-confirm-overlay .booking-cancel-modal { --cancel-surface: #222a48; --cancel-border: #414b6b; --cancel-muted: #bac3e1; background: #171e36; color: #f4f5ff; box-shadow: 0 24px 64px #0008; }
+:root[data-theme='dark'] .cancel-confirm-warning { background: #48283b; color: #ff8c9e; }
+:root[data-theme='dark'] .cancel-confirm-seats span { background: #171e36; }
+@media (max-width: 560px) {
+  .booking-modal-overlay.cancel-confirm-overlay { padding: 12px; }
+  .cancel-confirm-overlay .booking-cancel-modal { max-height: calc(100dvh - 24px); padding: 24px 18px; border-radius: 22px; }
+  .cancel-confirm-warning { width: 54px; height: 54px; margin-bottom: 16px; }
+  .cancel-confirm-reference { margin: 16px 0 20px; font-size: 14px; }
+  .cancel-confirm-summary { padding: 14px; gap: 14px; align-items: flex-start; border-radius: 16px; }
+  .cancel-confirm-poster { width: 64px; border-radius: 8px; }
+  .cancel-confirm-details > div { align-items: flex-start; flex-direction: column; gap: 5px; padding: 10px 0; }
+  .cancel-confirm-details dd { text-align: left; font-size: 14px; }
+  .cancel-confirm-seats { justify-content: flex-start; gap: 5px; }
+  .cancel-confirm-explanation { font-size: 14px; margin: 18px 0 22px; }
+  .cancel-confirm-overlay .booking-modal-actions { flex-direction: column; gap: 10px; }
+}
