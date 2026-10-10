@@ -81,3 +81,24 @@ test('turning on reduced motion cancels a pending automatic play but permits exp
   player.resume(); player.playing();
   assert.equal(calls.status.at(-1), 'playing');
 });
+
+
+test('a browser pause before the hidden-tab policy update resumes on return', () => {
+  const { player, calls, initial } = harness();
+  player.ready(); player.playing();
+  player.paused(false);
+  assert.deepEqual(calls.manual, [false]);
+  player.update({ ...initial, active: false });
+  player.update(initial);
+  assert.equal(calls.play, 2);
+});
+
+test('a manual pause before leaving the tab remains manual', () => {
+  const { player, calls, initial } = harness();
+  player.ready(); player.playing(); player.paused(true);
+  player.paused(false);
+  player.update({ ...initial, active: false, manualPaused: true });
+  player.update({ ...initial, manualPaused: true });
+  assert.equal(calls.play, 1);
+  assert.equal(calls.manual.at(-1), true);
+});

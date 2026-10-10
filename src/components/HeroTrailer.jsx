@@ -25,7 +25,7 @@ const HeroTrailer = forwardRef(function HeroTrailer({ media, poster, active, red
     const video = videoRef.current;
     const mount = mountRef.current;
     const native = media.kind === 'video';
-    const policy = () => ({ active: latest.current.active, autoplay: !latest.current.reducedMotion, manualPaused: latest.current.manualPaused });
+    const policy = () => ({ active: latest.current.active && !document.hidden, autoplay: !latest.current.reducedMotion, manualPaused: latest.current.manualPaused });
     const fullscreen = element => {
       if (element?.requestFullscreen) element.requestFullscreen().catch(() => latest.current.onFullscreenError('Fullscreen is unavailable in this browser. Use the provider’s fullscreen control if available.'));
       else if (element?.webkitEnterFullscreen) element.webkitEnterFullscreen();
@@ -64,7 +64,7 @@ const HeroTrailer = forwardRef(function HeroTrailer({ media, poster, active, red
     if (native) {
       listen('loadedmetadata', () => session.ready());
       listen('playing', () => session.playing());
-      listen('pause', () => { if (!video.ended) session.paused(); });
+      listen('pause', () => { if (!video.ended) session.paused(policy().active); });
       listen('ended', () => session.ended());
       listen('error', () => session.fail());
       listen('volumechange', () => latest.current.onMutedChange(video.muted));

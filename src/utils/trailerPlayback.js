@@ -62,8 +62,10 @@ export function createTrailerPlayback(adapter, initialPolicy, callbacks) {
       callbacks.onManualPause(false);
       status('playing');
     },
-    paused() {
+    paused(active = policy.active) {
       if (disposed || phase === 'failed' || phase === 'ended') return;
+      policy = { ...policy, active };
+      if (!active && !policy.manualPaused) automaticallyPaused = true;
       pendingPlay = false;
       if (!automaticallyPaused && hasPlayed) {
         policy = { ...policy, manualPaused: true };
