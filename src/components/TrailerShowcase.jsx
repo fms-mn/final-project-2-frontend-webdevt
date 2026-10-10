@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { FiPause, FiPlay } from 'react-icons/fi';
 import { trailerPlaylist, initialPlaylist, playableEntries, playlistTransition } from '../utils/trailerPlaylist';
 import HeroTrailer from './HeroTrailer';
 import './trailerShowcase.css';
@@ -40,7 +39,6 @@ function ShowcaseSession({ entries, loading, error }) {
   const [reducedMotion, setReducedMotion] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const heroRef = useRef(null);
   const mediaRef = useRef(null);
-  const playerRef = useRef(null);
   const current = entries.find(entry => entry.key === playlist.current);
   const available = playableEntries(entries, playlist);
   const failed = current && playlist.failed.includes(current.key);
@@ -92,21 +90,10 @@ function ShowcaseSession({ entries, loading, error }) {
   const showMovie = !loading && !error && !exhausted && current;
   const provider = current?.media.kind === 'youtube';
   const message = loading ? 'Loading trailers…' : error ? 'Trailers unavailable' : exhausted ? 'No trailers available for this date' : failed ? 'This trailer could not be played.' : phase === 'blocked' ? 'Autoplay is unavailable. The movie preview is shown instead.' : reducedMotion && phase !== 'playing' ? 'Automatic playback is off for reduced motion.' : '';
-  const resume = manualPaused || phase === 'blocked' || reducedMotion && phase !== 'playing';
-  const togglePlayback = () => {
-    if (resume) {
-      setManualPaused(false);
-      playerRef.current?.resume();
-    } else {
-      policyRef.current = false;
-      setManualPaused(true);
-      playerRef.current?.pause();
-    }
-  };
 
   return <section ref={heroRef} data-movie-id={showMovie ? current.movie._id : ''} className={'cinema-hero' + (provider ? ' is-provider' : '') + (outgoing && canAdvance ? ' is-exiting' : '')} aria-label="Trailers for the selected date">
     <div className="cinema-media" ref={mediaRef}>
-      {showMovie && !failed ? <HeroTrailer key={current.key + ':' + playlist.generation} ref={playerRef} media={current.media} poster={current.movie.backdropUrl || current.movie.posterUrl} active={active} reducedMotion={reducedMotion} manualPaused={manualPaused} muted={muted} onManualPause={setManualPaused} onMutedChange={setMuted} onStatus={setPhase} onFullscreenChange={setFullscreen}
+      {showMovie && !failed ? <HeroTrailer key={current.key + ':' + playlist.generation} media={current.media} poster={current.movie.backdropUrl || current.movie.posterUrl} active={active} reducedMotion={reducedMotion} manualPaused={manualPaused} muted={muted} onManualPause={setManualPaused} onMutedChange={setMuted} onStatus={setPhase} onFullscreenChange={setFullscreen}
         onEnded={() => {
           const event = { type: 'ended', key: current.key, generation: playlist.generation, canAdvance: policyRef.current && !document.hidden };
           if (!event.canAdvance && !reducedMotion && !manualPaused) pendingEnd.current = event;
@@ -118,7 +105,6 @@ function ShowcaseSession({ entries, loading, error }) {
     <div className="cinema-panel">
       <div className="cinema-topbar"><span className="cinema-showcase-brand">Now playing · trailer</span>
         <p className="cinema-counter" aria-label={'Trailer ' + (showMovie ? available.findIndex(entry => entry.key === current.key) + 1 : 0) + ' of ' + available.length}>{showMovie ? available.findIndex(entry => entry.key === current.key) + 1 : 0} / {available.length}</p>
-        {showMovie && !failed && <button className="cinema-pause" type="button" aria-label={resume ? 'Resume trailers' : 'Pause trailers'} aria-pressed={manualPaused} onClick={togglePlayback} disabled={!active || phase === 'loading'}>{resume ? <FiPlay aria-hidden="true" /> : <FiPause aria-hidden="true" />}</button>}
       </div>
       <div className="cinema-indicators" aria-hidden="true">{available.map(entry => <span key={entry.key} className={entry.key === current?.key ? 'is-active' : ''} />)}</div>
       <div className="cinema-info" aria-live="polite" aria-atomic="true">

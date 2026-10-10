@@ -20,8 +20,6 @@
 .cinema-topbar {display:flex;align-items:center;gap:8px;min-height:44px}
 .cinema-showcase-brand {flex:1;min-width:0;font:700 11px/1.4 'Instrument Sans Variable';letter-spacing:.17em;text-transform:uppercase;color:var(--showcase-muted)}
 .cinema-counter {flex:none;margin:0;white-space:nowrap;font-size:12px;font-weight:700;color:var(--showcase-muted)}
-.cinema-pause {display:grid;place-items:center;flex:none;width:44px;height:44px;border:1px solid #ffffff25;border-radius:50%;color:var(--showcase-text);background:#ffffff0b;font-size:16px;cursor:pointer}
-.cinema-pause:hover {background:#ffffff20}.cinema-pause:disabled {opacity:.4;cursor:default}
 .cinema-panel :focus-visible {outline:3px solid var(--accent-primary);outline-offset:4px}
 .cinema-indicators {display:flex;gap:6px;margin:8px 0 24px}
 .cinema-indicators span {flex:1;height:4px;border-radius:8px;background:#ffffff26;transition:background-color 200ms ease}
