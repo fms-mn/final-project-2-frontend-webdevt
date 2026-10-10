@@ -103,3 +103,11 @@
   .movie-drawer-head { padding-top:max(17px,env(safe-area-inset-top)); }
   .movie-editor-actions .movie-button { min-height:44px; }
 }
+
+.movie-showings { display: grid; gap: 0.15rem; font-weight: 600; }
+.movie-showings small { font-weight: 400; color: var(--a-muted, var(--text-muted)); max-width: 15rem; }
+.movie-showings-ok { color: var(--a-ok, var(--success-text)); }
+.movie-showings-warn { color: var(--a-warn-text); }
+.movie-showings-none { color: var(--a-muted, var(--text-muted)); font-weight: 400; }
+.movie-withdraw-confirm { display: grid; gap: 0.4rem; padding: 0.6rem; max-width: 16rem; }
+.movie-withdraw-confirm p { margin: 0; font-size: 0.82rem; line-height: 1.4; }

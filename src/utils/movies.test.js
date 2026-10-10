@@ -40,3 +40,13 @@ test('an unreleased movie is "coming soon"; a bad date never counts as released'
 test('a movie without a genre still works', () => {
   assert.deepEqual(normalizeMovie({ ...apiMovie, genre: undefined }).genre, []);
 });
+
+test('the server\'s showing status and cheapest price win over the release date', () => {
+  const live = { ...apiMovie, releaseDate: '2020-01-01T00:00:00.000Z', showStatus: 'now_showing', fromPrice: 35050 };
+  assert.equal(normalizeMovie(live).status, 'now_showing');
+  assert.equal(normalizeMovie(live).price, 350.5, 'centavos become pesos');
+  assert.equal(normalizeMovie({ ...live, showStatus: 'not_showing', fromPrice: null }).status, 'not_showing', 'released but nothing to book');
+  assert.equal(normalizeMovie({ ...live, showStatus: 'not_showing', fromPrice: null }).price, null, 'no invented price');
+  assert.equal(normalizeMovie({ ...live, showStatus: 'coming_soon' }, new Date('2030-01-01')).status, 'coming_soon');
+  assert.equal(normalizeMovie({ ...apiMovie, showStatus: 'bogus' }, new Date('2026-12-01')).status, 'now_showing', 'an unknown answer falls back to the release date');
+});

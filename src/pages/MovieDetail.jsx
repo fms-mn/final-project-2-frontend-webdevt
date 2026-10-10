@@ -85,6 +85,7 @@ export default function MovieDetail() {
   const ticketPrice = previewBooking ? movie?.price || 0 : (selectedSlot?.ticketPrice || 0) / 100;
   const isBookable = movie?.status === 'now_showing' && user?.role !== 'admin';
   const isComingSoon = movie?.status === 'coming_soon';
+  const isNotShowing = movie?.status === 'not_showing';
 
   useEffect(() => {
     if (previewBooking || !movie) return;
@@ -241,6 +242,7 @@ export default function MovieDetail() {
           </div>
           <div className="movie-detail-text">
             {isComingSoon && <span className="booking-eyebrow">Coming Soon</span>}
+            {isNotShowing && <span className="booking-eyebrow">No showings right now</span>}
             {isBookable && <span className="booking-eyebrow">Choose your seats</span>}
             <h1 ref={pageHeadingRef} tabIndex={-1}>{movie.title}</h1>
             {isBookable && <p className="booking-mobile-context">{new Date(`${selectedDate}T00:00:00`).toLocaleDateString('en-PH',{weekday:'short',day:'numeric',month:'short'})} · {auditorium?.name || 'Cinema'}</p>}
@@ -251,6 +253,7 @@ export default function MovieDetail() {
               <span className="tag">⭐ {movie.rating}</span>
             </div>
             <p>{movie.description}</p>
+            {isNotShowing && <p className="movie-detail-closed" role="status">This movie has no showings to book right now. Please check back soon.</p>}
             <div className="movie-detail-stats">
               <div className="stat">
                 <span className="stat-label">Duration</span>
@@ -270,7 +273,7 @@ export default function MovieDetail() {
                   <span className="stat-value">{movie.director}</span>
                 </div>
               )}
-              {!isComingSoon && <div className="stat">
+              {!isComingSoon && !isNotShowing && <div className="stat">
                 <span className="stat-label">Price</span>
                 <span className="stat-value stat-price">₱{ticketPrice}</span>
               </div>}
@@ -289,7 +292,7 @@ export default function MovieDetail() {
               <h2>Choose your seats</h2>
               <p>Pick a showtime, then choose your favorite seats below.</p>
             </div>
-            <span className="booking-price">₱{movie.price} <small>/ seat</small></span>
+            {movie.price != null && <span className="booking-price">{previewBooking ? '' : 'from '}₱{movie.price} <small>/ seat</small></span>}
           </div>
 
           <div className="booking-schedule">
