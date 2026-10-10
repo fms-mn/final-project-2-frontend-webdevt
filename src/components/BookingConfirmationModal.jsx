@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { getDemoBookingReference } from '../data/demoBookings';
+import { displayTime, shortDate } from '../utils/manila';
 import { listAuditoriums } from '../data/demoSchedule';
 
 export default function BookingConfirmationModal({ draft, booking, pending, error, onConfirm, onClose, onViewBookings, returnFocusRef }) {
@@ -67,9 +68,10 @@ export default function BookingConfirmationModal({ draft, booking, pending, erro
     if (booking) headingRef.current?.focus({ preventScroll: true });
   }, [booking]);
 
-  const when = booking?.showtime?.startTime ? new Date(booking.showtime.startTime) : new Date(`${booking?.showDate || draft.showDate}T${booking?.showTime || draft.showTime}:00`);
-  const showDate = when.toLocaleDateString('en-PH', { weekday: 'short', day: 'numeric', month: 'short' });
-  const showTime = booking?.showtime?.startTime ? when.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', hour12: false }) : booking?.showTime || draft.showTime;
+  const when = booking?.showtime?.startTime ? new Date(booking.showtime.startTime) : new Date(`${booking?.showDate || draft.showDate}T${booking?.showTime || draft.showTime}:00+08:00`);
+  const showDate = shortDate(when);
+  const showTime = displayTime(when);
+  const simulated = draft.isDemo || booking?.isDemo;
   const seats = booking?.seats || draft.seats;
   const code = booking && (booking.bookingCode || getDemoBookingReference(booking));
   const auditoriumName = booking ? booking.auditorium?.name || listAuditoriums().find((room) => room.id === booking.auditoriumId)?.name || 'Cinema' : draft.auditoriumName;
@@ -96,13 +98,13 @@ export default function BookingConfirmationModal({ draft, booking, pending, erro
             {celebrationKey === bookingKey && <span className="confirmation-confetti">{Array.from({ length: 8 }, (_, index) => <i key={index} />)}</span>}
           </span> : <span className="booking-eyebrow">Final step</span>}
           <button type="button" className="confirmation-close" aria-label={booking ? 'Close ticket' : 'Close confirmation'} onClick={onClose} disabled={pending}>×</button>
-          <h2 id="booking-modal-title" ref={headingRef} tabIndex={-1}>{booking ? 'You’re booked! Enjoy the show.' : 'Confirm your booking'}</h2>
-          <p id="booking-modal-reference" className="booking-modal-reference">{booking ? 'Your booking is confirmed and saved in My tickets. Show the code below at the cinema.' : 'Review your seats and total before confirming.'}</p>
+          <h2 id="booking-modal-title" ref={headingRef} tabIndex={-1}>{simulated ? booking ? 'Demo booking saved' : 'Confirm simulated booking' : booking ? 'Booking confirmed' : 'Confirm your booking'}</h2>
+          <p id="booking-modal-reference" className="booking-modal-reference">{simulated ? 'This booking is simulated. No payment is taken and this code is not valid for cinema admission.' : booking ? 'Your booking is confirmed and saved in My tickets. Show the code below at the cinema.' : 'Review your seats and total before confirming.'}</p>
         </header>
         <div className="confirmation-modal-content">
         <div className={`confirmation-ticket ${booking ? 'is-confirmed' : 'is-review'} ${booking && celebrationKey === bookingKey ? 'is-celebrating' : ''}`}>
           <div className="confirmation-main">
-            <div className="confirmation-brand"><img src="/filme-mark.svg" alt="" /> FILME <span>ADMIT {seats.length}</span></div>
+            <div className="confirmation-brand"><img src="/filme-mark.svg" alt="" /> FILME <span>{simulated ? 'DEMO · ' : 'ADMIT '}{seats.length}</span></div>
             <h3>{booking?.movie?.title || draft.movieTitle}</h3>
             <dl><div><dt>Date</dt><dd>{showDate}</dd></div><div><dt>Time</dt><dd>{showTime}</dd></div><div><dt>Cinema</dt><dd>{auditoriumName}</dd></div><div><dt>Seats</dt><dd>{seats.join(' · ')}</dd></div></dl>
           </div>

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { displayClock } from '../utils/manila';
 import { listShowtimes } from '../data/demoSchedule';
 import { demoHeroMediaFor } from '../data/demoHeroMedia';
 import { useHoverPreview } from '../hooks/useHoverPreview';
@@ -47,7 +48,7 @@ export default function MovieCard({ movie, showShowtimes = false, previewOnHover
         )}
         {showShowtimes && isShowing && (
           <div className="movie-card-showtimes" aria-label="Daily showtimes">
-            {listShowtimes(movie._id).map((slot) => <span key={slot.id}>{slot.time}</span>)}
+            {listShowtimes(movie._id).map((slot) => <span key={slot.id}>{displayClock(slot.time)}</span>)}
           </div>
         )}
       </div>

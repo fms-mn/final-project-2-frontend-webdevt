@@ -69,14 +69,14 @@ function showingsFor(date) {
     ['demo-show-1', 0, 0, '10:30', 40000, 12, true, 'scheduled'],
     ['demo-show-2', 1, 1, '13:30', 45000, 19, true, 'scheduled'],
     ['demo-show-3', 2, 0, '16:45', 40000, 31, true, 'scheduled'],
-    ['demo-show-4', 0, 1, '20:00', 50000, 0, false, 'scheduled'],
+    ['demo-show-4', 0, 1, '20:45', 50000, 0, false, 'scheduled'],
     ['demo-show-5', 3, 1, '18:45', 40000, 8, true, 'scheduled'],
   ];
   return slots.map(([id, movieIndex, roomIndex, clock, ticketPrice, sold, published, status]) => {
     const movie = catalog.find((item) => item._id === seedMovies[movieIndex]._id) || seedMovies[movieIndex];
     const auditorium = rooms[roomIndex];
     const startTime = instant(date, clock);
-    const totalSeats = auditorium.rows * auditorium.seatsPerRow - auditorium.blockedSeats.length;
+    const totalSeats = auditorium.rows * auditorium.seatsPerRow - new Set([...auditorium.blockedSeats, ...(id === 'demo-show-3' ? ['B2'] : [])]).size;
     return {
       _id: `${id}-${date}`, movie, auditorium, startTime, endTime: addMinutes(startTime, movie.duration),
       ticketPrice, totalSeats, remainingSeats: totalSeats - sold, status, published, blockedSeats: id === 'demo-show-3' ? ['B2'] : [],

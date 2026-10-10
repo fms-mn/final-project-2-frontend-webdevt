@@ -1,7 +1,7 @@
 // Which clip a movie card previews on hover: its YouTube trailer, else a demo video, else none.
 export function previewMediaFor(videoId, demoMedia) {
   if (videoId) return { kind: 'youtube', videoId };
-  if (demoMedia?.kind === 'video' && demoMedia.src) return { kind: 'video', src: demoMedia.src };
+  if (demoMedia?.kind === 'video' && demoMedia.src) return { kind: 'video', src: demoMedia.src, label: demoMedia.label || 'Sample footage · not a movie trailer' };
   return null;
 }
 

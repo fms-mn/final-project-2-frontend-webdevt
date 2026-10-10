@@ -15,3 +15,13 @@ export function groupShowtimesByTime(rows) {
 }
 
 export const isBookableShowing = row => row.seats > 0 && (row.status === 'OPEN' || row.status === 'FEW SEATS');
+
+export function groupShowtimesByMovie(rows) {
+  const groups = new Map();
+  for (const row of [...rows].sort((a,b) => a.time.localeCompare(b.time))) {
+    const id = row.movie._id;
+    if (!groups.has(id)) groups.set(id, { movie: row.movie, showings: [] });
+    groups.get(id).showings.push(row);
+  }
+  return [...groups.values()];
+}

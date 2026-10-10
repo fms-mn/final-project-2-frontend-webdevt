@@ -18,6 +18,7 @@ function OpeningCard({ movie, currentDay }) {
     <div className="opening-card-body">
       <div className="opening-date-line"><span className="opening-date-pill">{date ? date.toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', month: 'short', day: 'numeric' }).toUpperCase() : 'TBA'}</span><span className="opening-countdown">{daysLeft === null ? 'DATE TO BE ANNOUNCED' : daysLeft === 0 ? 'OPENS TODAY' : `IN ${daysLeft} ${daysLeft === 1 ? 'DAY' : 'DAYS'}`}</span></div>
       <Link className="opening-title" to={`/movie/${movie._id}`}>{movie.title}</Link>
+      <Link className="opening-more-details" to={'/movie/' + movie._id + '?details=1'}>More details</Link>
       <p className="opening-details">{movie.genre.join(' · ')} · {movie.duration} min</p>
       <div className="opening-card-footer"><span className="opening-rating">{movie.rating}</span><div className="opening-calendar-action">{calendarUrl
         ? <a className="opening-remind" href={calendarUrl} target="_blank" rel="noopener noreferrer" aria-label={`Add ${movie.title} release to Google Calendar`}><FiCalendar aria-hidden="true" />Add to Calendar</a>

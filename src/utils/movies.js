@@ -14,6 +14,6 @@ export function normalizeMovie(movie, now = new Date()) {
     description: movie.synopsis,
     genre: movie.genre ? [movie.genre] : [],
     status: isReleased(movie, now) ? 'now_showing' : 'coming_soon',
-    price: DEMO_TICKET_PRICE,
+    price: movie._id?.startsWith('demo-') ? DEMO_TICKET_PRICE : movie.price,
   };
 }

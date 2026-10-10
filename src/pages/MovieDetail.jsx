@@ -3,8 +3,11 @@ import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useMovie } from '../hooks/useMovies';
-import { listAuditoriums, listShowtimes } from '../data/demoSchedule';
-import { createDemoBooking, getBookedSeats } from '../data/demoBookings';
+import { DEMO_RULES, isDemoSlotSafe, listAuditoriums, listShowtimes } from '../data/demoSchedule';
+import { createDemoBooking, demoRemainingSeats, getReservedDemoSeats } from '../data/demoBookings';
+import { dayHeading, displayClock, manilaClock, manilaDay, shiftDay, today } from '../utils/manila';
+import { canEnterBooking } from '../utils/bookingHero';
+import MovieDetails from '../components/MovieDetails';
 import BookingConfirmationModal from '../components/BookingConfirmationModal';
 
 const ROWS = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
@@ -21,31 +24,8 @@ export function toggleSeatSelection(selectedSeats, seatId, bookedSeats) {
     : [...selectedSeats, seatId];
 }
 
-function getNextDays(count) {
-  const days = [];
-  const today = new Date();
-  for (let i = 0; i < count; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
-    days.push(d);
-  }
-  return days;
-}
-
-function formatDate(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-function initialSelection(movieId) {
-  const slots = listShowtimes(movieId);
-  const firstFuture = slots.find((slot) => new Date(`${formatDate(new Date())}T${slot.time}:00`).getTime() > Date.now());
-  const date = new Date();
-  if (!firstFuture) date.setDate(date.getDate() + 1);
-  return { date: formatDate(date), time: (firstFuture || slots[0])?.time || '' };
-}
+const getNextDays = count => Array.from({ length: count }, (_, index) => new Date(shiftDay(today(), index) + 'T12:00:00+08:00'));
+const formatDate = manilaDay;
 
 export default function MovieDetail() {
   const { id } = useParams();
@@ -54,12 +34,17 @@ export default function MovieDetail() {
   const { user } = useAuth();
 
   const { movie, loading, notFound, error, reload, isDemo } = useMovie(id);
-  const previewBooking = isDemo || user?.id === 'demo-user';
-  const [selectedDate, setSelectedDate] = useState(() => searchParams.get('date') || initialSelection(id).date);
-  const [selectedTime, setSelectedTime] = useState(() => searchParams.get('time') || initialSelection(id).time);
+  const previewBooking = isDemo && user?.isDemo;
+  const [selectedDate, setSelectedDate] = useState(() => searchParams.get('date') || today());
+  const [selectedTime, setSelectedTime] = useState(() => searchParams.get('time') || '');
   const [selectedShowtimeId, setSelectedShowtimeId] = useState(() => searchParams.get('showtime') || '');
   const [liveSlots, setLiveSlots] = useState([]);
+  const [loadedDate, setLoadedDate] = useState('');
+  const [scheduleAttempt, setScheduleAttempt] = useState(0);
+  const [scheduleError, setScheduleError] = useState('');
   const [liveSeats, setLiveSeats] = useState(null);
+  const [, refreshClock] = useState(0);
+  useEffect(() => { const timer = setInterval(() => refreshClock(value => value + 1), 30000); return () => clearInterval(timer); }, []);
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [booking, setBooking] = useState(false);
   const bookingLocked = useRef(false);
@@ -72,42 +57,47 @@ export default function MovieDetail() {
   const mobileBarRef = useRef(null);
   const pageHeadingRef = useRef(null);
 
+  useEffect(() => { setSelectedDate(searchParams.get('date') || today()); setSelectedTime(searchParams.get('time') || ''); setSelectedShowtimeId(searchParams.get('showtime') || ''); setSelectedSeats([]); setBookingSuccess(null); setConfirmationOpen(false); }, [id, searchParams]);
   const dates = getNextDays(7);
-  const showtimes = previewBooking ? listShowtimes(id) : liveSlots;
-  const selectedSlot = showtimes.find((slot) => slot.id === selectedShowtimeId) || showtimes.find((slot) => slot.time === selectedTime);
+  const showtimes = previewBooking ? listShowtimes(id, selectedDate) : liveSlots;
+  const selectedSlot = showtimes.find((slot) => slot.id === selectedShowtimeId);
   const auditorium = previewBooking ? listAuditoriums().find((item) => item.id === selectedSlot?.auditoriumId) : liveSeats?.auditorium;
-  const bookedSeats = previewBooking ? (movie ? getBookedSeats(id, selectedDate, selectedTime) : []) : (liveSeats?.seats || []).filter(seat => seat.status === 'booked').map(seat => seat.label);
+  const bookedSeats = previewBooking ? (movie ? getReservedDemoSeats(id, selectedDate, selectedSlot?.time) : []) : (liveSeats?.seats || []).filter(seat => seat.status !== 'available').map(seat => seat.label);
   const seatsPerRow = auditorium?.seatsPerRow ?? SEATS_PER_ROW;
   const seatCapacity = auditorium?.capacity ?? (auditorium?.rows && auditorium?.seatsPerRow ? auditorium.rows * auditorium.seatsPerRow : 8 * SEATS_PER_ROW);
   const visibleRows = ROWS.slice(0, Math.ceil(seatCapacity / seatsPerRow));
   const aisleAfter = seatsPerRow >= 6 && seatsPerRow % 2 === 0 ? seatsPerRow / 2 - 1 : -1;
-  const showtimeUnavailable = !selectedSlot || (previewBooking ? new Date(`${selectedDate}T${selectedTime}:00`).getTime() <= Date.now() : (!liveSeats || liveSeats.showtime?._id !== selectedSlot._id || new Date(selectedSlot.startTime).getTime() <= Date.now()));
-  const ticketPrice = previewBooking ? movie?.price || 0 : (selectedSlot?.ticketPrice || 0) / 100;
+  const verifiedShowing = previewBooking && selectedSlot ? { _id: selectedSlot.id,
+    startTime: selectedDate + 'T' + selectedSlot.time + ':00+08:00',
+    verified: isDemoSlotSafe(id, selectedDate, selectedSlot.time), remainingSeats: demoRemainingSeats(id, selectedDate, selectedSlot.time),
+    bookable: Date.parse(selectedDate + 'T' + selectedSlot.time + ':00+08:00') > Date.now() + DEMO_RULES.salesCutoffMinutes * 60000,
+  } : liveSeats && loadedDate === selectedDate && liveSeats.showtime?._id === selectedSlot?._id ? {
+    ...liveSeats.showtime, verified: true, remainingSeats: liveSeats.seats.filter(seat => seat.status === 'available').length,
+  } : null;
+  const showtimeUnavailable = !verifiedShowing || !canEnterBooking(verifiedShowing, user?.role);
+
+  const ticketPrice = previewBooking ? movie?.price || 0 : (liveSeats?.showtime?.ticketPrice ?? selectedSlot?.ticketPrice ?? 0) / 100;
   const isBookable = movie?.status === 'now_showing' && user?.role !== 'admin';
   const isComingSoon = movie?.status === 'coming_soon';
 
   useEffect(() => {
     if (previewBooking || !movie) return;
     const controller = new AbortController();
+    setLiveSlots([]); setLiveSeats(null); setLoadedDate(''); setScheduleError('');
     api(`/showtimes?movie=${encodeURIComponent(id)}&date=${selectedDate}`, { signal: controller.signal })
-      .then(slots => setLiveSlots(slots.map(slot => ({ ...slot, id: slot._id, time: new Date(slot.startTime).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', hour12: false }) }))))
-      .catch(error => { if (error.name !== 'AbortError') setBookingError(error.message); });
+      .then(slots => { setLiveSlots(slots.map(slot => ({ ...slot, id: slot._id, time: manilaClock(slot.startTime) }))); setLoadedDate(selectedDate); })
+      .catch(error => { if (error.name !== 'AbortError') { setLiveSlots([]); setLiveSeats(null); setScheduleError('Showings unavailable. Please retry.'); } });
     return () => controller.abort();
-  }, [id, selectedDate, previewBooking, movie]);
-
-  useEffect(() => {
-    if (!previewBooking && liveSlots.length && !liveSlots.some(slot => slot.time === selectedTime)) {
-      setSelectedTime(liveSlots[0].time);
-    }
-  }, [previewBooking, liveSlots, selectedTime]);
+  }, [id, selectedDate, previewBooking, movie, scheduleAttempt]);
 
   useEffect(() => {
     if (user?.role === 'admin' || previewBooking || !selectedSlot) { setLiveSeats(null); return; }
     const controller = new AbortController();
+    setLiveSeats(null); setScheduleError('');
     api(`/showtimes/${selectedSlot._id}/seats`, { signal: controller.signal })
-      .then(setLiveSeats).catch(error => { if (error.name !== 'AbortError') setBookingError(error.message); });
+      .then(setLiveSeats).catch(error => { if (error.name !== 'AbortError') { setLiveSeats(null); setScheduleError('Seat availability unavailable. Please retry.'); } });
     return () => controller.abort();
-  }, [user?.role, previewBooking, selectedSlot?._id]);
+  }, [user?.role, previewBooking, selectedSlot?._id, scheduleAttempt]);
 
   useEffect(() => {
     const viewport = seatMapRef.current;
@@ -176,7 +166,8 @@ export default function MovieDetail() {
         movie,
         seats: selectedSeats,
         showDate: selectedDate,
-        showTime: selectedTime,
+        showTime: selectedSlot.time,
+        showingId: selectedSlot.id,
       }) : await api('/bookings', { method: 'POST', body: { showtime: selectedSlot._id, seats: selectedSeats } });
       if (!previewBooking) api(`/showtimes/${selectedSlot._id}/seats`).then(setLiveSeats).catch(() => {});
       bookingLocked.current = false;
@@ -219,7 +210,7 @@ export default function MovieDetail() {
 
   return (
     <div className={`movie-detail booking-experience fade-in ${isComingSoon ? 'coming-soon-detail' : ''} ${isBookable ? 'booking-active' : ''} ${confirmationOpen ? 'modal-open' : ''}`} style={{ '--booking-mobile-bar-height': `${mobileBarHeight}px` }}>
-      {isDemo && <p className="demo-catalog-notice">Preview catalog · This is a sample movie.</p>}
+      {user?.role === 'admin' && <p className="demo-catalog-notice">Admin preview — customer booking is disabled.</p>}
       {isBookable && (
         <nav className="booking-progress" aria-label="Booking progress">
           <span className="booking-progress-mobile" aria-current="step">Step {confirmationOpen ? bookingSuccess ? 4 : 3 : 2} of 4 · {confirmationOpen ? bookingSuccess ? 'Complete' : 'Review booking' : 'Choose seats'}</span>
@@ -243,14 +234,14 @@ export default function MovieDetail() {
             {isComingSoon && <span className="booking-eyebrow">Coming Soon</span>}
             {isBookable && <span className="booking-eyebrow">Choose your seats</span>}
             <h1 ref={pageHeadingRef} tabIndex={-1}>{movie.title}</h1>
-            {isBookable && <p className="booking-mobile-context">{new Date(`${selectedDate}T00:00:00`).toLocaleDateString('en-PH',{weekday:'short',day:'numeric',month:'short'})} · {auditorium?.name || 'Cinema'}</p>}
+            {isBookable && <p className="booking-mobile-context">{dayHeading(selectedDate)} · {auditorium?.name || 'Cinema'}</p>}
             <div className="movie-detail-tags">
               {movie.genre.map((g) => (
                 <span key={g} className="tag">{g}</span>
               ))}
               <span className="tag">⭐ {movie.rating}</span>
             </div>
-            <p>{movie.description}</p>
+            <MovieDetails movie={movie} isDemo={isDemo} />
             <div className="movie-detail-stats">
               <div className="stat">
                 <span className="stat-label">Duration</span>
@@ -272,7 +263,7 @@ export default function MovieDetail() {
               )}
               {!isComingSoon && <div className="stat">
                 <span className="stat-label">Price</span>
-                <span className="stat-value stat-price">₱{ticketPrice}</span>
+                <span className="stat-value stat-price">{selectedSlot ? '\u20b1' + ticketPrice : 'Choose a showing'}</span>
               </div>}
             </div>
           </div>
@@ -283,15 +274,17 @@ export default function MovieDetail() {
       <div className="booking-main">
       {isBookable && (
         <div className="booking-section">
+          <div className="booking-selection">
           <div className="booking-heading">
             <div>
               <span className="booking-eyebrow">Your cinema experience</span>
               <h2>Choose your seats</h2>
               <p>Pick a showtime, then choose your favorite seats below.</p>
             </div>
-            <span className="booking-price">₱{movie.price} <small>/ seat</small></span>
+            <span className="booking-price">₱{ticketPrice} <small>/ seat</small></span>
           </div>
 
+          {scheduleError && <div className="booking-submit-error" role="alert">{scheduleError} <button type="button" className="btn btn-secondary" onClick={() => setScheduleAttempt(value => value + 1)}>Retry</button></div>}
           <div className="booking-schedule">
           <div>
           <h3 style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
@@ -300,8 +293,6 @@ export default function MovieDetail() {
           <div className="date-selector">
             {dates.map((date) => {
               const dateStr = formatDate(date);
-              const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-              const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
               return (
                 <button
                   key={dateStr}
@@ -309,9 +300,9 @@ export default function MovieDetail() {
                   onClick={() => { bookingLocked.current = false; setSelectedDate(dateStr); setSelectedShowtimeId(''); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); }}
                   disabled={booking}
                 >
-                  <span className="day-name">{dayNames[date.getDay()]}</span>
-                  <span className="day-num">{date.getDate()}</span>
-                  <span className="month">{monthNames[date.getMonth()]}</span>
+                  <span className="day-name">{date.toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', weekday: 'short' })}</span>
+                  <span className="day-num">{date.toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', day: 'numeric' })}</span>
+                  <span className="month">{date.toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', month: 'short' })}</span>
                 </button>
               );
             })}
@@ -329,15 +320,21 @@ export default function MovieDetail() {
                 key={slot.id}
                 className={`showtime-btn ${selectedSlot?.id === slot.id ? 'active' : ''}`}
                 onClick={() => { bookingLocked.current = false; setSelectedTime(slot.time); setSelectedShowtimeId(slot.id); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); }}
-                disabled={booking || (previewBooking ? new Date(`${selectedDate}T${slot.time}:00`).getTime() <= Date.now() : new Date(slot.startTime).getTime() <= Date.now())}
+                aria-label={movie.title + ', ' + displayClock(slot.time) + ', ' + (previewBooking ? listAuditoriums().find(room => room.id === slot.auditoriumId)?.name : slot.auditorium?.name || 'Cinema')}
+                aria-pressed={selectedSlot?.id === slot.id}
+                disabled={booking || (previewBooking ? !isDemoSlotSafe(id, selectedDate, slot.time) || Date.parse(selectedDate + 'T' + slot.time + ':00+08:00') <= Date.now() + DEMO_RULES.salesCutoffMinutes * 60000 || demoRemainingSeats(id, selectedDate, slot.time) <= 0 : slot.bookable === false || slot.remainingSeats <= 0 || Date.parse(slot.startTime) <= Date.now())}
               >
-                {slot.time}
+                {displayClock(slot.time)} · {previewBooking ? listAuditoriums().find(room => room.id === slot.auditoriumId)?.name : slot.auditorium?.name || 'Cinema'}
               </button>
             ))}
           </div>
           </div>
           </div>
 
+          <div className="booking-showing-info">
+          <p role="status">{showtimeUnavailable ? 'Select an available showing to enable the seat map.' : (auditorium?.name || 'Cinema') + ' · ' + verifiedShowing.remainingSeats + ' seats available'}</p>
+          {selectedSlot && <p className="booking-showing-meta">{[selectedSlot.format, selectedSlot.language, selectedSlot.subtitles && 'Subtitles: ' + selectedSlot.subtitles].filter(Boolean).join(' · ')}</p>}
+          </div>
           <div className="booking-seat-panel">
           <div className="screen-indicator">
             <div className="screen-line" aria-hidden="true" />
@@ -400,6 +397,8 @@ export default function MovieDetail() {
           </p>
           </div>
 
+          </div>
+
           {/* Booking Summary */}
           {selectedSlot && (
             <div className="booking-summary">
@@ -418,7 +417,7 @@ export default function MovieDetail() {
               </div>
               <div className="summary-row">
                 <span className="label">Time</span>
-                <span className="value">{selectedTime}</span>
+                <span className="value">{selectedSlot ? displayClock(selectedSlot.time) : 'Select a showtime'}</span>
               </div>
               <div className="summary-row">
                 <span className="label">Seats</span>
@@ -481,7 +480,7 @@ export default function MovieDetail() {
       )}
       {confirmationOpen && (
         <BookingConfirmationModal
-          draft={{ movieTitle: movie.title, showDate: selectedDate, showTime: selectedTime, auditoriumName: auditorium?.name || 'Cinema', seats: selectedSeats, unitPrice: ticketPrice, totalPrice: selectedSeats.length * ticketPrice }}
+          draft={{ isDemo: previewBooking, movieTitle: movie.title, showDate: selectedDate, showTime: selectedSlot?.time || selectedTime, auditoriumName: auditorium?.name || 'Cinema', seats: selectedSeats, unitPrice: ticketPrice, totalPrice: selectedSeats.length * ticketPrice }}
           booking={bookingSuccess}
           pending={booking}
           error={bookingError}

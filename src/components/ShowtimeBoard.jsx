@@ -1,22 +1,24 @@
 import { Link } from 'react-router-dom';
 import { isBookableShowing } from '../utils/showtimesBoard';
+import { displayClock } from '../utils/manila';
 
-function FilmShowing({ row, dateLabel, showingLink }) {
-  const available = isBookableShowing(row);
-  const status = row.status === 'FEW SEATS' ? 'Few seats' : row.status === 'SOLD OUT' ? 'Sold out' : row.status === 'STARTED' ? 'Started' : row.status === 'CANCELLED' ? 'Cancelled' : 'Open';
-  const label = `${row.movie.title}, ${dateLabel}, ${row.time}, ${row.room}: ${available ? `${row.seats} seats left. Book` : status}`;
-  return <article className="board-film-option">
-    <div className="board-film-copy"><h4>{row.movie.title}</h4>
-      <p className="board-film-room">{row.room}</p>
-      <p className={`board-film-availability ${available ? '' : 'is-unavailable'}`}><span aria-hidden="true">●</span> {status} · {row.seats} {row.seats === 1 ? 'seat' : 'seats'} left</p>
+export default function ShowtimeBoard({ groups, dateLabel, showingLink, role, selectedMovieId, onMovieChange }) {
+  return <div className="movie-showing-grid">{groups.map(({ movie, showings }) => <article className={'movie-showing-card' + (selectedMovieId === movie._id ? ' is-selected' : '')} key={movie._id}>
+    <div className="movie-showing-heading">
+      <button type="button" className="board-poster" onClick={() => onMovieChange(movie._id)} aria-label={'Preview ' + movie.title + ' in the hero'}><img src={movie.posterUrl} alt="" loading="lazy" /></button>
+      <div><h3>{movie.title}</h3><p className="board-movie-meta">{movie.rating} · {movie.duration} min · {movie.genre.join(' / ')}</p><p className="board-synopsis">{movie.description}</p>
+        <button type="button" className="board-preview" onClick={() => onMovieChange(movie._id)} aria-pressed={selectedMovieId === movie._id}>Preview movie</button>
+        <Link className="board-details" to={'/movie/' + movie._id + '?details=1'}>More details</Link>
+      </div>
     </div>
-    {available ? <Link className="board-book" to={showingLink(row)} aria-label={label}>Book</Link> : <button type="button" className="board-book" aria-label={label} disabled>{status}</button>}
-  </article>;
-}
-
-export default function ShowtimeBoard({ groups, dateLabel, showingLink }) {
-  return <div className="showtime-board">{groups.map(group => <div className="board-time-group" key={group.time}>
-    <h3 className="board-digital-time">{group.time}</h3>
-    <div className="board-film-list">{group.showings.map(row => <FilmShowing key={row.id} row={row} dateLabel={dateLabel} showingLink={showingLink} />)}</div>
-  </div>)}</div>;
+    <div className="board-showtime-chips" role="group" aria-label={movie.title + ' showings'}>{showings.map(row => {
+      const available = isBookableShowing(row);
+      const status = row.status === 'FEW SEATS' ? 'Limited availability' : row.status === 'OPEN' ? 'Available' : row.status.toLowerCase();
+      const label = movie.title + ', ' + dateLabel + ', ' + displayClock(row.time) + ', ' + row.room + ': ' + status + ', ' + row.seats + ' seats left';
+      const content = <><strong>{displayClock(row.time)}</strong><span>{row.room}{row.format ? ' · ' + row.format : ''}</span><span>{status} · {row.seats} seats left</span>{row.price != null && <span>₱{row.price.toLocaleString('en-PH')} / seat</span>}</>;
+      return available && role === 'user' ? <Link key={row.id} className="board-showtime-chip" aria-label={'Book ' + label} to={showingLink(row)} onClick={() => onMovieChange(movie._id)}>{content}</Link>
+        : <button key={row.id} type="button" className="board-showtime-chip" disabled aria-label={label + (role === 'admin' ? '. Admin preview; booking disabled' : '')}>{content}</button>;
+    })}</div>
+    {showings[0]?.language && <p className="board-movie-meta">{showings[0].language}{showings[0].subtitles ? ' · Subtitles: ' + showings[0].subtitles : ''}</p>}
+  </article>)}</div>;
 }

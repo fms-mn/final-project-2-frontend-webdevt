@@ -5,7 +5,7 @@ import { canHoverPreview } from '../hooks/useHoverPreview.js';
 
 test('a YouTube trailer wins over a demo clip; no clip means no preview', () => {
   assert.deepEqual(previewMediaFor('c51ND9Hdbw0', { kind: 'video', src: '/a.mp4' }), { kind: 'youtube', videoId: 'c51ND9Hdbw0' });
-  assert.deepEqual(previewMediaFor('', { kind: 'video', src: '/a.mp4' }), { kind: 'video', src: '/a.mp4' });
+  assert.deepEqual(previewMediaFor('', { kind: 'video', src: '/a.mp4' }), { kind: 'video', src: '/a.mp4', label: 'Sample footage · not a movie trailer' });
   assert.equal(previewMediaFor('', null), null);
   assert.equal(previewMediaFor('', { kind: 'video' }), null);
 });

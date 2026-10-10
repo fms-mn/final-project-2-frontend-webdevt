@@ -44,3 +44,6 @@ export function daysBetween(from, to) {
   for (let day = from; day && day <= to && days.length < 400; day = shiftDay(day, 1)) days.push(day);
   return days;
 }
+
+export const displayTime = value => new Date(value).toLocaleTimeString('en-PH', { timeZone: ZONE, hour: 'numeric', minute: '2-digit', hour12: true });
+export const displayClock = clock => displayTime('2000-01-01T' + clock + ':00' + OFFSET);

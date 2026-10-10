@@ -13,7 +13,7 @@ export default function Movies() {
     ? requestedStatus
     : 'all';
 
-  const { movies: allMovies, loading, error, reload, isDemo } = useMovies();
+  const { movies: allMovies, loading, error, reload } = useMovies();
   const query = search.trim().toLowerCase();
   const genres = [...new Set(allMovies.flatMap(movie => movie.genre))].sort();
   const movies = allMovies.filter((movie) =>
@@ -27,12 +27,12 @@ export default function Movies() {
       <span className="eyebrow">The lineup</span>
       <h1>All movies</h1>
       <p>Find your film, then pick a showing and seats.</p>
-      {isDemo && <p className="demo-catalog-notice">Preview catalog · Sample movies are shown while the database is unavailable.</p>}
 
       <div className="search-bar">
         <FiSearch className="search-icon" />
         <input
           type="text"
+          aria-label="Search movies by title"
           placeholder="Search movies..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}

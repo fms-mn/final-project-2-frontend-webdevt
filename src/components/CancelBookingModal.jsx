@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { dayHeading, displayClock } from '../utils/manila';
 import { getDemoBookingReference } from '../data/demoBookings';
 
 export default function CancelBookingModal({ booking, error, onKeep, onCancel }) {
@@ -39,9 +40,7 @@ export default function CancelBookingModal({ booking, error, onKeep, onCancel })
     };
   }, [onKeep]);
 
-  const showtime = `${new Date(`${booking.showDate}T00:00:00`).toLocaleDateString('en-PH', {
-    month: 'short', day: 'numeric', year: 'numeric',
-  })} · ${booking.showTime}`;
+  const showtime = dayHeading(booking.showDate) + ' ? ' + displayClock(booking.showTime);
 
   return createPortal(
     <div className="booking-modal-overlay">

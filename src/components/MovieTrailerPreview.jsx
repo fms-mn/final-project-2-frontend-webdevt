@@ -33,7 +33,7 @@ export default function MovieTrailerPreview({ media, title, poster, visible }) {
       </div>
       <span className="movie-card-preview-tag">
         <span className="movie-card-preview-bars"><i /><i /><i /></span>
-        Trailer
+        {media?.kind === 'video' ? 'Sample footage · not a movie trailer' : 'Trailer'}
       </span>
     </div>
   );
