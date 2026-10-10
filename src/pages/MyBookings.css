@@ -9,3 +9,6 @@
     white-space: nowrap;
   }
 }
+
+.ticket-payment { margin: 12px 0 0; color: #525d83; font: 600 12px 'JetBrains Mono Variable', monospace; letter-spacing: .04em; }
+.ticket-payment.is-refunded { color: #b4233e; }

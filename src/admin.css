@@ -126,6 +126,13 @@
 .link-button:hover { color: var(--a-coral); }
 .booking-detail { display: grid; gap: 2px; margin-top: 6px; font-family: 'Instrument Sans Variable', sans-serif; font-size: 12px; color: var(--a-soft); font-weight: 400; }
 .admin-status { display: inline-block; padding: 3px 9px; border: 1px solid var(--a-ok); border-radius: 99px; background: var(--a-ok-bg); color: var(--a-ok); font-size: 12px; font-weight: 700; text-transform: capitalize; }
+.admin-status.pending { border-color: var(--a-warn-line); background: var(--a-warn-bg); color: var(--a-warn-text); }
+.admin-status.expired { border-color: var(--a-line); background: var(--a-paper); color: var(--a-muted); }
+.admin-payment { display: grid; font-weight: 700; font-size: 13px; }
+.admin-payment-paid { color: var(--a-ok); }
+.admin-payment-refunded { color: var(--a-warn-text); }
+.admin-payment-waiting { color: var(--a-warn-text); }
+.admin-payment-none { color: var(--a-muted); font-weight: 500; }
 .admin-status.cancelled { border-color: var(--a-line); background: var(--a-paper); color: var(--a-muted); }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
