@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FiMoon, FiSun } from 'react-icons/fi';
 import PromoMarquee from '../components/PromoMarquee';
+import LandingFeatures from '../components/LandingFeatures';
 import './Landing.css';
 import '../components/landingTicketMotion.css';
 
@@ -13,11 +14,6 @@ function SampleTicket() {
     <div className="landing-ticket-shine" aria-hidden="true" />
   </div></div></div></div>;
 }
-const features = [
-  { title: 'Choose your seats', description: 'See the screen layout and pick the seats you want.' },
-  { title: 'Discover movies and schedules', description: "Find what's playing and when." },
-  { title: 'Manage your tickets', description: 'View your tickets and cancel bookings when eligible.' },
-];
 function CreateAccount({ closing = false }) {
   return <Link className={`landing-button${closing ? ' landing-button-paper' : ''}`} to="/register">Create Account <span aria-hidden="true">→</span></Link>;
 }
@@ -47,7 +43,7 @@ export default function Landing() {
     </header>
     <section className="landing-hero landing-container" aria-labelledby="landing-title"><div className="landing-hero-copy"><h1 id="landing-title"><span>Your next</span><span><mark>cinema</mark></span><span>night starts</span><span>here.</span></h1><p>Discover what's showing, choose your seats, and manage your tickets, all in one place.</p><CreateAccount /></div><SampleTicket /></section>
     <PromoMarquee />
-    <section className="landing-features landing-container" id="how-it-works" tabIndex={-1} aria-labelledby="landing-features-title"><h2 id="landing-features-title">Built around how you watch.</h2><div className="landing-feature-grid">{features.map((feature, index) => <article className={`landing-feature landing-feature-${index + 1}`} key={feature.title}><span className="landing-feature-number" aria-hidden="true">0{index + 1}</span><h3>{feature.title}</h3><p>{feature.description}</p></article>)}</div></section>
+    <LandingFeatures />
     <section className="landing-closing" aria-labelledby="landing-closing-title"><div className="landing-container"><h2 id="landing-closing-title">Ready for your next movie?</h2><p>Create your free FILME account and book in a few taps.</p><CreateAccount closing /></div></section>
     <footer className="landing-footer landing-container"><Link className="landing-footer-brand" to="/" aria-label="FILME home">FILME</Link><nav aria-label="Footer navigation"><a href="#how-it-works">How It Works</a><Link to="/login">Log In</Link></nav><small>© FILME</small></footer>
   </div>;
