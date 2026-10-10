@@ -6,6 +6,7 @@ import { canCancelDemoBooking, cancelDemoBooking, getDemoBookingReference, getDe
 import { displayTime, manilaDay, shortDate, today } from '../utils/manila';
 import { listAuditoriums } from '../data/demoSchedule';
 import CancelBookingModal from '../components/CancelBookingModal';
+import './MyBookings.css';
 
 function detail(booking) {
   const when = booking.showtime?.startTime ? new Date(booking.showtime.startTime) : new Date(`${booking.showDate}T${booking.showTime}:00+08:00`);
@@ -59,7 +60,7 @@ export default function MyBookings() {
       setRevision(value => value + 1);
     } catch (err) { setCancelError(err.message); }
   };
-  return <div className="bookings-page fade-in"><div className="wallet-heading"><div><span className="eyebrow">Your wallet</span><h1>My tickets</h1></div><Link to="/movies" className="btn btn-primary">Book a film</Link></div>
+  return <div className="bookings-page fade-in"><div className="wallet-heading"><div><span className="eyebrow">Your wallet</span><h1>My tickets</h1></div>{!loading && !error && upcoming.length > 0 && <Link to="/movies" className="btn btn-primary">Browse movies</Link>}</div>
     {isDemo && <p className="demo-note">Simulated bookings saved in this browser. These are not admission tickets.</p>}
     {feedback && <p className="booking-feedback-success" role="status">{feedback}</p>}
     {loading && <div className="loading"><div className="spinner"/></div>}

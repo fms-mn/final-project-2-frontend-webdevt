@@ -1,0 +1,11 @@
+@media (max-width: 600px) {
+  .bookings-page .wallet-heading {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .bookings-page .wallet-heading .btn {
+    margin-bottom: 0;
+    white-space: nowrap;
+  }
+}
