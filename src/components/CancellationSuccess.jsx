@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { FiCheckCircle, FiX } from 'react-icons/fi';
+import { FiX } from 'react-icons/fi';
 import './CancellationSuccess.css';
 
 const SEQUENCE_MS = 8000;
@@ -53,7 +53,10 @@ export default function CancellationSuccess({ reference, onDismiss }) {
         <div className="cancellation-success-items" aria-hidden="true">
           {items.map(([heading, text], index) => (
             <div className={`cancellation-success-item item-${index + 1}`} key={heading}>
-              <FiCheckCircle />
+              <svg aria-hidden="true" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <circle className="cancellation-success-ring" cx="14" cy="14" r="12" />
+                <path className="cancellation-success-tick" d="M8.5 14.5l4 4 7-8" />
+              </svg>
               <div><strong>{heading}</strong><p className={index === 0 ? 'cancellation-success-reference' : undefined}>{text}</p></div>
             </div>
           ))}
