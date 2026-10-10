@@ -5,11 +5,17 @@ export function previewMediaFor(videoId, demoMedia) {
   return null;
 }
 
-// A silent, looping, control-free embed for the small preview screen.
-export const youtubePreviewUrl = (videoId) => `https://www.youtube-nocookie.com/embed/${videoId}?${new URLSearchParams({
-  autoplay: '1', mute: '1', controls: '0', loop: '1', playlist: videoId, playsinline: '1',
-  rel: '0', modestbranding: '1', disablekb: '1', iv_load_policy: '3', fs: '0',
-})}`;
+// Player settings for the silent, looping, control-free preview.
+export const previewPlayerVars = (videoId, origin) => ({
+  autoplay: 1, mute: 1, controls: 0, loop: 1, playlist: videoId, playsinline: 1,
+  rel: 0, modestbranding: 1, disablekb: 1, iv_load_policy: 3, fs: 0, origin,
+});
+
+// YouTube's own overlays (play/pause symbol, spinner, "video unavailable") show whenever the
+// video is not actually playing, so the preview shows the video only in the playing state.
+// States are YouTube's: -1 unstarted, 0 ended, 1 playing, 2 paused, 3 buffering, 5 cued.
+export const previewVideoVisible = (state) => state === 1;
+export const previewNeedsRestart = (state) => state === 0;
 
 export const PREVIEW_WIDTH = 460;
 export const PREVIEW_INFO_HEIGHT = 128; // room under the video for the title, details and synopsis

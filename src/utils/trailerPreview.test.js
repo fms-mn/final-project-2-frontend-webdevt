@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { previewMediaFor, youtubePreviewUrl } from './trailerPreview.js';
+import { previewMediaFor, previewPlayerVars, previewVideoVisible, previewNeedsRestart } from './trailerPreview.js';
 import { canHoverPreview } from '../hooks/useHoverPreview.js';
 
 test('a YouTube trailer wins over a demo clip; no clip means no preview', () => {
@@ -10,14 +10,21 @@ test('a YouTube trailer wins over a demo clip; no clip means no preview', () => 
   assert.equal(previewMediaFor('', { kind: 'video' }), null);
 });
 
-test('the preview embed is silent, looping and without controls', () => {
-  const url = new URL(youtubePreviewUrl('c51ND9Hdbw0'));
-  assert.equal(url.origin + url.pathname, 'https://www.youtube-nocookie.com/embed/c51ND9Hdbw0');
-  assert.equal(url.searchParams.get('autoplay'), '1');
-  assert.equal(url.searchParams.get('mute'), '1');
-  assert.equal(url.searchParams.get('controls'), '0');
-  assert.equal(url.searchParams.get('loop'), '1');
-  assert.equal(url.searchParams.get('playlist'), 'c51ND9Hdbw0', 'a single video only loops with a playlist of itself');
+test('the preview player is silent, looping and without controls', () => {
+  const vars = previewPlayerVars('c51ND9Hdbw0', 'http://localhost:3000');
+  assert.equal(vars.autoplay, 1);
+  assert.equal(vars.mute, 1);
+  assert.equal(vars.controls, 0);
+  assert.equal(vars.loop, 1);
+  assert.equal(vars.playlist, 'c51ND9Hdbw0', 'a single video only loops with a playlist of itself');
+  assert.equal(vars.origin, 'http://localhost:3000');
+});
+
+test('the video is shown only while it is playing, so no YouTube overlay is ever visible', () => {
+  assert.equal(previewVideoVisible(1), true);
+  for (const state of [-1, 0, 2, 3, 5]) assert.equal(previewVideoVisible(state), false, `state ${state}`);
+  assert.equal(previewNeedsRestart(0), true);
+  assert.equal(previewNeedsRestart(1), false);
 });
 
 test('hover previews run only with a real mouse, motion allowed, no data saver and a connection', () => {

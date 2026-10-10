@@ -1,14 +1,50 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { PREVIEW_WIDTH, previewPlacement, youtubePreviewUrl } from '../utils/trailerPreview';
+import { PREVIEW_WIDTH, previewNeedsRestart, previewPlacement, previewPlayerVars, previewVideoVisible } from '../utils/trailerPreview';
+import { loadYouTubeApi } from '../utils/youtubeApi';
 
 // The floating trailer panel that opens beside a movie card while the pointer rests on it.
 // `media` is { kind: 'youtube', videoId }, { kind: 'video', src } or null (no trailer yet).
 // It is drawn on the page itself (not inside the card) so it can be larger than the card.
 export default function MovieTrailerPreview({ media, movie, anchorRef, visible }) {
   const panelRef = useRef(null);
+  const playerMount = useRef(null);
   const [ready, setReady] = useState(false);
   const [place, setPlace] = useState(null);
+
+  // The trailer comes from YouTube. Its player draws a pause/play symbol, a spinner or an error
+  // whenever the video is not playing, so the video stays hidden (the shimmer shows instead)
+  // until YouTube says it is playing, and hides again if it pauses or buffers.
+  const videoId = media?.kind === 'youtube' ? media.videoId : '';
+  useEffect(() => {
+    if (!videoId) return undefined;
+    let disposed = false;
+    let player;
+    loadYouTubeApi().then((YT) => {
+      if (disposed || !playerMount.current) return;
+      const target = document.createElement('div');
+      playerMount.current.appendChild(target);
+      player = new YT.Player(target, {
+        host: 'https://www.youtube-nocookie.com',
+        videoId,
+        playerVars: previewPlayerVars(videoId, window.location.origin),
+        events: {
+          onReady: ({ target: ready }) => { ready.mute(); ready.playVideo(); },
+          onStateChange: ({ data, target: p }) => {
+            if (disposed) return;
+            setReady(previewVideoVisible(data));
+            if (previewNeedsRestart(data)) p.playVideo();
+          },
+          onError: () => { if (!disposed) setReady(false); },
+        },
+      });
+    }).catch(() => {});
+    return () => {
+      disposed = true;
+      player?.destroy?.();
+      playerMount.current?.replaceChildren();
+    };
+  }, [videoId]);
 
   useLayoutEffect(() => {
     let frame = 0;
@@ -52,14 +88,7 @@ export default function MovieTrailerPreview({ media, movie, anchorRef, visible }
           <span className="trailer-pop-loader" />
         )}
         {!media ? null : media.kind === 'youtube' ? (
-          <iframe
-            src={youtubePreviewUrl(media.videoId)}
-            title={`${movie.title} trailer preview`}
-            tabIndex={-1}
-            allow="autoplay; encrypted-media"
-            referrerPolicy="strict-origin-when-cross-origin"
-            onLoad={() => setReady(true)}
-          />
+          <div className="trailer-pop-player" ref={playerMount} />
         ) : (
           <video src={media.src} muted loop autoPlay playsInline preload="auto" tabIndex={-1}
             onPlaying={() => setReady(true)} onError={() => setReady(false)} />
