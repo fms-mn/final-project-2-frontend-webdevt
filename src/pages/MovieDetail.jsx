@@ -477,6 +477,9 @@ export default function MovieDetail() {
             Selected: {selectedSeats.length ? [...selectedSeats].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).join(', ') : 'None'}
             <br />{selectedSeats.length} of {MAX_SEATS_PER_BOOKING} seats selected. {selectedSeats.length >= MAX_SEATS_PER_BOOKING ? 'Limit reached. Deselect a seat to choose another.' : 'Maximum 10 seats per booking.'}
           </p>
+          <div className="seat-selection-actions">
+            <button type="button" className="btn btn-secondary btn-small" disabled={!selectedSeats.length || booking || !!bookingSuccess || confirmationOpen} onClick={() => { setSelectedSeats([]); setBookingError(''); }}>Unselect all</button>
+          </div>
           </div>
 
           </div>

@@ -471,6 +471,8 @@ a {color:inherit}
 :root[data-theme='dark'] .booking-active .seat.seat-selected {--chair-fill:var(--filme-coral-fill);--chair-outline:#ff9eaf;color:#fff}
 :root[data-theme='dark'] .booking-active .seat.seat-booked {--chair-fill:repeating-linear-gradient(135deg,var(--filme-booked-base) 0 4px,var(--filme-booked-stripe) 4px 7px);--chair-outline:#7785a5;color:#fff}
 :root[data-theme='dark'] .booking-active .seat-selection-summary {color:var(--text-primary)}
+.booking-active .seat-selection-actions {display:flex;justify-content:center;margin:12px 0 0}
+.booking-active .seat-selection-actions .btn {min-height:44px}
 :root[data-theme='dark'] .booking-card-footer,:root[data-theme='dark'] .wallet-ticket-bottom {border-color:var(--filme-rule)}
 :root[data-theme='dark'] .booking-total strong,:root[data-theme='dark'] .wallet-ticket-facts b {color:var(--text-primary)}
 :root[data-theme='dark'] .wallet-ticket {background:var(--bg-card)}
