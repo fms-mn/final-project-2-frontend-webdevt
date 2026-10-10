@@ -9,19 +9,14 @@ import { dayHeading, displayClock, manilaClock, manilaDay, shiftDay, today } fro
 import { canEnterBooking } from '../utils/bookingHero';
 import MovieDetails from '../components/MovieDetails';
 import BookingConfirmationModal from '../components/BookingConfirmationModal';
+import { MAX_SEATS_PER_BOOKING, toggleSeatSelection } from '../utils/seatSelection';
+export { toggleSeatSelection } from '../utils/seatSelection';
 
 const ROWS = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
 const SEATS_PER_ROW = 10;
 
 function ChairShape({ label }) {
   return <><span className="chair-backrest" /><span className="chair-cushion" /><span className="chair-label">{label}</span></>;
-}
-
-export function toggleSeatSelection(selectedSeats, seatId, bookedSeats) {
-  if (bookedSeats.includes(seatId)) return selectedSeats;
-  return selectedSeats.includes(seatId)
-    ? selectedSeats.filter((seat) => seat !== seatId)
-    : [...selectedSeats, seatId];
 }
 
 const getNextDays = count => Array.from({ length: count }, (_, index) => new Date(shiftDay(today(), index) + 'T12:00:00+08:00'));
@@ -145,6 +140,10 @@ export default function MovieDetail() {
 
   const toggleSeat = (seatId) => {
     if (booking || showtimeUnavailable || bookedSeats.includes(seatId)) return;
+    if (!bookingSuccess && !selectedSeats.includes(seatId) && selectedSeats.length >= MAX_SEATS_PER_BOOKING) {
+      setBookingError('You can select a maximum of 10 seats. Deselect a seat to choose another.');
+      return;
+    }
     setBookingError('');
     if (bookingSuccess) {
       bookingLocked.current = false;
@@ -222,7 +221,7 @@ export default function MovieDetail() {
   };
 
   const reviewBooking = () => {
-    if (selectedSeats.length === 0 || showtimeUnavailable || booking || bookingSuccess) return;
+    if (selectedSeats.length === 0 || selectedSeats.length > MAX_SEATS_PER_BOOKING || showtimeUnavailable || booking || bookingSuccess) return;
     setBookingError('');
     setConfirmationOpen(true);
   };
@@ -234,7 +233,7 @@ export default function MovieDetail() {
       return;
     }
 
-    if (selectedSeats.length === 0) return;
+    if (selectedSeats.length === 0 || selectedSeats.length > MAX_SEATS_PER_BOOKING) return;
 
     bookingLocked.current = true;
     setBooking(true);
@@ -476,6 +475,7 @@ export default function MovieDetail() {
           </div>
           <p className="seat-selection-summary" aria-live="polite">
             Selected: {selectedSeats.length ? [...selectedSeats].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).join(', ') : 'None'}
+            <br />{selectedSeats.length} of {MAX_SEATS_PER_BOOKING} seats selected. {selectedSeats.length >= MAX_SEATS_PER_BOOKING ? 'Limit reached. Deselect a seat to choose another.' : 'Maximum 10 seats per booking.'}
           </p>
           </div>
 

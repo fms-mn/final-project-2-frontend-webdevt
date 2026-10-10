@@ -1,4 +1,5 @@
 import { manilaDay } from '../utils/manila.js';
+import { MAX_SEATS_PER_BOOKING } from '../utils/seatSelection.js';
 import { listDemoBookings } from './demoBookingStore.js';
 export { listDemoBookings } from './demoBookingStore.js';
 import { DEMO_RULES, isDemoSlotSafe, listAuditoriums, listShowtimes } from './demoSchedule.js';
@@ -40,6 +41,9 @@ export function createDemoBooking({ userId, movie, seats, showDate, showTime, sh
   const movieId = movie?._id;
   if (userId !== 'demo-user' || !movieId || movie.status !== 'now_showing') {
     throw new Error('This movie is not available for booking');
+  }
+  if (Array.isArray(seats) && seats.length > MAX_SEATS_PER_BOOKING) {
+    throw new Error(`You can book at most ${MAX_SEATS_PER_BOOKING} seats at a time`);
   }
   if (!Array.isArray(seats) || seats.length === 0 ||
       new Set(seats).size !== seats.length || seats.some((seat) => !SEAT_PATTERN.test(seat))) {
