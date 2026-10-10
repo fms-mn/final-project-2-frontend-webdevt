@@ -660,3 +660,11 @@ body,.navbar,.theme-toggle,.movie-card,.auth-card,.admin-panel,.admin-row,.booki
 .board-date-selector {display:flex;align-items:center;gap:12px;max-width:100%;margin-bottom:24px;color:var(--text-secondary);font-size:14px}
 .board-date-selector select {min-height:44px;max-width:100%;padding:8px 32px 8px 12px;border:1px solid var(--border-color);border-radius:10px;background:var(--bg-card);color:var(--text-primary);font:inherit}
 .board-date-selector select:focus-visible {outline:3px solid var(--accent-primary);outline-offset:3px}
+
+@media(max-width:600px) {
+  .booking-schedule>div {display:block}
+  .booking-schedule h3 {margin-bottom:8px!important}
+  .booking-schedule>div+div {margin-top:12px}
+  .booking-active .showtime-selector {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible;gap:8px}
+  .booking-active .showtime-btn {white-space:normal;min-width:0;padding:10px;line-height:1.35}
+}

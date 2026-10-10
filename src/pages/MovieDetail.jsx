@@ -82,6 +82,16 @@ export default function MovieDetail() {
   const ticketPrice = previewBooking ? movie?.price || 0 : (liveSeats?.showtime?.ticketPrice ?? selectedSlot?.ticketPrice ?? 0) / 100;
   const isBookable = movie?.status === 'now_showing' && user?.role !== 'admin';
   const isComingSoon = movie?.status === 'coming_soon';
+  const isSlotUnavailable = useCallback(slot => previewBooking ? !isDemoSlotSafe(id, selectedDate, slot.time) || Date.parse(selectedDate + 'T' + slot.time + ':00+08:00') <= Date.now() + DEMO_RULES.salesCutoffMinutes * 60000 || demoRemainingSeats(id, selectedDate, slot.time) <= 0 : slot.bookable === false || slot.remainingSeats <= 0 || Date.parse(slot.startTime) <= Date.now(), [previewBooking, id, selectedDate]);
+
+  useEffect(() => {
+    if (!isBookable || selectedShowtimeId || (!previewBooking && loadedDate !== selectedDate)) return;
+    const firstAvailable = showtimes.find(slot => !isSlotUnavailable(slot));
+    if (firstAvailable) {
+      setSelectedShowtimeId(firstAvailable.id);
+      setSelectedTime(firstAvailable.time);
+    }
+  }, [isBookable, selectedShowtimeId, previewBooking, loadedDate, selectedDate, showtimes, isSlotUnavailable]);
 
   useEffect(() => {
     if (previewBooking || !movie) return;
@@ -237,7 +247,7 @@ export default function MovieDetail() {
             {isComingSoon && <span className="booking-eyebrow">Coming Soon</span>}
             {isBookable && <span className="booking-eyebrow">Choose your seats</span>}
             <h1 ref={pageHeadingRef} tabIndex={-1}>{movie.title}</h1>
-            {isBookable && <p className="booking-mobile-context">{dayHeading(selectedDate)} · {auditorium?.name || 'Cinema'}</p>}
+            {isBookable && <p className="booking-mobile-context">{dayHeading(selectedDate)} · {selectedSlot ? auditorium?.name || selectedSlot.auditorium?.name || 'Cinema' : 'Select a showing'}</p>}
             <div className="movie-detail-tags">
               {movie.genre.map((g) => (
                 <span key={g} className="tag">{g}</span>
@@ -288,7 +298,7 @@ export default function MovieDetail() {
           </div>
 
           {scheduleError && <div className="booking-submit-error" role="alert">{scheduleError} <button type="button" className="btn btn-secondary" onClick={() => setScheduleAttempt(value => value + 1)}>Retry</button></div>}
-          <div className="booking-schedule">
+          <div className="booking-schedule" role="region" aria-label="Choose booking date and showtime">
           <div>
           <h3 style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
             Select Date
@@ -300,6 +310,7 @@ export default function MovieDetail() {
                 <button
                   key={dateStr}
                   className={`date-btn ${selectedDate === dateStr ? 'active' : ''}`}
+                  aria-pressed={selectedDate === dateStr}
                   onClick={() => { bookingLocked.current = false; setSelectedDate(dateStr); setSelectedShowtimeId(''); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); }}
                   disabled={booking}
                 >
@@ -325,7 +336,7 @@ export default function MovieDetail() {
                 onClick={() => { bookingLocked.current = false; setSelectedTime(slot.time); setSelectedShowtimeId(slot.id); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); }}
                 aria-label={movie.title + ', ' + displayClock(slot.time) + ', ' + (previewBooking ? listAuditoriums().find(room => room.id === slot.auditoriumId)?.name : slot.auditorium?.name || 'Cinema')}
                 aria-pressed={selectedSlot?.id === slot.id}
-                disabled={booking || (previewBooking ? !isDemoSlotSafe(id, selectedDate, slot.time) || Date.parse(selectedDate + 'T' + slot.time + ':00+08:00') <= Date.now() + DEMO_RULES.salesCutoffMinutes * 60000 || demoRemainingSeats(id, selectedDate, slot.time) <= 0 : slot.bookable === false || slot.remainingSeats <= 0 || Date.parse(slot.startTime) <= Date.now())}
+                disabled={booking || isSlotUnavailable(slot)}
               >
                 {displayClock(slot.time)} · {previewBooking ? listAuditoriums().find(room => room.id === slot.auditoriumId)?.name : slot.auditorium?.name || 'Cinema'}
               </button>
@@ -403,7 +414,6 @@ export default function MovieDetail() {
           </div>
 
           {/* Booking Summary */}
-          {selectedSlot && (
             <div className="booking-summary">
               <span className="booking-eyebrow">Your ticket</span><h3>{movie.title}</h3>
               <div className="summary-row">
@@ -416,7 +426,7 @@ export default function MovieDetail() {
               </div>
               <div className="summary-row">
                 <span className="label">Room</span>
-                <span className="value">{auditorium?.name || 'Cinema'}</span>
+                <span className="value">{selectedSlot ? auditorium?.name || selectedSlot.auditorium?.name || 'Cinema' : 'Select a showing'}</span>
               </div>
               <div className="summary-row">
                 <span className="label">Time</span>
@@ -424,11 +434,11 @@ export default function MovieDetail() {
               </div>
               <div className="summary-row">
                 <span className="label">Seats</span>
-                <span className="value">{[...selectedSeats].sort().join(', ')}</span>
+                <span className="value">{[...selectedSeats].sort().join(', ') || 'None'}</span>
               </div>
               <div className="summary-row">
                 <span className="label">Price per seat</span>
-                <span className="value">₱{ticketPrice}</span>
+                <span className="value">{selectedSlot ? `₱${ticketPrice}` : 'Select a showing'}</span>
               </div>
               <div className="summary-row summary-total">
                 <span className="label">Total</span>
@@ -447,7 +457,6 @@ export default function MovieDetail() {
               </div>
               {bookingError && <p className="booking-submit-error" role="alert">{bookingError}</p>}
             </div>
-          )}
         </div>
       )}
       </div>
