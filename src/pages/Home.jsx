@@ -87,6 +87,5 @@ export default function Home() {
       </> : <div className="showtime-board-empty">No showings are scheduled for this day. <Link to="/movies">Explore Movies</Link></div>}
     </div></section>
     <OpeningSoon movies={coming} currentDay={currentDay} />
-    <details className="booking-guide"><summary>How booking works</summary><section className="how-strip"><div><small>Step 1</small><h3>Pick a showing</h3><p>Find your film on the board and see how many seats are left.</p></div><div><small>Step 2</small><h3>Choose your seats</h3><p>The seat chart shows what is free, taken and yours.</p></div><div><small>Step 3</small><h3>Show your code</h3><p>Your booking is kept in My tickets. Demo bookings are simulated.</p></div></section></details>
   </div>;
 }

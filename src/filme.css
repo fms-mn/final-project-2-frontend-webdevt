@@ -145,12 +145,6 @@ a {color:inherit}
 .opening-empty {margin-top:32px;color:var(--opening-muted)}
 :root[data-theme='light'] .opening-section {--opening-bg:#e8ebf4;--opening-card:#fff;--opening-rule:#cbd2e6;--opening-text:#12163a;--opening-muted:#525d83;--opening-button:#12163a;--opening-button-text:#fff}
 :root[data-theme='light'] .opening-section a:focus-visible,:root[data-theme='light'] .opening-section button:focus-visible {outline-color:#a12442}
-.how-strip {display:grid;grid-template-columns:repeat(3,1fr);margin:62px 0 0;background:#fff;border-radius:12px;box-shadow:var(--shadow-md);overflow:hidden}
-.how-strip>div {padding:26px 28px;border-right:1px dashed #d3d8e8}
-.how-strip>div:last-child {border:0}
-.how-strip small {font:600 10px 'JetBrains Mono Variable';color:#E94560;text-transform:uppercase;letter-spacing:.13em}
-.how-strip h3 {font-size:22px;line-height:1.1;margin:8px 0}
-.how-strip p {font-size:12px;color:#525d83;line-height:1.45}
 
 /* Shared pages */
 .movies-page,.bookings-page,.admin-page {max-width:1440px;width:auto;margin:0 auto;padding:55px clamp(20px,4vw,72px)}
@@ -334,7 +328,6 @@ a {color:inherit}
   .board-heading p {margin-top:16px}
   .showtime-board {grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
   .board-digital-time {min-height:94px;font-size:50px}
-  .how-strip {grid-template-columns:1fr}.how-strip>div {border-right:0;border-bottom:1px dashed #d3d8e8}
   .booking-experience .booking-section {display:block}.booking-schedule,.booking-seat-panel {margin-bottom:20px}
   .booking-summary {position:static;margin:20px 0!important}
   .booking-progress {display:none}.booking-mobile-bar {display:grid}
@@ -395,7 +388,7 @@ a {color:inherit}
   .board-film-room {font-size:11px}
   .board-film-availability {font-size:12px}
   .board-book {min-width:82px;min-height:44px;font-size:14px}
-  .opening-section,.how-strip {margin-top:40px}
+  .opening-section {margin-top:40px}
   .opening-section-inner {padding:44px 20px 48px}
   .opening-heading h2 {font-size:clamp(44px,11vw,58px)}
   .opening-grid {gap:16px;margin-top:28px}
@@ -445,13 +438,13 @@ a {color:inherit}
 :root[data-theme='dark'] .footer {border-color:var(--border-color);color:var(--text-secondary)}
 :root[data-theme='dark'] .footer-brand strong {color:var(--text-primary)}
 :root[data-theme='dark'] .eyebrow,:root[data-theme='dark'] .home-section-eyebrow,:root[data-theme='dark'] .booking-eyebrow {color:var(--text-muted)}
-:root[data-theme='dark'] .tonight-intro>p,:root[data-theme='dark'] .featured-caption p,:root[data-theme='dark'] .section-title p,:root[data-theme='dark'] .how-strip p {color:var(--text-secondary)}
+:root[data-theme='dark'] .tonight-intro>p,:root[data-theme='dark'] .featured-caption p,:root[data-theme='dark'] .section-title p {color:var(--text-secondary)}
 :root[data-theme='dark'] .hero-days button {border-color:var(--filme-ink);color:var(--text-primary)}
 :root[data-theme='dark'] .hero-days button.active {background:var(--filme-ink);color:var(--filme-ink-on)}
 :root[data-theme='dark'] .filmstrip-frame:before,:root[data-theme='dark'] .filmstrip-frame:after {background:repeating-linear-gradient(90deg,var(--bg-primary) 0 8px,transparent 8px 20px)}
-:root[data-theme='dark'] .how-strip,:root[data-theme='dark'] .movie-card,:root[data-theme='dark'] .auth-card,:root[data-theme='dark'] .admin-panel,:root[data-theme='dark'] .booking-card,:root[data-theme='dark'] .admin-stat,:root[data-theme='dark'] .admin-row,:root[data-theme='dark'] .bookings-empty {background:var(--bg-card);border-color:var(--border-color)}
+:root[data-theme='dark'] .movie-card,:root[data-theme='dark'] .auth-card,:root[data-theme='dark'] .admin-panel,:root[data-theme='dark'] .booking-card,:root[data-theme='dark'] .admin-stat,:root[data-theme='dark'] .admin-row,:root[data-theme='dark'] .bookings-empty {background:var(--bg-card);border-color:var(--border-color)}
 :root[data-theme='dark'] .movies-page>p,:root[data-theme='dark'] .bookings-page>p,:root[data-theme='dark'] .admin-heading p,:root[data-theme='dark'] .auth-card .subtitle {color:var(--text-secondary)}
-:root[data-theme='dark'] .how-strip>div,:root[data-theme='dark'] .admin-tabs {border-color:var(--filme-rule)}
+:root[data-theme='dark'] .admin-tabs {border-color:var(--filme-rule)}
 :root[data-theme='dark'] .search-bar,:root[data-theme='dark'] .form-group input,:root[data-theme='dark'] .admin-form input,:root[data-theme='dark'] .admin-form select,:root[data-theme='dark'] .admin-form textarea {background:var(--bg-secondary);border-color:var(--border-color);color:var(--text-primary)}
 :root[data-theme='dark'] .search-bar::placeholder,:root[data-theme='dark'] .form-group input::placeholder,:root[data-theme='dark'] .admin-form input::placeholder,:root[data-theme='dark'] .admin-form textarea::placeholder {color:var(--text-muted)}
 :root[data-theme='dark'] .filter-btn,:root[data-theme='dark'] .btn-secondary {border-color:var(--filme-ink);color:var(--filme-ink)}
@@ -606,7 +599,7 @@ body,.navbar,.theme-toggle,.movie-card,.auth-card,.admin-panel,.admin-row,.booki
 .board-showtime-chip strong {font-size:18px}.board-showtime-chip span {font-size:13px}
 .board-showtime-chip:hover:not(:disabled) {background:var(--filme-coral-hover);color:#fff}
 .board-showtime-chip:disabled {background:transparent;border-color:var(--board-rule);color:var(--board-muted);cursor:not-allowed;opacity:1}
-.board-section :is(button,a):focus-visible,.booking-guide summary:focus-visible {outline:3px solid var(--accent-primary);outline-offset:4px}
+.board-section :is(button,a):focus-visible {outline:3px solid var(--accent-primary);outline-offset:4px}
 .opening-grid {margin-top:24px;gap:22px}.opening-card {gap:20px;padding:22px;border-radius:20px}
 .opening-poster {width:110px;min-height:165px;align-self:flex-start}.opening-title {font-size:28px;margin-top:12px}
 .opening-details {font-size:15px}.opening-countdown {white-space:normal;line-height:1.5;font-size:12px}
@@ -614,10 +607,6 @@ body,.navbar,.theme-toggle,.movie-card,.auth-card,.admin-panel,.admin-row,.booki
 .opening-calendar-hint {font-size:14px;max-width:27ch;text-align:left;line-height:1.5}
 .opening-date-pill {background:var(--filme-coral-fill);font-size:14px;min-height:30px}
 .opening-more-details {color:var(--opening-text);padding-left:0}.opening-rating {font-size:14px}
-.booking-guide {margin-top:24px;border-top:1px solid var(--border-color);padding-top:12px}
-.booking-guide summary {min-height:44px;padding:10px 0;cursor:pointer;font-weight:700}
-.booking-guide .how-strip {margin-top:12px;background:var(--bg-card);box-shadow:none;border:1px solid var(--border-color)}
-.how-strip small {color:var(--accent-primary);font-size:12px}.how-strip p {color:var(--text-secondary);font-size:15px}
 .demo-mode-banner {position:relative;margin-top:70px;background:var(--filme-coral-fill);color:#fff;padding:14px var(--filme-gutter);display:flex;flex-wrap:wrap;gap:8px 20px;line-height:1.5}
 .demo-mode-banner + .main-content {margin-top:0}.demo-mode-banner span {font-size:14px}
 .demo-catalog-notice,.movie-fixture-note,.demo-note {color:var(--text-secondary);font-size:15px;line-height:1.5;margin:12px 0}
@@ -634,7 +623,7 @@ body,.navbar,.theme-toggle,.movie-card,.auth-card,.admin-panel,.admin-row,.booki
 .movie-details-copy p {margin:12px 0;color:var(--text-secondary);font-size:15px;line-height:1.6}
 .details-trailer {display:block;width:100%;aspect-ratio:16/9;margin-top:16px;border:0;border-radius:12px}
 @media(max-width:1000px) {.movie-showing-grid,.opening-grid {grid-template-columns:1fr}.board-heading {flex-direction:column}.board-heading p {max-width:none}.opening-card {min-height:0}}
-@media(max-width:600px) {.movie-showing-card {padding:16px}.movie-showing-heading {grid-template-columns:72px minmax(0,1fr);gap:12px}.movie-showing-heading h3 {font-size:23px}.board-showtime-chips {grid-template-columns:repeat(2,minmax(0,1fr))}.board-showtime-chip {padding:10px}.opening-card {padding:16px;gap:14px}.opening-poster {width:80px;min-height:120px}.opening-title {font-size:24px}.footer-content {align-items:start}.demo-mode-banner {padding:12px 18px}.how-strip {grid-template-columns:1fr}}
+@media(max-width:600px) {.movie-showing-card {padding:16px}.movie-showing-heading {grid-template-columns:72px minmax(0,1fr);gap:12px}.movie-showing-heading h3 {font-size:23px}.board-showtime-chips {grid-template-columns:repeat(2,minmax(0,1fr))}.board-showtime-chip {padding:10px}.opening-card {padding:16px;gap:14px}.opening-poster {width:80px;min-height:120px}.opening-title {font-size:24px}.footer-content {align-items:start}.demo-mode-banner {padding:12px 18px}}
 
 :root {--accent-gradient:var(--filme-coral-fill)}
 .booking-experience .booking-summary .btn-primary,.booking-experience .date-btn.active,.booking-experience .showtime-btn.active {background:var(--filme-coral-fill);color:#fff;border-color:var(--filme-coral-fill)}
