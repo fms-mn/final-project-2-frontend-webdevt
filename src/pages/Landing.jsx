@@ -3,13 +3,15 @@ import { Link } from 'react-router-dom';
 import { FiMoon, FiSun } from 'react-icons/fi';
 import PromoMarquee from '../components/PromoMarquee';
 import './Landing.css';
+import '../components/landingTicketMotion.css';
 
 function SampleTicket() {
-  return <div className="landing-ticket-stage" role="img" aria-label="Sample Midnight Signal cinema ticket: Thursday October 8, 21:30, seats A7 and A6, 800 pesos"><div className="landing-ticket" aria-hidden="true">
+  return <div className="landing-ticket-stage"><div className="landing-ticket-hover"><div className="landing-ticket-float" role="img" aria-label="Sample Midnight Signal cinema ticket: Thursday October 8, 21:30, seats A7 and A6, 800 pesos"><div className="landing-ticket" aria-hidden="true">
     <div className="landing-ticket-banner"><span>NEXT UP · TODAY</span><span>CINEMA</span></div>
     <div className="landing-ticket-details"><strong>Midnight Signal</strong><div className="landing-ticket-meta"><span><small>Date</small><b>Thu, Oct 8</b></span><span><small>Time</small><b>21:30</b></span><span><small>Seats</small><b>A7, A6</b></span></div></div>
     <div className="landing-ticket-bottom"><span>FLM-C191196E</span><strong>₱800</strong></div>
-  </div></div>;
+    <div className="landing-ticket-shine" aria-hidden="true" />
+  </div></div></div></div>;
 }
 const features = [
   { title: 'Choose your seats', description: 'See the screen layout and pick the seats you want.' },
