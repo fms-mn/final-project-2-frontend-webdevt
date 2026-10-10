@@ -37,8 +37,7 @@ const HeroTrailer = forwardRef(function HeroTrailer({ media, poster, active, red
     const session = createTrailerPlayback(adapter, policy(), {
       onStatus: status => {
         if (disposed) return;
-        if (status === 'playing' || !native && ['ready', 'blocked'].includes(status)) setFrameVisible(true);
-        if (status === 'failed' || native && status === 'blocked') setFrameVisible(false);
+        setFrameVisible(status === 'playing');
         if (['ready', 'playing', 'blocked', 'failed'].includes(status)) clearTimeout(readinessTimeout);
         latest.current.onStatus(status);
       },
@@ -73,15 +72,15 @@ const HeroTrailer = forwardRef(function HeroTrailer({ media, poster, active, red
         mount.appendChild(target);
         playerRef.current = new YT.Player(target, {
           videoId: media.videoId, host: 'https://www.youtube-nocookie.com',
-          playerVars: { autoplay: 0, controls: 1, playsinline: 1, rel: 0, fs: 1, origin: window.location.origin },
+          playerVars: { autoplay: 0, controls: 0, playsinline: 1, rel: 0, fs: 0, disablekb: 1, iv_load_policy: 3, origin: window.location.origin },
           events: {
             onReady: ({ target: player }) => {
               if (disposed) return;
               playerRef.current = player;
               const iframe = player.getIframe();
               iframe.title = media.title + ' trailer';
-              iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
-              iframe.allowFullscreen = true;
+              iframe.allow = 'autoplay; encrypted-media';
+              iframe.tabIndex = -1;
               iframe.referrerPolicy = 'strict-origin-when-cross-origin';
               adapter.setMuted(latest.current.muted);
               session.update(policy());
@@ -89,6 +88,7 @@ const HeroTrailer = forwardRef(function HeroTrailer({ media, poster, active, red
             },
             onStateChange: ({ data }) => {
               if (disposed) return;
+              if (data !== YT.PlayerState.PLAYING) setFrameVisible(false);
               if (data === YT.PlayerState.PLAYING) { session.playing(); latest.current.onMutedChange(playerRef.current?.isMuted() ?? true); }
               if (data === YT.PlayerState.PAUSED) session.paused();
               if (data === YT.PlayerState.ENDED) session.ended();

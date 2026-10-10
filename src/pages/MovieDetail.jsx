@@ -328,7 +328,7 @@ export default function MovieDetail() {
             Select Showtime
           </h3>
           <div className="showtime-selector">
-            {showtimes.length === 0 && <p>No showtimes are scheduled for this movie.</p>}
+            {!showtimes.some(slot => !isSlotUnavailable(slot)) && <p role="status">No available showtimes for this date. Try another date.</p>}
             {showtimes.map((slot) => (
               <button
                 key={slot.id}
@@ -346,7 +346,7 @@ export default function MovieDetail() {
           </div>
 
           <div className="booking-showing-info">
-          <p role="status">{showtimeUnavailable ? 'Select an available showing to enable the seat map.' : (auditorium?.name || 'Cinema') + ' · ' + verifiedShowing.remainingSeats + ' seats available'}</p>
+          {showtimes.some(slot => !isSlotUnavailable(slot)) && <p role="status">{showtimeUnavailable ? 'Select an available showing to enable the seat map.' : (auditorium?.name || 'Cinema') + ' · ' + verifiedShowing.remainingSeats + ' seats available'}</p>}
           {selectedSlot && <p className="booking-showing-meta">{[selectedSlot.format, selectedSlot.language, selectedSlot.subtitles && 'Subtitles: ' + selectedSlot.subtitles].filter(Boolean).join(' · ')}</p>}
           </div>
           <div className="booking-seat-panel">

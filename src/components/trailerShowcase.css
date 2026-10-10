@@ -5,8 +5,8 @@
 .cinema-media-poster,.cinema-empty-art img {object-fit:cover}
 .cinema-media-poster {opacity:1;transition:opacity 200ms ease}
 .cinema-video {top:var(--video-top,0%);height:var(--video-height,100%);object-fit:cover;background:#090b14;opacity:0;transition:opacity 200ms ease}
-.cinema-youtube {position:absolute;inset:0;opacity:0;transition:opacity 200ms ease}
-.cinema-youtube iframe {position:absolute;inset:0;width:100%;height:100%;border:0}
+.cinema-youtube {position:absolute;inset:0;container-type:size;opacity:0;transition:opacity 200ms ease;pointer-events:none}
+.cinema-youtube iframe {position:absolute;top:50%;left:50%;width:max(100cqw,177.778cqh);height:max(100cqh,56.25cqw);transform:translate(-50%,-50%);border:0}
 .has-frame .cinema-video,.has-frame .cinema-youtube {opacity:1}
 .has-frame .cinema-media-poster {opacity:0;pointer-events:none}
 .is-exiting .cinema-video,.is-exiting .cinema-youtube {opacity:0;transition-duration:120ms}
