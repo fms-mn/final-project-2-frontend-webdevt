@@ -10,15 +10,15 @@ function MoviePreview({ entry, sizing = false }) {
   const Title = sizing ? 'div' : 'h1';
   return <div className={'cinema-entry' + (sizing ? ' is-sizing' : '')} aria-hidden={sizing || undefined} inert={sizing || undefined}>
     <div className="cinema-identity">
-      <div className="cinema-poster">{!sizing && <img src={movie.posterUrl} alt="" />}</div>
+      <div className="cinema-poster">{!sizing && movie.posterUrl && <img src={movie.posterUrl} alt="" />}</div>
       <div className="cinema-copy"><Title className="cinema-title">{movie.title}</Title><div className="cinema-meta">
         {movie.rating && <span className="cinema-rating">{movie.rating}</span>}{(movie.genre || []).map(genre => <span key={genre}>{genre}</span>)}{movie.duration && <span>{runtime(movie.duration)}</span>}
-      </div></div>
+      </div>{(movie.description || movie.synopsis) && <p className="cinema-synopsis">{movie.description || movie.synopsis}</p>}</div>
     </div>
-    <div className={'cinema-attribution' + (media.label || media.credit ? ' has-credit' : '')}>
+    {(media.label || media.credit) && <div className="cinema-attribution has-credit">
       {media.label && <p className="cinema-demo-label">{media.label}</p>}
       {media.credit && <p className="cinema-credit">{sizing ? <>{media.credit.name}{' · '}{media.credit.licenseName}</> : <><a href={media.credit.source} target="_blank" rel="noreferrer">{media.credit.name}</a>{' · '}<a href={media.credit.licenseUrl} target="_blank" rel="noreferrer">{media.credit.licenseName}</a></>}</p>}
-    </div>
+    </div>}
   </div>;
 }
 
@@ -72,7 +72,7 @@ function ShowcaseSession({ entries, loading, error }) {
       if (!policyRef.current || document.hidden) return;
       commit(outgoing);
       setOutgoing(null);
-    }, 120);
+    }, 360);
     return () => clearTimeout(timer);
   }, [outgoing, canAdvance]);
   useEffect(() => { setPhase('loading'); pendingEnd.current = null; }, [playlist.current, playlist.generation]);
@@ -103,6 +103,7 @@ function ShowcaseSession({ entries, loading, error }) {
         : <div className="cinema-empty-art" aria-hidden="true">{current?.movie.posterUrl && <img src={current.movie.backdropUrl || current.movie.posterUrl} alt="" />}<span>F</span></div>}
     </div>
     <div className="cinema-panel">
+      {showMovie && (current.movie.backdropUrl || current.movie.posterUrl) && <img key={current.key + ':' + playlist.generation} className="cinema-panel-art" src={current.movie.backdropUrl || current.movie.posterUrl} alt="" aria-hidden="true" />}
       <div className="cinema-topbar"><span className="cinema-showcase-brand">Now playing · trailer</span>
         <p className="cinema-counter" aria-label={'Trailer ' + (showMovie ? available.findIndex(entry => entry.key === current.key) + 1 : 0) + ' of ' + available.length}>{showMovie ? available.findIndex(entry => entry.key === current.key) + 1 : 0} / {available.length}</p>
       </div>
