@@ -23,10 +23,6 @@ export function playlistTransition(state, action, entries) {
     }
     return '';
   };
-  if (action.type === 'select') {
-    const entry = available.find(item => item.movie._id === action.movieId);
-    return entry ? { ...state, current: entry.key, generation: state.generation + 1 } : state;
-  }
   if (action.type === 'move') {
     const current = nextKey(action.direction);
     return current ? { ...state, current, generation: state.generation + 1 } : state;

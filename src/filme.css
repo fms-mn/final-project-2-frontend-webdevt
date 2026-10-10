@@ -594,15 +594,13 @@ body,.navbar,.theme-toggle,.movie-card,.auth-card,.admin-panel,.admin-row,.booki
 .board-eyebrow,.opening-eyebrow {font-size:12px;margin-bottom:10px;letter-spacing:.15em}
 .movie-showing-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
 .movie-showing-card {min-width:0;padding:22px;border:1px solid var(--board-rule);border-radius:20px;background:var(--board-card)}
-.movie-showing-card.is-selected {border-color:var(--accent-primary);box-shadow:0 0 0 1px var(--accent-primary)}
 .movie-showing-heading {display:grid;grid-template-columns:100px minmax(0,1fr);gap:18px;align-items:start}
 .movie-showing-heading h3 {font-size:26px;line-height:1.12;letter-spacing:-.035em;overflow-wrap:anywhere}
-.board-poster {display:block;width:100%;aspect-ratio:2/3;overflow:hidden;padding:0;border:0;border-radius:12px;background:var(--surface-tint);cursor:pointer}
+.board-poster {display:block;width:100%;aspect-ratio:2/3;overflow:hidden;padding:0;border:0;border-radius:12px;background:var(--surface-tint);cursor:default}
 .board-poster img {width:100%;height:100%;object-fit:cover}
 .board-movie-meta {color:var(--board-muted);font-size:14px;line-height:1.5;margin:8px 0}
 .board-synopsis {color:var(--board-text);font-size:15px;margin:8px 0;line-height:1.5}
-.board-preview,.board-details,.opening-more-details {display:inline-flex;align-items:center;min-height:44px;padding:8px 10px;border:0;border-radius:8px;background:transparent;color:var(--board-text);font:700 14px 'Instrument Sans Variable';text-underline-offset:4px;cursor:pointer}
-.board-preview[aria-pressed='true'] {background:var(--surface-tint)}
+.board-details,.opening-more-details {display:inline-flex;align-items:center;min-height:44px;padding:8px 10px;border:0;border-radius:8px;background:transparent;color:var(--board-text);font:700 14px 'Instrument Sans Variable';text-underline-offset:4px;cursor:pointer}
 .board-showtime-chips {display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-top:18px}
 .board-showtime-chip {display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;min-height:100px;min-width:0;padding:12px;border:1px solid var(--filme-coral-fill);border-radius:12px;background:var(--filme-coral-fill);color:#fff;text-align:left;text-decoration:none;line-height:1.4}
 .board-showtime-chip strong {font-size:18px}.board-showtime-chip span {font-size:13px}
@@ -658,3 +656,7 @@ body,.navbar,.theme-toggle,.movie-card,.auth-card,.admin-panel,.admin-row,.booki
 .booking-showing-info p {margin:0;font-size:16px;font-weight:700;line-height:1.5}
 .booking-showing-info .booking-showing-meta {color:var(--text-secondary);font-size:14px;font-weight:400}
 @media(max-width:600px) {.booking-showing-info {padding-inline:18px}.booking-selection {gap:14px}}
+
+.board-date-selector {display:flex;align-items:center;gap:12px;max-width:100%;margin-bottom:24px;color:var(--text-secondary);font-size:14px}
+.board-date-selector select {min-height:44px;max-width:100%;padding:8px 32px 8px 12px;border:1px solid var(--border-color);border-radius:10px;background:var(--bg-card);color:var(--text-primary);font:inherit}
+.board-date-selector select:focus-visible {outline:3px solid var(--accent-primary);outline-offset:3px}

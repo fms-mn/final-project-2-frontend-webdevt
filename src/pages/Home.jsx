@@ -31,9 +31,6 @@ function previewShowings(movies, currentDay) {
 
 export default function Home() {
   const { user } = useAuth();
-  const [selectedMovieId, setSelectedMovieId] = useState('');
-  const [previewRequest, setPreviewRequest] = useState({ movieId: '', sequence: 0 });
-  const requestPreview = movieId => setPreviewRequest(request => ({ movieId, sequence: request.sequence + 1 }));
   const [, setClockTick] = useState(0);
   useEffect(() => { const timer = setInterval(() => setClockTick(value => value + 1), 30000); return () => clearInterval(timer); }, []);
   const { movies, loading, error, reload, isDemo } = useMovies();
@@ -80,12 +77,13 @@ export default function Home() {
 
   return <div className="tonight-page cinematic-home fade-in">
     {user?.role === 'admin' && <p className="demo-catalog-notice">Admin preview — customer booking is disabled.</p>}
-    <TrailerShowcase movies={movies} showings={showings} dateOptions={dateOptions} selectedDate={selectedDate} onDateChange={setSelectedDate} loading={isLoading} error={pageError} onRetry={retry} isDemo={isDemo} previewRequest={previewRequest} onMovieChange={setSelectedMovieId} />
+    <TrailerShowcase movies={movies} showings={showings} selectedDate={selectedDate} loading={isLoading} error={pageError} onRetry={retry} isDemo={isDemo} />
     <section className="board-section" id="todays-board" aria-label={'Showing ' + manilaDate(selectedDate)}><div className="board-section-inner">
       <div className="board-heading"><div><span className="board-eyebrow">THE SCHEDULE</span><h2>Showing {manilaDate(selectedDate)}</h2></div><p>All times are Manila time. Seats left update as people book.</p></div>
+      <label className="board-date-selector">Showing date<select aria-label="Schedule date" value={selectedDate} onChange={event => setSelectedDate(event.target.value)}>{dateOptions.map(day => <option key={day} value={day}>{day === currentDay ? 'Today' : new Date(day + 'T12:00:00+08:00').toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', weekday: 'short', month: 'short', day: 'numeric' })}</option>)}</select></label>
       {isLoading ? <div className="loading"><div className="spinner" /></div> : pageError ? <div className="showtime-board-empty"><p>{pageError}</p><button className="btn btn-primary" onClick={retry}>Try again</button></div> : rows.length ? <>
-        {boardGroups.length ? <ShowtimeBoard groups={boardGroups} dateLabel={manilaDate(selectedDate)} showingLink={showingLink} role={user?.role} selectedMovieId={selectedMovieId} onMovieChange={requestPreview} /> : <p className="showtime-board-empty">No more showtimes are available today. Review earlier sessions below or choose another date.</p>}
-        {earlierGroups.length > 0 && <details className="showtime-earlier"><summary>Earlier today <span>{earlierRows.length} {earlierRows.length === 1 ? 'showing' : 'showings'}</span></summary><ShowtimeBoard groups={earlierGroups} dateLabel={manilaDate(selectedDate)} showingLink={showingLink} role={user?.role} selectedMovieId={selectedMovieId} onMovieChange={requestPreview} /></details>}
+        {boardGroups.length ? <ShowtimeBoard groups={boardGroups} dateLabel={manilaDate(selectedDate)} showingLink={showingLink} role={user?.role} /> : <p className="showtime-board-empty">No more showtimes are available today. Review earlier sessions below or choose another date.</p>}
+        {earlierGroups.length > 0 && <details className="showtime-earlier"><summary>Earlier today <span>{earlierRows.length} {earlierRows.length === 1 ? 'showing' : 'showings'}</span></summary><ShowtimeBoard groups={earlierGroups} dateLabel={manilaDate(selectedDate)} showingLink={showingLink} role={user?.role} /></details>}
       </> : <div className="showtime-board-empty">No showings are scheduled for this day. <Link to="/movies">Explore Movies</Link></div>}
     </div></section>
     <OpeningSoon movies={coming} currentDay={currentDay} />

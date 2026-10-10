@@ -1,11 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { FiChevronLeft, FiChevronRight, FiMaximize, FiPause, FiPlay, FiVolume2, FiVolumeX } from 'react-icons/fi';
 import { trailerPlaylist, initialPlaylist, playableEntries, playlistTransition } from '../utils/trailerPlaylist';
-import { today } from '../utils/manila';
 import HeroTrailer from './HeroTrailer';
 import './trailerShowcase.css';
 
-const dateLabel = day => day === today() ? 'Today' : new Date(day + 'T12:00:00+08:00').toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', weekday: 'short', month: 'short', day: 'numeric' });
 const runtime = minutes => minutes ? Math.floor(minutes / 60) + 'h ' + String(minutes % 60).padStart(2, '0') + 'm' : '';
 
 export default function TrailerShowcase(props) {
@@ -14,7 +11,7 @@ export default function TrailerShowcase(props) {
   return <ShowcaseSession key={props.selectedDate + ':' + entries.map(entry => entry.key).join('|')} {...props} entries={entries} />;
 }
 
-function ShowcaseSession({ entries, dateOptions, selectedDate, onDateChange, loading, error, onRetry, previewRequest, onMovieChange }) {
+function ShowcaseSession({ entries, loading, error, onRetry }) {
   const [playlist, setPlaylist] = useState(() => initialPlaylist(entries));
   const [manualPaused, setManualPaused] = useState(false);
   const [muted, setMuted] = useState(true);
@@ -27,7 +24,6 @@ function ShowcaseSession({ entries, dateOptions, selectedDate, onDateChange, loa
   const heroRef = useRef(null);
   const mediaRef = useRef(null);
   const playerRef = useRef(null);
-  const requestSequence = useRef(previewRequest?.sequence);
   const current = entries.find(entry => entry.key === playlist.current);
   const available = playableEntries(entries, playlist);
   const failed = current && playlist.failed.includes(current.key);
@@ -37,7 +33,6 @@ function ShowcaseSession({ entries, dateOptions, selectedDate, onDateChange, loa
   const pendingEnd = useRef(null);
   policyRef.current = canAdvance;
   const transition = action => setPlaylist(state => playlistTransition(state, action, entries));
-  const select = movieId => { transition({ type: 'select', movieId }); };
 
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting && entry.intersectionRatio > .5), { threshold: [0, .51] });
@@ -51,12 +46,6 @@ function ShowcaseSession({ entries, dateOptions, selectedDate, onDateChange, loa
     preference.addEventListener('change', motion);
     return () => { observer.disconnect(); document.removeEventListener('visibilitychange', visibility); document.removeEventListener('fullscreenchange', fullscreenChange); preference.removeEventListener('change', motion); };
   }, []);
-  useEffect(() => { onMovieChange(current?.movie._id || ''); }, [current?.movie._id, onMovieChange]);
-  useEffect(() => {
-    if (previewRequest?.sequence === requestSequence.current) return;
-    requestSequence.current = previewRequest?.sequence;
-    transition({ type: 'select', movieId: previewRequest?.movieId });
-  }, [previewRequest?.sequence]);
   useEffect(() => { setPhase('loading'); setFullscreenMessage(''); pendingEnd.current = null; }, [playlist.current, playlist.generation]);
   useEffect(() => {
     if (canAdvance && pendingEnd.current) {
@@ -71,19 +60,13 @@ function ShowcaseSession({ entries, dateOptions, selectedDate, onDateChange, loa
 
   const exhausted = !available.length;
   const provider = current?.media.kind === 'youtube';
-  const message = loading ? 'Loading trailers…' : error ? 'Trailers unavailable' : exhausted ? 'No trailers available for this date' : failed ? 'This trailer could not be played. Choose another movie.' : phase === 'blocked' ? 'Autoplay was blocked. Play when you’re ready.' : fullscreenMessage ? fullscreenMessage : reducedMotion && phase !== 'playing' ? 'Automatic playback is off for reduced motion. Play when you’re ready.' : '';
+  const message = loading ? 'Loading trailers…' : error ? 'Trailers unavailable' : exhausted ? 'No trailers available for this date' : failed ? 'This trailer could not be played.' : phase === 'blocked' ? 'Autoplay was blocked. Play when you’re ready.' : fullscreenMessage ? fullscreenMessage : reducedMotion && phase !== 'playing' ? 'Automatic playback is off for reduced motion. Play when you’re ready.' : '';
   const playing = phase === 'playing';
   const ready = !['loading', 'failed'].includes(phase);
 
   return <section ref={heroRef} className={'cinema-hero' + (provider && !exhausted ? ' is-provider' : '')} aria-label="Trailers for the selected date">
     <div className="cinema-topbar">
       <span className="cinema-showcase-brand">FILME <span>TRAILER SHOWCASE</span></span>
-      <div className="cinema-selectors">
-        <label><span className="sr-only">Trailer date</span><select aria-label="Trailer date" value={selectedDate} onChange={event => onDateChange(event.target.value)}>{[...new Set([selectedDate, ...dateOptions])].map(day => <option value={day} key={day}>{dateLabel(day)}</option>)}</select></label>
-        <label><span className="sr-only">Choose a movie trailer</span><select aria-label="Choose a movie trailer" value={failed || exhausted ? '' : current?.movie._id || ''} disabled={loading || !!error || exhausted} onChange={event => select(event.target.value)}>
-          {(failed || exhausted) && <option value="">Choose a trailer</option>}{available.map(entry => <option key={entry.key} value={entry.movie._id}>{entry.movie.title}</option>)}
-        </select></label>
-      </div>
     </div>
     <div className="cinema-media" ref={mediaRef}>
       {!loading && !error && current && !failed && !exhausted ? <HeroTrailer key={current.key + ':' + playlist.generation} ref={playerRef} media={current.media} poster={current.movie.backdropUrl || current.movie.posterUrl} active={active} reducedMotion={reducedMotion} manualPaused={manualPaused} muted={muted} onManualPause={setManualPaused} onMutedChange={setMuted} onStatus={setPhase} onFullscreenError={setFullscreenMessage} onFullscreenChange={setFullscreen}
@@ -105,13 +88,6 @@ function ShowcaseSession({ entries, dateOptions, selectedDate, onDateChange, loa
         {!loading && !error && !exhausted && current?.media.label && <p className="cinema-demo-label">{current.media.label}</p>}
         {!loading && !error && !exhausted && current?.media.credit && <p className="cinema-credit"><a href={current.media.credit.source} target="_blank" rel="noreferrer">{current.media.credit.name}</a>{' · '}<a href={current.media.credit.licenseUrl} target="_blank" rel="noreferrer">{current.media.credit.licenseName}</a></p>}
       </div>
-      {!loading && !error && !exhausted && <div className="cinema-controls" role="group" aria-label="Trailer playback controls">
-        <button type="button" aria-label="Previous trailer" disabled={available.length < 2} onClick={() => transition({ type: 'move', direction: -1 })}><FiChevronLeft /></button>
-        <button type="button" aria-label={playing ? 'Pause trailer' : 'Resume trailer'} disabled={failed || !ready || !active} onClick={() => playing ? playerRef.current?.pause() : playerRef.current?.resume()}>{playing ? <FiPause /> : <FiPlay />}</button>
-        <button type="button" aria-label="Next trailer" disabled={available.length < 2} onClick={() => transition({ type: 'move', direction: 1 })}><FiChevronRight /></button>
-        <button type="button" aria-label={muted ? 'Unmute trailer' : 'Mute trailer'} aria-pressed={!muted} disabled={failed} onClick={() => playerRef.current?.toggleMute()}>{muted ? <FiVolumeX /> : <FiVolume2 />}</button>
-        <button type="button" aria-label="View complete trailer in fullscreen" disabled={failed || !ready} onClick={() => playerRef.current?.fullscreen()}><FiMaximize /></button>
-      </div>}
     </div>
   </section>;
 }

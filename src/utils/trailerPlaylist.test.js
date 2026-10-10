@@ -25,13 +25,12 @@ test('actual ended events advance and wrap; stale and duplicate player events ar
   assert.equal(state.current, entries[0].key);
   assert.equal(state.generation, 3);
 });
-test('selection and previous/next are independent of showings; a new date starts at its first entry', () => {
-  let state = playlistTransition(initialPlaylist(entries), { type: 'select', movieId: 'three' }, entries);
-  assert.equal(state.current, entries[2].key);
+test('failure recovery is independent of showings; a new date starts at its first entry', () => {
+  let state = initialPlaylist(entries);
   state = playlistTransition(state, { type: 'move', direction: 1 }, entries);
-  assert.equal(state.current, entries[0].key);
+  assert.equal(state.current, entries[1].key);
   state = playlistTransition(state, { type: 'move', direction: -1 }, entries);
-  assert.equal(state.current, entries[2].key);
+  assert.equal(state.current, entries[0].key);
   assert.equal(initialPlaylist(entries.slice(1)).current, entries[1].key);
   assert.equal(initialPlaylist([]).current, '');
   assert.equal('showtime' in state, false);
