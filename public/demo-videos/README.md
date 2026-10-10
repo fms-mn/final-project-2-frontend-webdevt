@@ -5,3 +5,5 @@ These local MP4 files let the frontend preview work without the FILME API or an 
 - `sintel-trailer.mp4`: [Sintel trailer hosted by W3C](https://media.w3.org/2010/05/sintel/trailer.mp4), © Blender Foundation, licensed under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).
 
 The mapping lives in `client/src/data/demoHeroMedia.js`. Actual movie trailers take precedence. Live mode never substitutes these samples.
+
+The hero fills its panel without stretching. The Sintel preview also crops the 58-pixel letterbox bands encoded in the source during inline display; the original video file and attribution remain intact. Native fullscreen preserves the complete original frame.

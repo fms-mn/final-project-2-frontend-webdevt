@@ -60,6 +60,7 @@ test('three demo sources have explicit labels and credits; live mode never subst
   const scheduled = demoMovies.map(movie => ({ movie: movie._id, startTime: day + 'T19:00:00+08:00', published: true }));
   const demo = trailerPlaylist(demoMovies, scheduled, day, true);
   assert.ok(demo.length >= 3);
+  assert.ok(demo.every(entry => entry.media.title === entry.movie.title));
   assert.ok(demo.filter(entry => entry.media.kind === 'video').every(entry => entry.media.label.includes('not this movie') && entry.media.credit.licenseUrl && !entry.media.loop));
   assert.ok(trailerPlaylist(demoMovies, scheduled, day, false).every(entry => entry.media.kind === 'youtube'));
 });

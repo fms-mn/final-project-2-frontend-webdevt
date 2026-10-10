@@ -2,7 +2,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 're
 import { createTrailerPlayback } from '../utils/trailerPlayback';
 import { loadYouTubeApi } from '../utils/youtubeApi';
 
-const HeroTrailer = forwardRef(function HeroTrailer({ media, poster, active, reducedMotion, manualPaused, muted, onManualPause, onMutedChange, onStatus, onEnded, onFailure, onFullscreenError, onFullscreenChange }, ref) {
+const HeroTrailer = forwardRef(function HeroTrailer({ media, poster, active, reducedMotion, manualPaused, muted, onManualPause, onMutedChange, onStatus, onEnded, onFailure, onFullscreenChange }, ref) {
   const videoRef = useRef(null);
   const mountRef = useRef(null);
   const playerRef = useRef(null);
@@ -10,13 +10,11 @@ const HeroTrailer = forwardRef(function HeroTrailer({ media, poster, active, red
   const adapterRef = useRef(null);
   const latest = useRef(null);
   const [frameVisible, setFrameVisible] = useState(false);
-  latest.current = { active, reducedMotion, manualPaused, muted, onManualPause, onMutedChange, onStatus, onEnded, onFailure, onFullscreenError, onFullscreenChange };
+  latest.current = { active, reducedMotion, manualPaused, muted, onManualPause, onMutedChange, onStatus, onEnded, onFailure, onFullscreenChange };
 
   useImperativeHandle(ref, () => ({
     resume: () => sessionRef.current?.resume(),
     pause: () => sessionRef.current?.pause(),
-    toggleMute: () => { const next = !latest.current.muted; adapterRef.current?.setMuted(next); latest.current.onMutedChange(next); },
-    fullscreen: () => { adapterRef.current?.fullscreen(); },
   }), []);
 
   useEffect(() => {
@@ -26,19 +24,13 @@ const HeroTrailer = forwardRef(function HeroTrailer({ media, poster, active, red
     const mount = mountRef.current;
     const native = media.kind === 'video';
     const policy = () => ({ active: latest.current.active && !document.hidden, autoplay: !latest.current.reducedMotion, manualPaused: latest.current.manualPaused });
-    const fullscreen = element => {
-      if (element?.requestFullscreen) element.requestFullscreen().catch(() => latest.current.onFullscreenError('Fullscreen is unavailable in this browser. Use the provider’s fullscreen control if available.'));
-      else if (element?.webkitEnterFullscreen) element.webkitEnterFullscreen();
-      else latest.current.onFullscreenError('Fullscreen is unavailable in this browser. Use the provider’s fullscreen control if available.');
-    };
     const adapter = native ? {
       play: () => video.play(), pause: () => video.pause(), rewind: () => { video.currentTime = 0; },
-      setMuted: value => { video.muted = value; }, fullscreen: () => fullscreen(video),
+      setMuted: value => { video.muted = value; },
       destroy: () => { video.pause(); video.removeAttribute('src'); video.load(); },
     } : {
       play: () => playerRef.current?.playVideo(), pause: () => playerRef.current?.pauseVideo(), rewind: () => playerRef.current?.seekTo(0, true),
       setMuted: value => { if (value) playerRef.current?.mute(); else playerRef.current?.unMute(); },
-      fullscreen: () => fullscreen(playerRef.current?.getIframe()),
       destroy: () => { playerRef.current?.destroy(); playerRef.current = null; mount?.replaceChildren(); },
     };
     adapterRef.current = adapter;
@@ -122,9 +114,12 @@ const HeroTrailer = forwardRef(function HeroTrailer({ media, poster, active, red
   }, [active, reducedMotion, manualPaused]);
   useEffect(() => { adapterRef.current?.setMuted(muted); }, [muted]);
 
-  return <div className={'cinema-media-frame' + (frameVisible ? ' has-frame' : '')}>
+  return <div data-trailer-title={media.title} className={'cinema-media-frame' + (frameVisible ? ' has-frame' : '')}>
     {poster && <img className="cinema-media-poster" src={poster} alt="" />}
-    {media.kind === 'video' ? <video ref={videoRef} className="cinema-video" playsInline muted preload="metadata" aria-label={media.label || media.title + ' trailer'} />
+    {media.kind === 'video' ? <video ref={videoRef} className="cinema-video" style={media.letterboxInset ? {
+      '--video-height': `${100 / (1 - 2 * media.letterboxInset)}%`,
+      '--video-top': `${-100 * media.letterboxInset / (1 - 2 * media.letterboxInset)}%`,
+    } : undefined} playsInline muted preload="metadata" aria-label={media.label || media.title + ' trailer'} />
       : <div className="cinema-youtube" ref={mountRef} />}
   </div>;
 });

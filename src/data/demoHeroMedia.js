@@ -10,6 +10,8 @@ const previewClips = {
   },
   'demo-blue-hour': {
     src: '/demo-videos/sintel-trailer.mp4',
+    // This file encodes 58 black rows above and below its 364-row picture.
+    letterboxInset: 58 / 480,
     credit: { name: 'Sintel · Blender Foundation', source: 'https://media.w3.org/2010/05/sintel/trailer.mp4', licenseName: 'CC BY 3.0', licenseUrl: 'https://creativecommons.org/licenses/by/3.0/' },
   },
 };

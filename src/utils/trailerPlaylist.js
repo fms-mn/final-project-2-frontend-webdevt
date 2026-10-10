@@ -6,7 +6,7 @@ export function trailerPlaylist(movies, showings, day, isDemo = false) {
   return moviesForDay(movies, showings, day).filter(movie => !['draft', 'archived'].includes(movie.status)).flatMap(movie => {
     const videoId = trailerVideoId(movie);
     const media = videoId ? { kind: 'youtube', videoId, title: movie.title } : isDemo ? demoHeroMediaFor(movie._id) : null;
-    return media ? [{ key: movie._id + ':' + (videoId || media.src), movie, media }] : [];
+    return media ? [{ key: movie._id + ':' + (videoId || media.src), movie, media: { ...media, title: movie.title } }] : [];
   });
 }
 

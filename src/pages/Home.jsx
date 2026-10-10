@@ -5,6 +5,7 @@ import { api } from '../api';
 import TrailerShowcase from '../components/TrailerShowcase';
 import ShowtimeBoard from '../components/ShowtimeBoard';
 import OpeningSoon from '../components/OpeningSoon';
+import './homeBooking.css';
 import { DEMO_RULES, isDemoSlotSafe, listAuditoriums, listShowtimes } from '../data/demoSchedule';
 import { demoRemainingSeats } from '../data/demoBookings';
 import { useMovies } from '../hooks/useMovies';
@@ -77,7 +78,7 @@ export default function Home() {
 
   return <div className="tonight-page cinematic-home fade-in">
     {user?.role === 'admin' && <p className="demo-catalog-notice">Admin preview — customer booking is disabled.</p>}
-    <TrailerShowcase movies={movies} showings={showings} selectedDate={selectedDate} loading={isLoading} error={pageError} onRetry={retry} isDemo={isDemo} />
+    <TrailerShowcase movies={movies} showings={showings} selectedDate={selectedDate} loading={isLoading} error={pageError} isDemo={isDemo} />
     <section className="board-section" id="todays-board" aria-label={'Showing ' + manilaDate(selectedDate)}><div className="board-section-inner">
       <div className="board-heading"><div><span className="board-eyebrow">THE SCHEDULE</span><h2>Showing {manilaDate(selectedDate)}</h2></div><p>All times are Manila time. Seats left update as people book.</p></div>
       <label className="board-date-selector">Showing date<select aria-label="Schedule date" value={selectedDate} onChange={event => setSelectedDate(event.target.value)}>{dateOptions.map(day => <option key={day} value={day}>{day === currentDay ? 'Today' : new Date(day + 'T12:00:00+08:00').toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', weekday: 'short', month: 'short', day: 'numeric' })}</option>)}</select></label>

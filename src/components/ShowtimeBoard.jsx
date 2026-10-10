@@ -8,6 +8,7 @@ export default function ShowtimeBoard({ groups, dateLabel, showingLink, role }) 
       <div className="board-poster"><img src={movie.posterUrl} alt="" loading="lazy" /></div>
       <div><h3>{movie.title}</h3><p className="board-movie-meta">{movie.rating} · {movie.duration} min · {movie.genre.join(' / ')}</p><p className="board-synopsis">{movie.description}</p>
         <Link className="board-details" to={'/movie/' + movie._id + '?details=1'}>More details</Link>
+        {showings[0]?.language && <p className="board-movie-meta">{showings[0].language}{showings[0].subtitles ? ' · Subtitles: ' + showings[0].subtitles : ''}</p>}
       </div>
     </div>
     <div className="board-showtime-chips" role="group" aria-label={movie.title + ' showings'}>{showings.map(row => {
@@ -18,6 +19,5 @@ export default function ShowtimeBoard({ groups, dateLabel, showingLink, role }) 
       return available && role === 'user' ? <Link key={row.id} className="board-showtime-chip" aria-label={'Book ' + label} to={showingLink(row)}>{content}</Link>
         : <button key={row.id} type="button" className="board-showtime-chip" disabled aria-label={label + (role === 'admin' ? '. Admin preview; booking disabled' : '')}>{content}</button>;
     })}</div>
-    {showings[0]?.language && <p className="board-movie-meta">{showings[0].language}{showings[0].subtitles ? ' · Subtitles: ' + showings[0].subtitles : ''}</p>}
   </article>)}</div>;
 }
