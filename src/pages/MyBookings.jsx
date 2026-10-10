@@ -6,6 +6,7 @@ import { canCancelDemoBooking, cancelDemoBooking, getDemoBookingReference, getDe
 import { displayTime, manilaDay, shortDate, today } from '../utils/manila';
 import { listAuditoriums } from '../data/demoSchedule';
 import CancelBookingModal from '../components/CancelBookingModal';
+import { paymentLine } from '../utils/payment';
 import './MyBookings.css';
 
 function detail(booking) {
@@ -25,6 +26,7 @@ function Ticket({ booking, onCancel, compact }) {
     <div className="wallet-ticket-body">{(booking.isDemo || booking.userId === 'demo-user') && <p className="movie-fixture-note">Simulated booking · no cinema admission</p>}<h3>{booking.movie?.title || 'Movie no longer in catalog'}</h3>
       {compact ? <p>{info.room} · seats {booking.seats.join(', ')}</p> : <div className="wallet-ticket-facts"><span>Date <b>{info.date}</b></span><span>Time <b>{info.time}</b></span><span>Seats <b>{booking.seats.join(', ')}</b></span></div>}
       <div className="wallet-ticket-bottom"><div><small>Code</small><span className="ticket-code">{info.code}</span></div><strong>₱{info.price.toLocaleString('en-PH')}</strong>{onCancel && <button type="button" className="btn btn-danger btn-small" onClick={() => onCancel(booking)}>Cancel ticket</button>}</div>
+      {paymentLine(booking) && <p className={`ticket-payment${booking.paymentStatus === 'refunded' ? ' is-refunded' : ''}`}>{paymentLine(booking)}</p>}
       {compact && <span className={`ticket-stamp ${booking.status === 'cancelled' ? 'cancelled' : ''}`}>{booking.status === 'cancelled' ? 'Cancelled' : booking.userId === 'demo-user' ? 'Demo ended' : 'Watched'}</span>}
     </div>
   </article>;
@@ -54,8 +56,12 @@ export default function MyBookings() {
     if (!toCancel) return;
     try {
       if (isDemo) cancelDemoBooking(toCancel._id, user.id);
-      else await api(`/bookings/${toCancel._id}/cancel`, { method: 'PATCH' });
-      setFeedback(`Ticket ${detail(toCancel).code} was cancelled. Its seats are available again.`);
+      let refund = '';
+      if (!isDemo) {
+        const result = await api(`/bookings/${toCancel._id}/cancel`, { method: 'PATCH' });
+        if (result?.payment?.status === 'refunded') refund = ` Your payment of ₱${(result.payment.amount / 100).toLocaleString('en-PH')} was refunded (${result.payment.refundReference}).`;
+      }
+      setFeedback(`Ticket ${detail(toCancel).code} was cancelled. Its seats are available again.${refund}`);
       setToCancel(null);
       setRevision(value => value + 1);
     } catch (err) { setCancelError(err.message); }

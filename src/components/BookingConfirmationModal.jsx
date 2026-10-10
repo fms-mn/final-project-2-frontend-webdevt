@@ -3,8 +3,13 @@ import { createPortal } from 'react-dom';
 import { getDemoBookingReference } from '../data/demoBookings';
 import { displayTime, shortDate } from '../utils/manila';
 import { listAuditoriums } from '../data/demoSchedule';
+import { describePayment } from '../utils/payment';
+import HoldTimer from './HoldTimer';
+import PaymentPanel from './PaymentPanel';
 
-export default function BookingConfirmationModal({ draft, booking, pending, error, onConfirm, onClose, onViewBookings, returnFocusRef }) {
+// `payment` (live bookings only) switches the dialog to its payment step: { hold, walletPayment, pending, error,
+// onPay, onAuthorize, onRelease, onExpire }. The seats are held until `hold.holdExpiresAt`.
+export default function BookingConfirmationModal({ draft, booking, pending, error, payment, onConfirm, onClose, onViewBookings, returnFocusRef }) {
   const dialogRef = useRef(null);
   const headingRef = useRef(null);
   const feedbackTimer = useRef(null);
@@ -72,11 +77,12 @@ export default function BookingConfirmationModal({ draft, booking, pending, erro
   const showDate = shortDate(when);
   const showTime = displayTime(when);
   const simulated = draft.isDemo || booking?.isDemo;
+  const paying = Boolean(payment && !booking);
   const seats = booking?.seats || draft.seats;
   const code = booking && (booking.bookingCode || getDemoBookingReference(booking));
   const auditoriumName = booking ? booking.auditorium?.name || listAuditoriums().find((room) => room.id === booking.auditoriumId)?.name || 'Cinema' : draft.auditoriumName;
-  const price = booking ? (booking.totalAmount != null ? booking.totalAmount / 100 : booking.totalPrice) : draft.totalPrice;
-  const unitPrice = booking ? (booking.unitPrice != null ? booking.unitPrice / 100 : price / seats.length) : draft.unitPrice;
+  const price = booking ? (booking.totalAmount != null ? booking.totalAmount / 100 : booking.totalPrice) : paying ? payment.hold.totalAmount / 100 : draft.totalPrice;
+  const unitPrice = booking ? (booking.unitPrice != null ? booking.unitPrice / 100 : price / seats.length) : paying ? payment.hold.unitPrice / 100 : draft.unitPrice;
 
   const copyCode = async () => {
     try {
@@ -98,8 +104,8 @@ export default function BookingConfirmationModal({ draft, booking, pending, erro
             {celebrationKey === bookingKey && <span className="confirmation-confetti">{Array.from({ length: 8 }, (_, index) => <i key={index} />)}</span>}
           </span> : <span className="booking-eyebrow">Final step</span>}
           <button type="button" className="confirmation-close" aria-label={booking ? 'Close ticket' : 'Close confirmation'} onClick={onClose} disabled={pending}>×</button>
-          <h2 id="booking-modal-title" ref={headingRef} tabIndex={-1}>{simulated ? booking ? 'Demo booking saved' : 'Confirm simulated booking' : booking ? 'Booking confirmed' : 'Confirm your booking'}</h2>
-          <p id="booking-modal-reference" className="booking-modal-reference">{simulated ? 'This booking is simulated. No payment is taken and this code is not valid for cinema admission.' : booking ? 'Your booking is confirmed and saved in My tickets. Show the code below at the cinema.' : 'Review your seats and total before confirming.'}</p>
+          <h2 id="booking-modal-title" ref={headingRef} tabIndex={-1}>{simulated ? booking ? 'Demo booking saved' : 'Confirm simulated booking' : booking ? 'Booking confirmed' : paying ? 'Pay for your tickets' : 'Confirm your booking'}</h2>
+          <p id="booking-modal-reference" className="booking-modal-reference">{simulated ? 'This booking is simulated. No payment is taken and this code is not valid for cinema admission.' : booking ? (booking.payment ? 'Payment received. Your booking is confirmed and saved in My tickets. Show the code below at the cinema.' : 'Your booking is confirmed and saved in My tickets. Show the code below at the cinema.') : paying ? 'Your seats are reserved for you while you pay.' : 'Review your seats and total before confirming.'}</p>
         </header>
         <div className="confirmation-modal-content">
         <div className={`confirmation-ticket ${booking ? 'is-confirmed' : 'is-review'} ${booking && celebrationKey === bookingKey ? 'is-celebrating' : ''}`}>
@@ -115,16 +121,27 @@ export default function BookingConfirmationModal({ draft, booking, pending, erro
             <span className="confirmation-copy-feedback" role="status" aria-live="polite">{copyFeedback}</span>
             <div className="ticket-bars" aria-hidden="true"/>
             <div className="confirmation-price"><span>{seats.length} × ₱{unitPrice.toLocaleString('en-PH')}</span><b>₱{price.toLocaleString('en-PH')}</b></div>
+            {booking.payment && <span className="confirmation-paid">Paid · {describePayment(booking.payment)}<br />{booking.payment.reference}</span>}
           </div> : <div className="confirmation-stub confirmation-review-stub">
             <small>Price breakdown</small>
             <span className="confirmation-review-unit">{seats.length} {seats.length === 1 ? 'ticket' : 'tickets'} × ₱{unitPrice.toLocaleString('en-PH')}</span>
             <div className="confirmation-price"><span>Total</span><b>₱{price.toLocaleString('en-PH')}</b></div>
           </div>}
         </div>
+        {paying && <>
+          <HoldTimer expiresAt={payment.hold.holdExpiresAt} onExpire={payment.onExpire} />
+          <PaymentPanel
+            formId="payment-form" total={price} pending={payment.pending} error={payment.error}
+            walletPayment={payment.walletPayment} onPay={payment.onPay} onAuthorize={payment.onAuthorize}
+          />
+        </>}
         </div>
         <footer className="booking-modal-actions confirmation-modal-actions">
-          {!booking && error && <p className="confirmation-error" role="alert">{error}</p>}
-          {booking ? <>
+          {!booking && !paying && error && <p className="confirmation-error" role="alert">{error}</p>}
+          {paying ? <>
+            <button type="button" className="btn btn-secondary" onClick={payment.onRelease} disabled={payment.pending}>Back to seats</button>
+            {!payment.walletPayment && <button type="submit" form="payment-form" className="btn btn-primary confirmation-submit" disabled={payment.pending} aria-busy={payment.pending}>{payment.pending ? 'Processing...' : `Pay ₱${price.toLocaleString('en-PH')}`}</button>}
+          </> : booking ? <>
             <button type="button" className="btn btn-primary" onClick={onViewBookings}>Go to My tickets</button>
             <button type="button" className="btn btn-secondary" onClick={onClose}>Close</button>
           </> : <>

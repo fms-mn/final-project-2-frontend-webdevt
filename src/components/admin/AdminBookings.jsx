@@ -3,6 +3,7 @@ import { api } from '../../api';
 import ActionPending from '../ActionPending';
 import { describeError, pesos, toCsv } from '../../utils/adminTools';
 import { manilaClock, shortDate, today } from '../../utils/manila';
+import { paymentSummary } from '../../utils/payment';
 import Feedback from './Feedback';
 import useAdminAction from './useAdminAction';
 
@@ -59,11 +60,11 @@ export default function AdminBookings() {
   };
 
   const exportCsv = () => {
-    const heading = ['Booking code', 'Customer', 'Email', 'Movie', 'Room', 'Showing', 'Seats', 'Total (PHP)', 'Status', 'Booked at'];
+    const heading = ['Booking code', 'Customer', 'Email', 'Movie', 'Room', 'Showing', 'Seats', 'Total (PHP)', 'Status', 'Payment', 'Payment reference', 'Booked at'];
     const body = shown.map((row) => [
       row.bookingCode, row.user?.name, row.user?.email, row.movie?.title, row.auditorium?.name,
       row.showtime?.startTime ? `${shortDate(row.showtime.startTime)} ${manilaClock(row.showtime.startTime)}` : '',
-      row.seats.join(' '), row.totalAmount / 100, row.status, new Date(row.bookedAt).toISOString(),
+      row.seats.join(' '), row.totalAmount / 100, row.status, paymentSummary(row).text, row.payment?.reference || '', new Date(row.bookedAt).toISOString(),
     ]);
     const url = URL.createObjectURL(new Blob([toCsv([heading, ...body])], { type: 'text/csv;charset=utf-8' }));
     const link = document.createElement('a');
@@ -82,7 +83,7 @@ export default function AdminBookings() {
         <label>Search<input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Code, customer, movie or seat" /></label>
         <label>Status
           <select value={status} onChange={changeFilter(setStatus)}>
-            <option value="all">All statuses</option><option value="confirmed">Confirmed</option><option value="cancelled">Cancelled</option>
+            <option value="all">All statuses</option><option value="confirmed">Confirmed</option><option value="pending">Awaiting payment</option><option value="cancelled">Cancelled</option><option value="expired">Expired</option>
           </select>
         </label>
         <label>Movie
@@ -102,7 +103,7 @@ export default function AdminBookings() {
         {shown.length > 0 && (
           <div className="admin-table-wrap">
             <table className="admin-table">
-              <thead><tr><th scope="col">Code</th><th scope="col">Customer</th><th scope="col">Movie</th><th scope="col">Showing</th><th scope="col">Seats</th><th scope="col">Total</th><th scope="col">Status</th><th scope="col"><span className="visually-hidden">Actions</span></th></tr></thead>
+              <thead><tr><th scope="col">Code</th><th scope="col">Customer</th><th scope="col">Movie</th><th scope="col">Showing</th><th scope="col">Seats</th><th scope="col">Total</th><th scope="col">Status</th><th scope="col">Payment</th><th scope="col"><span className="visually-hidden">Actions</span></th></tr></thead>
               <tbody>
                 {shown.map((row) => (
                   <tr key={row._id}>
@@ -112,6 +113,7 @@ export default function AdminBookings() {
                           <span>Booked {new Date(row.bookedAt).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}</span>
                           <span>{row.seats.length} × {pesos(row.unitPrice)}</span>
                           <span>{row.auditorium?.name}</span>
+                          {row.payment && <span>Payment {row.payment.reference}{row.payment.refundReference ? ` · refund ${row.payment.refundReference}` : ''}</span>}
                           {row.cancelledAt && <span>Cancelled {new Date(row.cancelledAt).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}</span>}
                         </div>
                       )}
@@ -121,7 +123,8 @@ export default function AdminBookings() {
                     <td className="mono">{row.showtime?.startTime ? `${shortDate(row.showtime.startTime)} · ${manilaClock(row.showtime.startTime)}` : '—'}</td>
                     <td className="mono">{row.seats.join(', ')}</td>
                     <td>{pesos(row.totalAmount)}</td>
-                    <td><span className={`admin-status ${row.status}`}>{row.status}</span></td>
+                    <td><span className={`admin-status ${row.status}`}>{row.status === 'pending' ? 'awaiting payment' : row.status}</span></td>
+                    <td>{(() => { const info = paymentSummary(row); return <span className={`admin-payment admin-payment-${info.tone}`}>{info.label}{info.text && <small className="cell-sub">{info.text}</small>}</span>; })()}</td>
                     <td>
                       {canCancel(row) && (
                         <button type="button" className="btn btn-danger btn-small" disabled={busy} aria-busy={busyAction === `cancel:${row._id}`} onClick={() => cancel(row)}>

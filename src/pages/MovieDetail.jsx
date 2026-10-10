@@ -54,6 +54,13 @@ export default function MovieDetail() {
   const [bookingError, setBookingError] = useState('');
   const [bookingSuccess, setBookingSuccess] = useState(null);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
+  // Paying (live bookings): `hold` is the pending booking that keeps the seats while the customer pays.
+  const [hold, setHold] = useState(null);
+  const [walletPayment, setWalletPayment] = useState(null);
+  const [paying, setPaying] = useState(false);
+  const [payError, setPayError] = useState('');
+  const holdRef = useRef(null);
+  holdRef.current = hold;
   const [mobileBarHeight, setMobileBarHeight] = useState(128);
   const [seatMapScrollable, setSeatMapScrollable] = useState(false);
   const seatMapRef = useRef(null);
@@ -148,11 +155,71 @@ export default function MovieDetail() {
     }
   };
 
+  const refreshSeats = useCallback(() => {
+    if (previewBooking || !selectedSlot) return;
+    api(`/showtimes/${selectedSlot._id}/seats`).then(setLiveSeats).catch(() => {});
+  }, [previewBooking, selectedSlot?._id]);
+
+  // Gives the held seats back (best effort: they are released by themselves when the time runs out).
+  const releaseHold = useCallback(() => {
+    const current = holdRef.current;
+    holdRef.current = null;
+    setHold(null); setWalletPayment(null); setPayError(''); setPaying(false);
+    return current ? api(`/bookings/${current._id}/release`, { method: 'POST' }).catch(() => {}) : Promise.resolve();
+  }, []);
+  useEffect(() => () => { // leaving the page while paying
+    if (holdRef.current) api(`/bookings/${holdRef.current._id}/release`, { method: 'POST' }).catch(() => {});
+  }, []);
+
   const closeConfirmation = useCallback(() => {
     if (bookingLocked.current) return;
+    if (holdRef.current) releaseHold().then(refreshSeats);
     setConfirmationOpen(false);
     setBookingError('');
-  }, []);
+  }, [releaseHold, refreshSeats]);
+
+  const holdExpired = useCallback(() => {
+    releaseHold().then(refreshSeats);
+    setBookingError('Your seats were released because the payment time ran out. Please confirm to reserve them again.');
+  }, [releaseHold, refreshSeats]);
+
+  const finishPaid = (paidBooking) => {
+    holdRef.current = null;
+    setHold(null); setWalletPayment(null); setPayError('');
+    setBookingSuccess(paidBooking);
+    refreshSeats();
+  };
+
+  const payFailed = (error) => {
+    if (error.status === 409) { // the hold ran out, or the showing changed
+      holdRef.current = null;
+      setHold(null); setWalletPayment(null);
+      setBookingError(error.message);
+      refreshSeats();
+    } else {
+      setWalletPayment(null);
+      setPayError(error.message || 'The payment could not be completed.');
+    }
+  };
+
+  const handlePay = async (input) => {
+    if (!hold || paying) return;
+    setPaying(true); setPayError('');
+    try {
+      const result = await api(`/bookings/${hold._id}/pay`, { method: 'POST', body: input });
+      if (result.awaitingApproval) setWalletPayment(result.payment);
+      else finishPaid(result.booking);
+    } catch (error) { payFailed(error); } finally { setPaying(false); }
+  };
+
+  const handleAuthorize = async (approve) => {
+    if (!walletPayment || paying) return;
+    setPaying(true); setPayError('');
+    try {
+      const result = await api(`/payments/${walletPayment._id}/authorize`, { method: 'POST', body: { approve } });
+      finishPaid(result.booking);
+    } catch (error) { payFailed(error); } finally { setPaying(false); }
+  };
 
   const reviewBooking = () => {
     if (selectedSeats.length === 0 || showtimeUnavailable || booking || bookingSuccess) return;
@@ -184,7 +251,8 @@ export default function MovieDetail() {
       }) : await api('/bookings', { method: 'POST', body: { showtime: selectedSlot._id, seats: selectedSeats } });
       if (!previewBooking) api(`/showtimes/${selectedSlot._id}/seats`).then(setLiveSeats).catch(() => {});
       bookingLocked.current = false;
-      setBookingSuccess(result);
+      if (result.status === 'pending') { holdRef.current = result; setHold(result); setPayError(''); } // now pay for it
+      else setBookingSuccess(result);
     } catch (error) {
       bookingLocked.current = false;
       setBookingError(error.message || 'Booking failed');
@@ -496,6 +564,7 @@ export default function MovieDetail() {
           booking={bookingSuccess}
           pending={booking}
           error={bookingError}
+          payment={hold ? { hold, walletPayment, pending: paying, error: payError, onPay: handlePay, onAuthorize: handleAuthorize, onRelease: closeConfirmation, onExpire: holdExpired } : null}
           onConfirm={handleBooking}
           onClose={closeConfirmation}
           onViewBookings={() => navigate('/my-bookings')}
