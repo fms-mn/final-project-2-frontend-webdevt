@@ -3,13 +3,14 @@ import { listShowtimes } from '../data/demoSchedule';
 
 export default function MovieCard({ movie, showShowtimes = false }) {
   const isShowing = movie.status === 'now_showing';
+  const notShowing = movie.status === 'not_showing';
 
   return (
     <Link to={`/movie/${movie._id}`} className="movie-card">
       <div className="movie-card-poster">
         <img src={movie.posterUrl} alt={movie.title} loading="lazy" />
-        <span className={`movie-card-badge ${isShowing ? 'badge-showing' : 'badge-coming'}`}>
-          {isShowing ? 'Now Showing' : 'Coming Soon'}
+        <span className={`movie-card-badge ${isShowing ? 'badge-showing' : notShowing ? 'badge-none' : 'badge-coming'}`}>
+          {isShowing ? 'Now Showing' : notShowing ? 'No Showings' : 'Coming Soon'}
         </span>
         <div className="movie-card-overlay">
           <span className="btn btn-primary btn-small">
@@ -25,7 +26,12 @@ export default function MovieCard({ movie, showShowtimes = false }) {
           <span>{movie.rating}</span>
         </div>
         {isShowing ? (
-          <div className="movie-card-price">Choose a showing →</div>
+          <div className="movie-card-price">
+            {movie.price != null && <small className="movie-card-from">From ₱{movie.price.toLocaleString('en-PH')} · </small>}
+            Choose a showing →
+          </div>
+        ) : notShowing ? (
+          <div className="movie-card-release">No showings right now</div>
         ) : (
           <div className="movie-card-release">
             In cinemas {new Date(movie.releaseDate).toLocaleDateString('en-PH', {

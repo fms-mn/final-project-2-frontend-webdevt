@@ -17,6 +17,18 @@ const toDraft = (movie) => ({
   rating: movie.rating, posterUrl: movie.posterUrl, trailerUrl: movie.trailerUrl || '',
   duration: movie.duration, releaseDate: String(movie.releaseDate).slice(0, 10), status: movie.status,
 });
+// What the admin should know about a movie's showings at a glance.
+function showingsSummary(movie) {
+  const count = movie.upcomingShowings ?? 0;
+  if (movie.status !== 'published') return { text: '—', tone: 'none' };
+  if (count > 0) {
+    const next = movie.nextShowing ? new Date(movie.nextShowing).toLocaleString('en-PH', { timeZone: 'Asia/Manila', weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : '';
+    return { text: `${count} upcoming`, hint: next && `Next: ${next}`, tone: 'ok' };
+  }
+  return movie.showStatus === 'coming_soon'
+    ? { text: 'None scheduled yet', hint: 'Coming soon', tone: 'warn' }
+    : { text: 'No showings', hint: 'Customers see "No showings". Schedule some, or archive it.', tone: 'warn' };
+}
 const dateYear = (value) => value ? String(value).slice(0, 4) : '—';
 const durationLabel = (minutes) => `${Math.floor(Number(minutes) / 60)}h ${String(Number(minutes) % 60).padStart(2, '0')}m`;
 
@@ -150,6 +162,7 @@ export default function AdminMovieManager({ movies, reload }) {
   const [editorTab, setEditorTab] = useState('Details');
   const [openMenu, setOpenMenu] = useState('');
   const [confirmRemove, setConfirmRemove] = useState('');
+  const [withdraw, setWithdraw] = useState(null); // { id, showings, bookings }: the plan awaiting a yes
   const genres = useMemo(() => [...new Set(movies.map((movie) => movie.genre).filter(Boolean))].sort(), [movies]);
   const shown = useMemo(() => movies
     .filter((movie) => movie.title.toLowerCase().includes(query.trim().toLowerCase()))
@@ -185,6 +198,23 @@ export default function AdminMovieManager({ movies, reload }) {
     if (done) reload();
   };
 
+  // Taking a movie off sale cancels its coming showings and their bookings, so ask first, with numbers.
+  const planWithdraw = async (movie) => {
+    let plan = null;
+    const done = await run(async () => { plan = await api(`/admin/movies/${movie._id}/withdraw`, { method: 'POST', body: { dryRun: true } }); }, '', `plan:${movie._id}`);
+    if (done) setWithdraw({ id: movie._id, showings: plan.showings, bookings: plan.bookings });
+  };
+  const confirmWithdraw = async (movie) => {
+    const plan = withdraw;
+    const done = await run(
+      () => api(`/admin/movies/${movie._id}/withdraw`, { method: 'POST', body: {} }),
+      `"${movie.title}" is off sale: ${plan.showings} ${plan.showings === 1 ? 'showing' : 'showings'} and ${plan.bookings} ${plan.bookings === 1 ? 'booking' : 'bookings'} cancelled, movie archived`,
+      `withdraw:${movie._id}`,
+    );
+    setWithdraw(null); setOpenMenu('');
+    if (done) reload();
+  };
+
   return (
     <section className="movie-manager" aria-label="Movie management">
       <Feedback error={draft ? '' : error} notice={notice} />
@@ -198,7 +228,7 @@ export default function AdminMovieManager({ movies, reload }) {
       </div>
       <div className="movie-table-shell">
         <table className="movie-table">
-          <thead><tr><th>Poster</th><th>Title</th><th>Genre</th><th>Classification</th><th>Duration</th><th>Status</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Poster</th><th>Title</th><th>Genre</th><th>Classification</th><th>Duration</th><th>Status</th><th>Showings</th><th>Actions</th></tr></thead>
           <tbody>
             {shown.map((movie) => (
               <tr key={movie._id}>
@@ -208,7 +238,14 @@ export default function AdminMovieManager({ movies, reload }) {
                 <td>{movie.rating}</td>
                 <td><span className="movie-duration">◷&nbsp; {durationLabel(movie.duration)}</span></td>
                 <td><span className={`movie-status movie-status-${movie.status}`}>{movie.status}</span></td>
-                <td><div className="movie-row-actions"><button type="button" className="movie-button movie-button-outline" onClick={() => openEditor(movie)}>Edit</button><div className="movie-menu-wrap"><button type="button" className="movie-button movie-button-outline movie-more" aria-label={`More actions for ${movie.title}`} aria-expanded={openMenu === movie._id} onClick={() => { setOpenMenu(openMenu === movie._id ? '' : movie._id); setConfirmRemove(''); }}>⋯</button>{openMenu === movie._id && <div className="movie-menu">{movie.status === 'published' && <Link to={`/movie/${movie._id}`}>View movie</Link>}<button type="button" disabled={busy} onClick={() => remove(movie)}>{busyAction === `remove:${movie._id}` ? 'Removing…' : confirmRemove === movie._id ? 'Confirm remove' : 'Remove movie'}</button></div>}</div></div></td>
+                <td>{(() => { const info = showingsSummary(movie); return <span className={`movie-showings movie-showings-${info.tone}`}>{info.text}{info.hint && <small>{info.hint}</small>}</span>; })()}</td>
+                <td><div className="movie-row-actions"><button type="button" className="movie-button movie-button-outline" onClick={() => openEditor(movie)}>Edit</button><div className="movie-menu-wrap"><button type="button" className="movie-button movie-button-outline movie-more" aria-label={`More actions for ${movie.title}`} aria-expanded={openMenu === movie._id} onClick={() => { setOpenMenu(openMenu === movie._id ? '' : movie._id); setConfirmRemove(''); setWithdraw(null); }}>⋯</button>{openMenu === movie._id && <div className="movie-menu">{movie.status === 'published' && <Link to={`/movie/${movie._id}`}>View movie</Link>}{(movie.status === 'published' || movie.upcomingShowings > 0) && (withdraw?.id === movie._id
+              ? <div className="movie-withdraw-confirm" role="alert">
+                <p>{withdraw.showings === 0 ? 'No coming showings. This archives the movie.' : `This cancels ${withdraw.showings} ${withdraw.showings === 1 ? 'showing' : 'showings'} and ${withdraw.bookings} ${withdraw.bookings === 1 ? 'booking' : 'bookings'}, then archives the movie.`}</p>
+                <button type="button" className="movie-button movie-button-primary" disabled={busy} onClick={() => confirmWithdraw(movie)}>{busyAction === `withdraw:${movie._id}` ? 'Working…' : 'Yes, take off sale'}</button>
+                <button type="button" disabled={busy} onClick={() => setWithdraw(null)}>Keep it</button>
+              </div>
+              : <button type="button" disabled={busy} onClick={() => planWithdraw(movie)}>{busyAction === `plan:${movie._id}` ? 'Checking…' : 'Take off sale…'}</button>)}<button type="button" disabled={busy} onClick={() => remove(movie)}>{busyAction === `remove:${movie._id}` ? 'Removing…' : confirmRemove === movie._id ? 'Confirm remove' : 'Remove movie'}</button></div>}</div></div></td>
               </tr>
             ))}
           </tbody>

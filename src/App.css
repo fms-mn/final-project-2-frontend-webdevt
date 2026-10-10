@@ -715,6 +715,26 @@ input, select {
   color: white;
 }
 
+.badge-none {
+  background: rgba(106, 106, 130, 0.9);
+  color: white;
+}
+
+.movie-card-from {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.movie-detail-closed {
+  margin-top: 0.75rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--surface-tint);
+  color: var(--text-secondary);
+}
+
 .badge-coming {
   background: rgba(124, 58, 237, 0.9);
   color: white;
