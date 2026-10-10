@@ -784,7 +784,7 @@ input, select {
   border: 0;
   object-fit: cover;
   opacity: 0;
-  transform: scale(1.3); /* crops the video site's title bar out of view */
+  transform: scale(1.3);
   transition: opacity 0.5s ease;
 }
 
@@ -792,13 +792,18 @@ input, select {
   transform: none; /* the iframe inside is what gets enlarged */
 }
 
+/* The player is drawn 1.5x the size of the screen and shifted so that only its middle shows:
+   the top edge (channel and title) and the bottom strip (logo, "More videos") fall outside.
+   A bigger frame, not a scaled one, so the video stays sharp. */
 .trailer-pop-player iframe {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  inset: auto;
+  left: -25%;
+  top: -17.5%;
+  width: 150%;
+  height: 150%;
   border: 0;
-  transform: scale(1.3);
+  transform: none;
 }
 
 .trailer-pop-screen video {
