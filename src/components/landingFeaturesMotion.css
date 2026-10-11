@@ -3,8 +3,6 @@
 .landing-features .landing-feature-lift .landing-feature { box-shadow: none; }
 .landing-features .landing-feature-number { transform-origin: left center; animation: landing-feature-number-wave 4s ease-in-out infinite; animation-delay: var(--wave-delay); animation-play-state: paused; }
 .landing-features[data-wave-running='true'] :is(.landing-feature-lift, .landing-feature-number) { animation-play-state: running; }
-.landing-features .landing-features-motion { display: flex; align-items: center; gap: 7px; min-height: 44px; margin: 36px 0 0 auto; padding: 8px 10px; border: 1px solid transparent; border-radius: 10px; color: var(--landing-muted); background: transparent; font: 500 12px/1.4 'Instrument Sans Variable', sans-serif; cursor: pointer; }
-.landing-features .landing-features-motion:hover { background: var(--landing-surface); border-color: var(--border-color); }
 @keyframes landing-feature-wave {
   0%, 55%, 100% { transform: translate(0, 0); box-shadow: var(--wave-shadow-rest) 0 var(--landing-shadow); }
   15%, 35% { transform: translate(var(--wave-x), var(--wave-y)); box-shadow: var(--wave-shadow-lift) 0 var(--landing-shadow); }
@@ -18,5 +16,4 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .landing-features .landing-feature-lift, .landing-features .landing-feature-number { animation: none; transform: none; }
-  .landing-features .landing-features-motion { display: none; }
 }
