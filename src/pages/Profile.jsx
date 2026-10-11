@@ -44,10 +44,13 @@ export default function Profile() {
   return (
     <div className="profile-page fade-in">
       <section className="profile-card" aria-labelledby="profile-heading">
+        <div className="profile-banner" aria-hidden="true" />
         <div className="profile-identity">
           <div className="profile-avatar" aria-label={`Initials for ${user.name}`}>{profileInitials(user.name)}</div>
-          <h1 id="profile-heading">My Profile</h1>
-          <p className="profile-subtitle">Your FILME account details</p>
+          <div className="profile-identity-copy">
+            <h1 id="profile-heading">My Profile</h1>
+            <p className="profile-subtitle">Your FILME account details</p>
+          </div>
           {user.isDemo && <p className="profile-demo-notice">Demo mode — saved in this browser. No real tickets or payments.</p>}
         </div>
         <div className="profile-form-panel">
@@ -64,12 +67,15 @@ export default function Profile() {
               <input id="profile-phone" type="tel" autoComplete="tel" value={phone} disabled={saving} onChange={(event) => { setPhone(event.target.value); setFieldErrors(current => ({ ...current, phone: undefined })); setError(''); setSaved(false); }} placeholder="e.g. 09171234567" aria-invalid={Boolean(fieldErrors.phone)} aria-describedby={fieldErrors.phone ? 'profile-phone-error' : undefined} />
               {fieldErrors.phone && <span id="profile-phone-error" className="profile-field-error" role="alert">{fieldErrors.phone}</span>}
             </div>
-            <div className="profile-field">
+            <div className="profile-field profile-field-email">
               <label htmlFor="profile-email">Email</label>
               <input id="profile-email" type="email" value={user.email} readOnly aria-describedby="profile-email-help" />
               <p className="profile-help" id="profile-email-help">Email cannot be changed here.</p>
             </div>
-            <button type="submit" className="btn btn-primary" disabled={!hasChanges || saving} aria-busy={saving}><ActionPending pending={saving}>{saving ? 'Saving...' : 'Save Profile'}</ActionPending></button>
+            <div className="profile-form-footer">
+              <p className="profile-save-help">Changes are saved to your account.</p>
+              <button type="submit" className="btn btn-primary" disabled={!hasChanges || saving} aria-busy={saving}><ActionPending pending={saving}>{saving ? 'Saving...' : 'Save profile'}</ActionPending></button>
+            </div>
           </form>
         </div>
       </section>
