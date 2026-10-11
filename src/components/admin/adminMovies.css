@@ -9,8 +9,8 @@
 .movie-search input { height:42px; border:0; }
 .movie-count { margin-left:auto; color:var(--m-muted); font-size:13px; white-space:nowrap; }
 .movie-button { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:34px; padding:0 12px; border:1px solid transparent; border-radius:6px; font:700 12px 'Instrument Sans Variable',sans-serif; white-space:nowrap; cursor:pointer; }
-.movie-button-primary { color:#fff; background:#ff6265; border-color:#ff6265; }
-.movie-button-primary:hover { background:#ed4e55; }
+.movie-button-primary { color:#fff; background:var(--a-coral-fill); border-color:var(--a-coral-fill); }
+.movie-button-primary:hover:not(:disabled) { background:var(--filme-coral-hover); border-color:var(--filme-coral-hover); }
 .movie-button-outline { background:var(--m-paper); color:var(--m-ink); border-color:var(--m-line); }
 .movie-button-outline:hover { border-color:var(--a-coral); color:var(--a-coral); }
 .movie-button:disabled { opacity:.6; cursor:wait; }
@@ -57,12 +57,12 @@
 .movie-icon-button { width:35px; height:35px; border:0; background:transparent; color:var(--m-ink); font-size:28px; line-height:1; cursor:pointer; }
 .movie-editor-tabs { display:flex; gap:9px; flex:none; margin:0 18px; border-bottom:1px solid var(--m-line); }
 .movie-editor-tabs button { min-height:36px; padding:0 10px; border:0; border-bottom:2px solid transparent; background:transparent; color:var(--m-muted); font:600 12px 'Instrument Sans Variable',sans-serif; cursor:pointer; }
-.movie-editor-tabs button[aria-selected=true] { border-color:#ff6265; color:var(--m-ink); }
+.movie-editor-tabs button[aria-selected=true] { border-color:var(--a-coral); color:var(--m-ink); }
 .movie-editor-form { display:flex; flex:1; min-height:0; flex-direction:column; }
 .movie-editor-scroll { flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:16px 18px 24px; }
 .movie-editor-fields { display:grid; gap:14px; }
 .movie-editor-fields label { display:block; color:var(--m-ink); font:700 12px 'Instrument Sans Variable',sans-serif; }
-.movie-editor-fields label em { display:inline; color:#f05460; font-style:normal; }
+.movie-editor-fields label em { display:inline; color:var(--a-coral); font-style:normal; }
 .movie-editor-fields input,.movie-editor-fields textarea,.movie-editor-fields select { display:block; width:100%; min-width:0; min-height:36px; margin-top:5px; padding:8px 10px; border:1px solid var(--m-line); border-radius:6px; background:var(--a-input); color:var(--m-ink); font:500 12px 'Instrument Sans Variable',sans-serif; line-height:1.4; }
 .movie-editor-fields textarea { resize:vertical; min-height:90px; }
 .movie-field-pair { display:grid; grid-template-columns:1fr 1fr; gap:10px; }

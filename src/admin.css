@@ -3,7 +3,7 @@
 :root {
   --a-ink: #12163A; --a-ink-on: #fff; --a-muted: #687297; --a-soft: #525d83; --a-label: #3e4370;
   --a-line: #d3d8e8; --a-line-soft: #e1e4ee; --a-paper: #fff; --a-ground: #E8EBF4; --a-input: #fff; --a-disabled: #f1f2f8;
-  --a-coral: #E94560; --a-coral-fill: #E94560; --a-coral-tint: #fdecef;
+  --a-coral: var(--accent-primary); --a-coral-fill: var(--filme-coral-fill); --a-coral-tint: #fdecef;
   --a-ok: #0B7F58; --a-ok-bg: #e2f7ed; --a-down: #b4233e;
   --a-warn-bg: #fff3dc; --a-warn-line: #e0a43a; --a-warn-text: #7a4a05;
   --a-block: #12163A; --a-block-alt: #2b3163; --a-cancel: #59658e;
@@ -11,7 +11,7 @@
 :root[data-theme='dark'] {
   --a-ink: #e3e9fa; --a-ink-on: #101733; --a-muted: #a2aed0; --a-soft: #bbc6e0; --a-label: #c7d0e8;
   --a-line: #465275; --a-line-soft: #333d5e; --a-paper: #192242; --a-ground: #0b1027; --a-input: #101733; --a-disabled: #151c38;
-  --a-coral: #ff657d; --a-coral-fill: #c72b50; --a-coral-tint: #3a2038;
+  --a-coral: var(--accent-primary); --a-coral-fill: var(--filme-coral-fill); --a-coral-tint: #3a2038;
   --a-ok: #74dfb5; --a-ok-bg: #123a30; --a-down: #ff8294;
   --a-warn-bg: #3a2f12; --a-warn-line: #b88a2e; --a-warn-text: #ffd98a;
   --a-block: #3b4a8a; --a-block-alt: #566ab0; --a-cancel: #8f9bbd;
