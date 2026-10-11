@@ -64,20 +64,26 @@
 .admin-workspace .admin-tabs {
   display: flex;
   flex-wrap: nowrap;
-  gap: 4px;
-  min-height: 44px;
+  gap: 10px;
+  min-height: 54px;
   margin: 0 0 24px;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: thin;
 }
-.admin-workspace .admin-tabs .filter-btn {
+.admin-page.admin-workspace .admin-tabs .filter-btn {
   flex: none;
-  min-height: 44px;
-  padding: 8px 14px;
-  font-size: 13px;
-  font-weight: 600;
+  min-height: 54px;
+  padding: 12px 18px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--a-muted);
+  font: 600 17px/1.4 'Instrument Sans Variable', sans-serif;
 }
+.admin-page.admin-workspace .admin-tabs .filter-btn.active { color: var(--a-ink); background: transparent; border-bottom-color: var(--a-coral); }
+.admin-page.admin-workspace .admin-tabs .filter-btn:hover { color: var(--a-ink); background: var(--a-paper); }
 .admin-workspace .admin-tab-body { min-width: 0; }
 .admin-tab-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
 .admin-tab-body > *, .admin-grid-two > *, .showings-layout > * { min-width: 0; }
@@ -174,7 +180,9 @@
   .admin-workspace .admin-heading { height: 94px; margin-bottom: 12px; }
   .admin-workspace .admin-heading h1 { font-size: clamp(30px, 8vw, 36px); }
   .admin-workspace .admin-heading p { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; font-size: 12px; line-height: 1.45; }
-  .admin-workspace .admin-tabs .filter-btn { min-height: 44px; padding: 8px 12px; }
+}
+@media (max-width: 560px) {
+  .admin-page.admin-workspace .admin-tabs .filter-btn { padding: 12px 14px; font-size: 15px; }
 }
 
 /* Schedule controls */
