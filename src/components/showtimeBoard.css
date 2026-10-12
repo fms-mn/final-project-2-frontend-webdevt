@@ -60,20 +60,18 @@
 .cinematic-home .movie-showing-card .board-ticket-book { display: grid; place-items: center; min-height: 40px; padding: 8px 20px; border-radius: 999px; background: #fff; color: var(--filme-coral-fill); font-weight: 700; }
 .cinematic-home .movie-showing-card a.board-showtime-chip:hover { background: var(--surface-tint); color: var(--text-primary); }
 .cinematic-home .schedule-spacious .board-showtime-chip { min-height: clamp(194px, 17vw, 270px); }
-.cinematic-home .movie-showing-card a.board-showtime-chip {
-  transition: transform 240ms cubic-bezier(.2, .7, .2, 1), box-shadow 240ms ease;
-}
 .cinematic-home .movie-showing-card a.board-showtime-chip .board-ticket-bottom {
-  transition: background-color 240ms ease;
+  transition: transform 240ms cubic-bezier(.2, .7, .2, 1), background-color 240ms ease;
 }
 .cinematic-home .movie-showing-card a.board-showtime-chip .board-ticket-book {
   transition: transform 240ms cubic-bezier(.2, .7, .2, 1), box-shadow 240ms ease;
 }
 .cinematic-home .movie-showing-card a.board-showtime-chip:focus-visible {
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-lg), 0 0 0 1px color-mix(in srgb, var(--accent-primary) 35%, transparent);
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 3px;
 }
 .cinematic-home .movie-showing-card a.board-showtime-chip:focus-visible .board-ticket-bottom {
+  transform: translateY(-5px);
   background: color-mix(in srgb, var(--filme-coral-fill) 90%, #12163a);
 }
 .cinematic-home .movie-showing-card a.board-showtime-chip:focus-visible .board-ticket-book {
@@ -81,18 +79,15 @@
   box-shadow: 0 0 0 4px #ffffff30, 0 5px 14px #12163a26;
 }
 @media (hover: hover) and (pointer: fine) {
-  .cinematic-home .movie-showing-card a.board-showtime-chip:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-lg), 0 0 0 1px color-mix(in srgb, var(--accent-primary) 35%, transparent);
-  }
   .cinematic-home .movie-showing-card a.board-showtime-chip:hover .board-ticket-bottom {
+    transform: translateY(-5px);
     background: color-mix(in srgb, var(--filme-coral-fill) 90%, #12163a);
   }
   .cinematic-home .movie-showing-card a.board-showtime-chip:hover .board-ticket-book {
     transform: scale(1.04);
     box-shadow: 0 0 0 4px #ffffff30, 0 5px 14px #12163a26;
   }
-  .cinematic-home .movie-showing-card a.board-showtime-chip:active {
+  .cinematic-home .movie-showing-card a.board-showtime-chip:active .board-ticket-bottom {
     transform: translateY(-1px);
   }
 }
@@ -103,7 +98,7 @@
     transition: none;
     transform: none;
   }
-  .cinematic-home .movie-showing-card a.board-showtime-chip:is(:hover, :focus-visible, :active),
+  .cinematic-home .movie-showing-card a.board-showtime-chip:is(:hover, :focus-visible, :active) .board-ticket-bottom,
   .cinematic-home .movie-showing-card a.board-showtime-chip:is(:hover, :focus-visible) .board-ticket-book {
     transform: none;
   }
