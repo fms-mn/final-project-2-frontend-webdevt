@@ -7,14 +7,15 @@
   --overview-border: #e1e5f2;
   --overview-accent: #cf3151;
   max-width: 1440px;
-  padding: 52px clamp(24px, 5.6vw, 80px) 96px;
+  padding: 32px clamp(24px, 5.6vw, 80px) 96px;
   color: var(--overview-ink);
 }
-.admin-overview-page .admin-heading { height: auto; min-height: 102px; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 24px; margin-bottom: 22px; }
-.admin-overview-page .admin-heading h1 { margin: 0; color: var(--overview-ink); font: 800 clamp(38px, 3.6vw, 52px)/1.1 'Instrument Sans Variable', sans-serif; letter-spacing: -.04em; }
-.admin-overview-page .admin-heading p { grid-column: 1; color: var(--overview-muted); font-size: 18px; line-height: 1.5; display: block; overflow: visible; }
-.admin-overview-page .admin-demo-badge { grid-column: 1; grid-row: 3; justify-self: start; font-size: 11px; color: var(--overview-muted); border-color: var(--overview-border); }
-.admin-overview-page .overview-period-slot { grid-column: 2; grid-row: 1 / 4; align-self: end; min-width: 0; }
+.admin-overview-page .admin-heading { height: 96px; grid-template-columns: minmax(0, 1fr) auto; gap: 0 24px; margin-bottom: 16px; }
+.admin-overview-page .admin-heading:has(.period-dates) { height: auto; min-height: 128px; }
+.admin-overview-page .admin-heading h1 { color: var(--overview-ink); }
+.admin-overview-page .admin-heading p { grid-column: 1; color: var(--overview-muted); }
+.admin-overview-page .admin-demo-badge { align-self: start; justify-self: end; color: var(--overview-muted); border-color: var(--overview-border); }
+.admin-overview-page .overview-period-slot { grid-column: 2; grid-row: 1 / 3; align-self: end; min-width: 0; }
 .admin-overview-page .overview-period-controls { display: grid; justify-items: end; gap: 14px; }
 .admin-overview-page .period-picker { gap: 10px; }
 .admin-page.admin-overview-page .period-picker .filter-btn { min-height: 46px; padding: 10px 20px; border: 1px solid var(--overview-border); border-radius: 14px; background: var(--overview-paper); color: var(--overview-ink); font: 600 16px/1.4 'Instrument Sans Variable', sans-serif; }
@@ -81,16 +82,14 @@
 .admin-page.admin-overview-page .overview-inventory span { color: var(--overview-muted); font-size: 17px; font-weight: 500; }
 .admin-overview-page .overview-empty, .admin-overview-page .overview-state { margin: 0; color: var(--overview-muted); font-size: 15px; line-height: 1.6; }
 .admin-overview-page .overview-state { padding: 24px; border: 1px solid var(--overview-border); border-radius: 18px; background: var(--overview-paper); }
-.app:has(.admin-overview-page) .navbar.filme-navbar { height: 82px; --nav-refined-ink: #201e50; --nav-refined-muted: #66658e; --nav-refined-active: #fdecf0; --nav-refined-border: #e1e5f2; }
-.app:has(.admin-overview-page) .main-content { margin-top: 82px; }
-.app:has(.admin-overview-page) .demo-mode-banner { margin-top: 82px; }
-.app:has(.admin-overview-page) .demo-mode-banner + .main-content { margin-top: 0; }
+.app:has(.admin-overview-page) .navbar.filme-navbar { --nav-refined-ink: #201e50; --nav-refined-muted: #66658e; --nav-refined-active: #fdecf0; --nav-refined-border: #e1e5f2; }
 :root[data-theme='dark'] .app:has(.admin-overview-page) { background: #10152a; }
 :root[data-theme='dark'] .admin-page.admin-overview-page { --overview-ink: #f0edff; --overview-muted: #b8bfdb; --overview-paper: #1b233e; --overview-tint: #262e49; --overview-border: #3c4665; --overview-accent: #ff8da3; }
 :root[data-theme='dark'] .app:has(.admin-overview-page) .navbar.filme-navbar { --nav-refined-ink: #f0edff; --nav-refined-muted: #b8bfdb; --nav-refined-active: #442838; --nav-refined-border: #3c4665; }
 @media (max-width: 1100px) {
-  .admin-overview-page .admin-heading { grid-template-columns: minmax(0, 1fr); }
-  .admin-overview-page .overview-period-slot { grid-column: 1; grid-row: 4; justify-self: start; margin-top: 10px; }
+  .admin-overview-page .admin-heading { height: auto; min-height: 96px; }
+  .admin-overview-page .admin-heading p { grid-column: 1 / -1; }
+  .admin-overview-page .overview-period-slot { grid-column: 1 / -1; grid-row: 3; justify-self: start; margin-top: 16px; }
   .admin-overview-page .overview-period-controls { justify-items: start; }
   .admin-overview-page .period-dates { justify-content: flex-start; }
   .admin-overview-page .overview-showing-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -107,9 +106,11 @@
   .admin-page.admin-overview-page .overview-metric-stack span { font-size: 15px; }
   .admin-overview-page .overview-metric-stack .stat-note { font-size: 12px; }
 }
+@media (max-width: 700px) {
+  .admin-page.admin-overview-page { padding-top: 24px; }
+}
 @media (max-width: 560px) {
-  .admin-page.admin-overview-page { padding: 28px 18px 40px; }
-  .admin-overview-page .admin-heading p { font-size: 15px; }
+  .admin-page.admin-overview-page { padding: 24px 18px 40px; }
   .admin-page.admin-overview-page .admin-tabs .filter-btn { padding: 12px 14px; font-size: 15px; }
   .admin-overview-page .period-picker { gap: 8px; }
   .admin-page.admin-overview-page .period-picker .filter-btn { padding: 10px 12px; font-size: 13px; }
@@ -127,7 +128,4 @@
   .admin-overview-page .top-movies li { padding: 16px 12px; }
   .admin-overview-page .top-movies li > span { font-size: 15px; }
   .admin-overview-page .top-movies li > strong { font-size: 15px; }
-  .app:has(.admin-overview-page) .navbar.filme-navbar { height: 68px; }
-  .app:has(.admin-overview-page) .main-content, .app:has(.admin-overview-page) .demo-mode-banner { margin-top: 68px; }
-  .app:has(.admin-overview-page) .demo-mode-banner + .main-content { margin-top: 0; }
 }
