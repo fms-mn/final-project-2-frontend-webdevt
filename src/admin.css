@@ -3,7 +3,7 @@
 :root {
   --a-ink: #12163A; --a-ink-on: #fff; --a-muted: #687297; --a-soft: #525d83; --a-label: #3e4370;
   --a-line: #d3d8e8; --a-line-soft: #e1e4ee; --a-paper: #fff; --a-ground: #E8EBF4; --a-input: #fff; --a-disabled: #f1f2f8;
-  --a-coral: #E94560; --a-coral-fill: #E94560; --a-coral-tint: #fdecef;
+  --a-coral: var(--accent-primary); --a-coral-fill: var(--filme-coral-fill); --a-coral-tint: #fdecef;
   --a-ok: #0B7F58; --a-ok-bg: #e2f7ed; --a-down: #b4233e;
   --a-warn-bg: #fff3dc; --a-warn-line: #e0a43a; --a-warn-text: #7a4a05;
   --a-block: #12163A; --a-block-alt: #2b3163; --a-cancel: #59658e;
@@ -11,7 +11,7 @@
 :root[data-theme='dark'] {
   --a-ink: #e3e9fa; --a-ink-on: #101733; --a-muted: #a2aed0; --a-soft: #bbc6e0; --a-label: #c7d0e8;
   --a-line: #465275; --a-line-soft: #333d5e; --a-paper: #192242; --a-ground: #0b1027; --a-input: #101733; --a-disabled: #151c38;
-  --a-coral: #ff657d; --a-coral-fill: #c72b50; --a-coral-tint: #3a2038;
+  --a-coral: var(--accent-primary); --a-coral-fill: var(--filme-coral-fill); --a-coral-tint: #3a2038;
   --a-ok: #74dfb5; --a-ok-bg: #123a30; --a-down: #ff8294;
   --a-warn-bg: #3a2f12; --a-warn-line: #b88a2e; --a-warn-text: #ffd98a;
   --a-block: #3b4a8a; --a-block-alt: #566ab0; --a-cancel: #8f9bbd;
@@ -64,20 +64,26 @@
 .admin-workspace .admin-tabs {
   display: flex;
   flex-wrap: nowrap;
-  gap: 4px;
-  min-height: 44px;
+  gap: 10px;
+  min-height: 54px;
   margin: 0 0 24px;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: thin;
 }
-.admin-workspace .admin-tabs .filter-btn {
+.admin-page.admin-workspace .admin-tabs .filter-btn {
   flex: none;
-  min-height: 44px;
-  padding: 8px 14px;
-  font-size: 13px;
-  font-weight: 600;
+  min-height: 54px;
+  padding: 12px 18px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--a-muted);
+  font: 600 17px/1.4 'Instrument Sans Variable', sans-serif;
 }
+.admin-page.admin-workspace .admin-tabs .filter-btn.active { color: var(--a-ink); background: transparent; border-bottom-color: var(--a-coral); }
+.admin-page.admin-workspace .admin-tabs .filter-btn:hover { color: var(--a-ink); background: var(--a-paper); }
 .admin-workspace .admin-tab-body { min-width: 0; }
 .admin-tab-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
 .admin-tab-body > *, .admin-grid-two > *, .showings-layout > * { min-width: 0; }
@@ -126,6 +132,13 @@
 .link-button:hover { color: var(--a-coral); }
 .booking-detail { display: grid; gap: 2px; margin-top: 6px; font-family: 'Instrument Sans Variable', sans-serif; font-size: 12px; color: var(--a-soft); font-weight: 400; }
 .admin-status { display: inline-block; padding: 3px 9px; border: 1px solid var(--a-ok); border-radius: 99px; background: var(--a-ok-bg); color: var(--a-ok); font-size: 12px; font-weight: 700; text-transform: capitalize; }
+.admin-status.pending { border-color: var(--a-warn-line); background: var(--a-warn-bg); color: var(--a-warn-text); }
+.admin-status.expired { border-color: var(--a-line); background: var(--a-paper); color: var(--a-muted); }
+.admin-payment { display: grid; font-weight: 700; font-size: 13px; }
+.admin-payment-paid { color: var(--a-ok); }
+.admin-payment-refunded { color: var(--a-warn-text); }
+.admin-payment-waiting { color: var(--a-warn-text); }
+.admin-payment-none { color: var(--a-muted); font-weight: 500; }
 .admin-status.cancelled { border-color: var(--a-line); background: var(--a-paper); color: var(--a-muted); }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
@@ -167,7 +180,9 @@
   .admin-workspace .admin-heading { height: 94px; margin-bottom: 12px; }
   .admin-workspace .admin-heading h1 { font-size: clamp(30px, 8vw, 36px); }
   .admin-workspace .admin-heading p { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; font-size: 12px; line-height: 1.45; }
-  .admin-workspace .admin-tabs .filter-btn { min-height: 44px; padding: 8px 12px; }
+}
+@media (max-width: 560px) {
+  .admin-page.admin-workspace .admin-tabs .filter-btn { padding: 12px 14px; font-size: 15px; }
 }
 
 /* Schedule controls */

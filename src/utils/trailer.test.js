@@ -1,26 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { canAutoplayTrailer } from './trailer.js';
+import { trailerVideoId } from './trailer.js';
 
-const fakeWindow = ({ reduceMotion = false, saveData } = {}) => ({
-  matchMedia: (query) => ({ matches: reduceMotion && query.includes('prefers-reduced-motion') }),
-  navigator: saveData === undefined ? {} : { connection: { saveData } },
+test('reads supported YouTube trailer links', () => {
+  assert.equal(trailerVideoId({ trailerUrl: 'https://www.youtube.com/watch?v=c51ND9Hdbw0' }), 'c51ND9Hdbw0');
+  assert.equal(trailerVideoId({ trailerUrl: 'https://youtu.be/c51ND9Hdbw0?t=4' }), 'c51ND9Hdbw0');
+  assert.equal(trailerVideoId({ trailerUrl: 'https://www.youtube.com/embed/c51ND9Hdbw0' }), 'c51ND9Hdbw0');
+  assert.equal(trailerVideoId({ trailerId: 'c51ND9Hdbw0' }), 'c51ND9Hdbw0');
 });
 
-test('autoplay is allowed by default', () => {
-  assert.equal(canAutoplayTrailer(fakeWindow()), true);
-  assert.equal(canAutoplayTrailer(fakeWindow({ saveData: false })), true);
-});
-
-test('autoplay is skipped for people who prefer reduced motion', () => {
-  assert.equal(canAutoplayTrailer(fakeWindow({ reduceMotion: true })), false);
-});
-
-test('autoplay is skipped when the browser asks to save data', () => {
-  assert.equal(canAutoplayTrailer(fakeWindow({ saveData: true })), false);
-});
-
-test('autoplay is skipped when there is no browser window, or it misbehaves', () => {
-  assert.equal(canAutoplayTrailer(undefined), false);
-  assert.equal(canAutoplayTrailer({ matchMedia: () => { throw new Error('boom'); } }), false);
+test('missing and invalid trailer links remain unavailable', () => {
+  assert.equal(trailerVideoId({}), '');
+  assert.equal(trailerVideoId({ trailerUrl: 'https://example.com/watch?v=c51ND9Hdbw0' }), '');
+  assert.equal(trailerVideoId({ trailerUrl: 'not a link' }), '');
 });

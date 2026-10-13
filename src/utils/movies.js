@@ -18,7 +18,7 @@ export function normalizeMovie(movie, now = new Date()) {
   // The real price is the cheapest bookable showing; only the demo catalogue uses the flat price.
   const price = Number.isInteger(movie.fromPrice)
     ? movie.fromPrice / 100
-    : (fromServer ? null : DEMO_TICKET_PRICE);
+    : (String(movie._id ?? '').startsWith('demo-') ? DEMO_TICKET_PRICE : (fromServer ? null : movie.price));
   return {
     ...movie,
     description: movie.synopsis,

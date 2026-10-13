@@ -9,6 +9,7 @@ import AdminUsers from '../components/admin/AdminUsers';
 import { describeError } from '../utils/adminTools';
 import { useAuth } from '../context/AuthContext';
 import '../admin.css';
+import '../components/admin/adminOverview.css';
 
 const TABS = [
   ['overview', 'Overview'], ['movies', 'Movies'], ['showings', 'Showings'],
@@ -31,6 +32,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [attempt, setAttempt] = useState(0);
+  const [periodControlsTarget, setPeriodControlsTarget] = useState(null);
 
   // Movies and accounts are shared by several tabs. They are loaded once, and again after a
   // change, without blanking the screen the admin is working on.
@@ -56,13 +58,18 @@ export default function Admin() {
 
   const reload = useCallback(() => setAttempt((count) => count + 1), []);
   const retry = () => { setLoading(true); reload(); };
+  const viewShowings = () => {
+    setTab('showings');
+    document.getElementById('admin-tab-showings')?.focus();
+  };
 
   return (
-    <div className="admin-page admin-workspace fade-in">
+    <div className={`admin-page admin-workspace fade-in${tab === 'overview' ? ' admin-overview-page' : ''}`}>
       <div className="admin-heading">
         <h1>{TABS.find(([id]) => id === tab)[1]}</h1>
         <p>{SUBTITLES[tab]}</p>
         {user?.isDemo && <span className="admin-demo-badge">Demo preview</span>}
+        {tab === 'overview' && <div className="overview-period-slot" ref={setPeriodControlsTarget} />}
       </div>
       <div className="admin-tabs" role="tablist" aria-label="Admin sections">
         {TABS.map(([id, label]) => (
@@ -80,7 +87,7 @@ export default function Admin() {
 
       {!loading && !loadError && (
         <div id="admin-panel" role="tabpanel" aria-labelledby={`admin-tab-${tab}`} className="admin-tab-body">
-          {tab === 'overview' && <AdminOverview movies={movies} users={users} />}
+          {tab === 'overview' && <AdminOverview movies={movies} users={users} periodControlsTarget={periodControlsTarget} onViewShowings={viewShowings} />}
           {tab === 'movies' && <AdminMovieManager movies={movies} reload={reload} />}
           {tab === 'showings' && <AdminShowings movies={movies} />}
           {tab === 'bookings' && <AdminBookings />}
