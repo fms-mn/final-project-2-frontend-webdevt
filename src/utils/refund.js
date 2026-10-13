@@ -1,11 +1,11 @@
 const paymentLabels = { paid: 'Paid', unpaid: 'Unpaid', refunded: 'Refunded', not_taken: 'No payment collected' };
-export const money = centavos => `₱${(centavos / 100).toLocaleString('en-PH')}`;
+const money = centavos => `₱${(centavos / 100).toLocaleString('en-PH')}`;
 
 export function refundSummary(info, after = false) {
   const refund = info?.refund;
   const paymentStatus = paymentLabels[info?.paymentStatus] || 'Unavailable';
   const amount = Number.isInteger(refund?.amount) && refund.amount >= 0 ? refund.amount : null;
-  const base = { paymentStatus, amount, reference: refund?.reference || null, unavailable: false };
+  const base = { paymentStatus, reference: refund?.reference || null, unavailable: false };
   const test = refund?.mode === 'simulated';
   switch (refund?.status) {
     case 'available':
