@@ -2,6 +2,7 @@
 .landing-hero-actions {display:flex;align-items:center;gap:24px;flex-wrap:wrap}
 .landing-secondary-action {font-weight:700;min-height:44px;display:inline-flex;align-items:center;text-decoration:underline;text-underline-offset:5px}
 .landing-schedule-link {display:inline-flex;align-items:center;min-height:44px;margin-top:20px;color:var(--landing-muted)}
+.landing-hero-actions .landing-schedule-link {margin-top:0}
 .landing-page .cinematic-home {max-width:1280px}
 #todays-board {scroll-margin-top:90px}
 .landing-page {--landing-bg:#f0edfa;--landing-text:#20214f;--landing-muted:#585a87;--landing-surface:#fff;--landing-border:#20214f;--landing-shadow:#20214f;--landing-accent:#ff567a;--landing-action:#c52d50;--landing-action-hover:#ac2444;--landing-on-action:#fff;--landing-deep:#20214f;--landing-on-deep:#fff;--landing-deep-muted:#d4d2ec;--landing-focus:#8b2043;--landing-card-border:#20214f;--landing-gutter:clamp(20px,5vw,64px);background:var(--landing-bg);color:var(--landing-text);font-family:'Instrument Sans Variable',sans-serif;min-width:0}

@@ -72,7 +72,7 @@ export default function Navbar() {
         {!user && <>
           <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`} aria-current={isActive('/') ? 'page' : undefined}>Home</Link>
           <Link to="/movies" className={`nav-link ${isActive('/movies') ? 'active' : ''}`} aria-current={isActive('/movies') ? 'page' : undefined}>Movies</Link>
-          <Link to="/register" className="nav-link">Create account</Link>
+          <Link to="/register" className="nav-link nav-mobile-sign-up">Sign up</Link>
         </>}
         {user?.role === 'user' && (
           <>
@@ -108,7 +108,10 @@ export default function Navbar() {
               <FiLogOut aria-hidden="true" /><ActionPending pending={signingOut}>{signingOut ? 'Signing out...' : 'Log out'}</ActionPending>
             </button>
           </>
-        ) : <Link to="/login" className="nav-link nav-sign-in">Sign in</Link>}
+        ) : <>
+          <Link to="/login" className="nav-link nav-sign-in">Sign in</Link>
+          <Link to="/register" className="nav-link nav-sign-up">Sign up</Link>
+        </>}
       </div>
       <button ref={menuButtonRef} type="button" className="nav-menu-toggle" aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'} aria-expanded={menuOpen} aria-controls="primary-navigation" onClick={() => setMenuOpen((open) => !open)}>
         {menuOpen ? <FiX aria-hidden="true" /> : <FiMenu aria-hidden="true" />}
