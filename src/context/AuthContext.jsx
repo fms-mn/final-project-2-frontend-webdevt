@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { api, forgetSession, UNAUTHORIZED_EVENT } from '../api';
 import { endDemoSession, getDemoUser, startDemoSession, updateDemoUser } from '../data/demoAccount';
+import { clearPendingBooking } from '../utils/pendingBooking';
 
 const AuthContext = createContext();
 
@@ -66,6 +67,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
+    clearPendingBooking();
     if (user?.isDemo) {
       endDemoSession();
       forgetSession();
@@ -77,6 +79,7 @@ export function AuthProvider({ children }) {
     } catch {
       // Even if the request fails, sign out locally; the cookie expires on its own.
     }
+    clearPendingBooking();
     forgetSession();
     setUser(null);
   };

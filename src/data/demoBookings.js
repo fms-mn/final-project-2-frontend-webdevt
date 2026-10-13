@@ -6,6 +6,7 @@ import { DEMO_RULES, isDemoSlotSafe, listAuditoriums, listShowtimes } from './de
 
 // Local preview bookings for the development demo account.
 const BOOKINGS_KEY = 'filme_demo_bookings';
+export const DEMO_BOOKING_MODE = 'simulated';
 const SEAT_PATTERN = /^[A-H](10|[1-9])$/;
 
 
@@ -65,6 +66,7 @@ export function createDemoBooking({ userId, movie, seats, showDate, showTime, sh
   const booking = {
     _id: crypto.randomUUID(),
     isDemo: true,
+    paymentMode: DEMO_BOOKING_MODE,
     showingId,
     userId,
     movieId,
@@ -110,4 +112,10 @@ export function cancelDemoBooking(bookingId, userId) {
 
 export function canCancelDemoBooking(booking) {
   return isUpcomingDemoBooking(booking);
+}
+
+export function demoCancellationInfo(booking) {
+  const eligible = canCancelDemoBooking(booking);
+  return { eligible, reason: eligible ? null : 'Only future bookings can be cancelled.', paymentStatus: 'not_taken',
+    refund: { status: 'none', mode: DEMO_BOOKING_MODE, amount: null, reference: null, reason: 'This local demo booking did not collect a payment. There is no payment to refund.' } };
 }

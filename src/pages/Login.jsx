@@ -3,6 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ActionPending from '../components/ActionPending';
 import BackToHome from '../components/BackToHome';
+import PendingBookingNotice from '../components/PendingBookingNotice';
+import { postAuthDestination } from '../utils/pendingBooking';
 import './AuthForms.css';
 
 export default function Login() {
@@ -16,12 +18,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
 
   const goAfterLogin = (signedInUser) => {
-    const destination = location.state?.from;
-    navigate(destination && (signedInUser.role === 'admin' ? destination.pathname.startsWith('/admin') : !destination.pathname.startsWith('/admin'))
-      ? `${destination.pathname}${destination.search}${destination.hash}`
-      : signedInUser.role === 'admin' ? '/admin' : '/home', {
-      replace: true,
-    });
+    navigate(postAuthDestination(signedInUser, location.state?.from), { replace: true });
   };
 
   const handleSubmit = async (e) => {
@@ -46,6 +43,7 @@ export default function Login() {
         <div className="auth-card">
           <h1>Welcome back</h1>
           <p className="subtitle">Sign in to your FILME account</p>
+          <PendingBookingNotice />
 
           {error && <div className="error-message" role="alert">{error}</div>}
 
@@ -82,7 +80,7 @@ export default function Login() {
           </form>
 
           <div className="auth-footer">
-            Don&apos;t have an account? <Link to="/register">Sign up</Link>
+            Don&apos;t have an account? <Link to="/register" state={location.state}>Sign up</Link>
           </div>
         </div>
       </div>

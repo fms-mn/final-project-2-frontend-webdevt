@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
 import TrailerShowcase from '../components/TrailerShowcase';
@@ -31,6 +31,7 @@ function previewShowings(movies, currentDay) {
 }
 
 export default function Home() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [, setClockTick] = useState(0);
   useEffect(() => { const timer = setInterval(() => setClockTick(value => value + 1), 30000); return () => clearInterval(timer); }, []);
@@ -78,7 +79,7 @@ export default function Home() {
 
   return <div className="tonight-page cinematic-home fade-in">
     {user?.role === 'admin' && <p className="demo-catalog-notice">Admin preview — customer booking is disabled.</p>}
-    <TrailerShowcase movies={movies} showings={showings} selectedDate={selectedDate} loading={isLoading} error={pageError} isDemo={isDemo} />
+    <TrailerShowcase movies={movies} showings={showings} selectedDate={selectedDate} loading={isLoading} error={pageError} isDemo={isDemo} onBookTickets={user?.role === 'admin' ? undefined : movie => navigate(`/movie/${movie._id}?${new URLSearchParams({ date: selectedDate })}`, { state: { browsingPage: 'home' } })} />
     <section className="board-section" id="todays-board" aria-label={'Showing ' + manilaDate(selectedDate)}><div className="board-section-inner">
       <div className="board-heading"><div><span className="board-eyebrow">THE SCHEDULE</span><h2>Showing {manilaDate(selectedDate)}</h2></div><p>All times are Manila time. Seats left update as people book.</p></div>
       <label className="board-date-selector">Showing date<select aria-label="Schedule date" value={selectedDate} onChange={event => setSelectedDate(event.target.value)}>{dateOptions.map(day => <option key={day} value={day}>{day === currentDay ? 'Today' : new Date(day + 'T12:00:00+08:00').toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', weekday: 'short', month: 'short', day: 'numeric' })}</option>)}</select></label>

@@ -61,7 +61,7 @@ export default function Navbar() {
   }, [menuOpen]);
 
   const isActive = (path) => location.pathname === path;
-  const homePath = user?.role === 'admin' ? '/admin' : user ? '/home' : '/';
+  const homePath = user?.role === 'admin' ? '/admin' : '/';
   const initials = (user?.name || '').trim().split(/\s+/).filter(Boolean).map(part => part[0]).slice(0, 2).join('').toUpperCase();
   const accountContent = <><span className="nav-avatar" aria-hidden="true">{initials}</span><span className="nav-user-name">{user?.name}</span></>;
   return (
@@ -69,9 +69,14 @@ export default function Navbar() {
       <Link to={['/login', '/register'].includes(location.pathname) ? '/' : homePath} className="nav-brand" aria-label="FILME home"><img src="/filme-mark.svg" alt="" />FILME</Link>
 
       <div id="primary-navigation" className={`nav-links ${menuOpen ? 'is-open' : ''}`}>
+        {!user && <>
+          <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`} aria-current={isActive('/') ? 'page' : undefined}>Home</Link>
+          <Link to="/movies" className={`nav-link ${isActive('/movies') ? 'active' : ''}`} aria-current={isActive('/movies') ? 'page' : undefined}>Movies</Link>
+          <Link to="/register" className="nav-link nav-mobile-sign-up">Sign up</Link>
+        </>}
         {user?.role === 'user' && (
           <>
-            <Link to="/home" aria-current={isActive('/home') ? 'page' : undefined} onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/home') ? 'active' : ''}`}>Home</Link>
+            <Link to="/" aria-current={isActive('/') ? 'page' : undefined} onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/') ? 'active' : ''}`}>Home</Link>
             <Link to="/movies" aria-current={isActive('/movies') ? 'page' : undefined} onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/movies') ? 'active' : ''}`}>Movies</Link>
             <Link to="/my-bookings" aria-current={isActive('/my-bookings') ? 'page' : undefined} onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/my-bookings') ? 'active' : ''}`}>My Tickets</Link>
             <Link to="/profile" aria-current={isActive('/profile') ? 'page' : undefined} onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/profile') ? 'active' : ''}`}>Profile</Link>
@@ -79,7 +84,7 @@ export default function Navbar() {
         )}
         {user?.role === 'admin' && (
           <>
-            <Link to="/home" aria-current={isActive('/home') ? 'page' : undefined} onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/home') ? 'active' : ''}`}>Customer View</Link>
+            <Link to="/" aria-current={isActive('/') ? 'page' : undefined} onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/') ? 'active' : ''}`}>Customer View</Link>
             <Link to="/movies" aria-current={isActive('/movies') ? 'page' : undefined} onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/movies') ? 'active' : ''}`}>All movies</Link>
             <Link to="/admin" aria-current={isActive('/admin') ? 'page' : undefined} onClick={() => setMenuOpen(false)} className={`nav-link ${isActive('/admin') ? 'active' : ''}`}>Dashboard</Link>
           </>
@@ -103,11 +108,14 @@ export default function Navbar() {
               <FiLogOut aria-hidden="true" /><ActionPending pending={signingOut}>{signingOut ? 'Signing out...' : 'Log out'}</ActionPending>
             </button>
           </>
-        ) : null}
+        ) : <>
+          <Link to="/login" className="nav-link nav-sign-in">Sign in</Link>
+          <Link to="/register" className="nav-link nav-sign-up">Sign up</Link>
+        </>}
       </div>
-      {user && <button ref={menuButtonRef} type="button" className="nav-menu-toggle" aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'} aria-expanded={menuOpen} aria-controls="primary-navigation" onClick={() => setMenuOpen((open) => !open)}>
+      <button ref={menuButtonRef} type="button" className="nav-menu-toggle" aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'} aria-expanded={menuOpen} aria-controls="primary-navigation" onClick={() => setMenuOpen((open) => !open)}>
         {menuOpen ? <FiX aria-hidden="true" /> : <FiMenu aria-hidden="true" />}
-      </button>}
+      </button>
     </nav>
   );
 }
