@@ -61,7 +61,6 @@ export default function CancellationSuccess({ reference, refund, onDismiss }) {
             </div>
           ))}
         </div>
-        {refund && <p className="cancellation-success-refund" aria-hidden="true">Refunded <b>₱{refund.amount.toLocaleString('en-PH')}</b> · {refund.reference}</p>}
         <button type="button" className="cancellation-success-dismiss" aria-label="Dismiss cancellation success" onClick={() => setClosing(true)}><FiX aria-hidden="true" /></button>
         <span className="cancellation-success-countdown" aria-hidden="true" />
       </section>
