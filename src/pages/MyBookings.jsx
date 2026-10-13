@@ -2,13 +2,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
-import { canCancelDemoBooking, cancelDemoBooking, getDemoBookingReference, getDemoBookings } from '../data/demoBookings';
+import { canCancelDemoBooking, cancelDemoBooking, demoCancellationInfo, getDemoBookingReference, getDemoBookings } from '../data/demoBookings';
 import { displayTime, manilaDay, shortDate, today } from '../utils/manila';
 import { listAuditoriums } from '../data/demoSchedule';
 import CancelBookingModal from '../components/CancelBookingModal';
 import CancellationSuccess from '../components/CancellationSuccess';
 import { isTestBooking, paymentLine } from '../utils/payment';
 import './MyBookings.css';
+import PaymentRefundInfo from '../components/PaymentRefundInfo';
+import { refundSummary } from '../utils/refund';
 
 function detail(booking) {
   const when = booking.showtime?.startTime ? new Date(booking.showtime.startTime) : new Date(`${booking.showDate}T${booking.showTime}:00+08:00`);
@@ -20,7 +22,7 @@ function detail(booking) {
     price: booking.totalAmount != null ? booking.totalAmount / 100 : booking.totalPrice,
   };
 }
-function Ticket({ booking, onCancel, compact }) {
+function Ticket({ booking, onCancel, compact, onRetryRefund, refundLoading, refundError }) {
   const info = detail(booking);
   return <article className={`wallet-ticket ${compact ? 'wallet-ticket-history' : ''}`}>
     <div className="wallet-ticket-ribbon"><span>{compact ? `${info.date} · ${info.time}` : manilaDay(info.when) === today() ? 'Next up · today' : info.date}</span><span>{info.room}</span></div>
@@ -28,6 +30,7 @@ function Ticket({ booking, onCancel, compact }) {
       {compact ? <p>{info.room} · seats {booking.seats.join(', ')}</p> : <div className="wallet-ticket-facts"><span>Date <b>{info.date}</b></span><span>Time <b>{info.time}</b></span><span>Seats <b>{booking.seats.join(', ')}</b></span></div>}
       <div className="wallet-ticket-bottom"><div><small>Code</small><span className="ticket-code">{info.code}</span></div><strong>₱{info.price.toLocaleString('en-PH')}</strong>{onCancel && <button type="button" className="btn btn-danger btn-small" onClick={() => onCancel(booking)}>Cancel ticket</button>}</div>
       {paymentLine(booking) && <p className={`ticket-payment${booking.paymentStatus === 'refunded' ? ' is-refunded' : ''}`}>{paymentLine(booking)}</p>}
+      {compact && booking.status === 'cancelled' && <PaymentRefundInfo info={booking.cancellation} after onRetry={onRetryRefund} loading={refundLoading} error={refundError} />}
       {compact && <span className={`ticket-stamp ${booking.status === 'cancelled' ? 'cancelled' : ''}`}>{booking.status === 'cancelled' ? 'Cancelled' : booking.userId === 'demo-user' ? 'Demo ended' : 'Watched'}</span>}
     </div>
   </article>;
@@ -44,6 +47,9 @@ export default function MyBookings() {
   const [toCancel, setToCancel] = useState(null);
   const [cancelError, setCancelError] = useState('');
   const [revision, setRevision] = useState(0);
+  const [refundPreview, setRefundPreview] = useState({ loading: true, info: null, error: '' });
+  const [refundAttempt, setRefundAttempt] = useState(0);
+  const [refundRefresh, setRefundRefresh] = useState({ id: '', loading: false, error: '' });
   useEffect(() => {
     if (isDemo) return;
     const controller = new AbortController();
@@ -56,30 +62,73 @@ export default function MyBookings() {
   const history = bookings.filter(b => b.status !== 'confirmed' || detail(b).when <= new Date()).sort((a,b) => detail(b).when - detail(a).when);
   const close = useCallback(() => { if (!cancelLocked.current) setToCancel(null); }, []);
   const dismissSuccess = useCallback(() => setFeedback(null), []);
+  const openCancellation = booking => {
+    setRefundPreview({ loading: true, info: null, error: '' });
+    setCancelError('');
+    setToCancel(booking);
+  };
+  const acceptCancellation = useCallback(result => {
+    setLiveBookings(current => current.map(booking => booking._id === result._id ? result : booking));
+    setFeedback({ id: result._id, reference: detail(result).code, refund: refundSummary(result.cancellation, true) });
+    setToCancel(null);
+  }, []);
+  useEffect(() => {
+    if (!toCancel) return;
+    setCancelError('');
+    if (isDemo) {
+      setRefundPreview({ loading: false, info: demoCancellationInfo(toCancel), error: '' });
+      return;
+    }
+    const controller = new AbortController();
+    setRefundPreview({ loading: true, info: null, error: '' });
+    api(`/bookings/${toCancel._id}`, { signal: controller.signal }).then(result => {
+      if (controller.signal.aborted) return;
+      if (result._id !== toCancel._id) throw new Error('The selected booking could not be verified.');
+      if (['cancelled', 'expired'].includes(result.status)) { acceptCancellation(result); return; }
+      setRefundPreview({ loading: false, info: result.cancellation, error: '' });
+    }).catch(err => { if (err.name !== 'AbortError') setRefundPreview({ loading: false, info: null, error: err.message }); });
+    return () => controller.abort();
+  }, [toCancel, isDemo, refundAttempt, acceptCancellation]);
+  const retryHistoryRefund = async booking => {
+    setRefundRefresh({ id: booking._id, loading: true, error: '' });
+    try {
+      const result = await api(`/bookings/${booking._id}`);
+      if (result._id !== booking._id) throw new Error('The selected booking could not be verified.');
+      setLiveBookings(current => current.map(item => item._id === result._id ? result : item));
+      setRefundRefresh({ id: booking._id, loading: false, error: '' });
+    } catch (err) { setRefundRefresh({ id: booking._id, loading: false, error: err.message }); }
+  };
   const confirm = async () => {
-    if (!toCancel || cancelLocked.current) return;
+    if (!toCancel || cancelLocked.current || refundPreview.loading || refundPreview.error || refundPreview.info?.eligible !== true) return;
     cancelLocked.current = true;
     setCancelling(true);
     setCancelError('');
     try {
-      if (isDemo) cancelDemoBooking(toCancel._id, user.id);
+      const result = isDemo ? cancelDemoBooking(toCancel._id, user.id) : await api(`/bookings/${toCancel._id}/cancel`, { method: 'PATCH' });
+      if (!['cancelled', 'expired'].includes(result?.status)) throw new Error('Cancellation could not be confirmed. Refresh booking information to check its status.');
+      acceptCancellation(isDemo ? { ...result, cancellation: demoCancellationInfo(result) } : result);
+    } catch (err) {
+      setCancelError(err.message);
       if (!isDemo) {
-        const result = await api(`/bookings/${toCancel._id}/cancel`, { method: 'PATCH' });
-        if (result?.status !== 'cancelled') throw new Error('Cancellation could not be confirmed. Please try again.');
-        setLiveBookings(current => current.map(booking => booking._id === toCancel._id ? result : booking));
+        try {
+          const current = await api(`/bookings/${toCancel._id}`);
+          if (current._id !== toCancel._id) throw new Error('The selected booking could not be verified.');
+          if (['cancelled', 'expired'].includes(current.status)) acceptCancellation(current);
+          else setRefundPreview({ loading: false, info: current.cancellation, error: '' });
+        } catch {
+          setRefundPreview({ loading: false, info: null, error: 'Cancellation status could not be checked. Refresh before trying to cancel again.' });
+        }
       }
-      setFeedback({ id: toCancel._id, reference: detail(toCancel).code });
-      setToCancel(null);
-    } catch (err) { setCancelError(err.message); }
+    }
     finally { cancelLocked.current = false; setCancelling(false); }
   };
   return <div className="bookings-page fade-in"><div className="wallet-heading"><div><span className="eyebrow">Your wallet</span><h1>My tickets</h1></div>{!loading && !error && upcoming.length > 0 && <Link to="/movies" className="btn btn-primary">Browse movies</Link>}</div>
     {isDemo && <p className="demo-note">Simulated bookings saved in this browser. These are not admission tickets.</p>}
-    {feedback && <CancellationSuccess key={feedback.id} reference={feedback.reference} onDismiss={dismissSuccess} />}
+    {feedback && <CancellationSuccess key={feedback.id} reference={feedback.reference} refund={feedback.refund} onDismiss={dismissSuccess} />}
     {loading && <div className="loading"><div className="spinner"/></div>}
     {error && <div className="error-message" role="alert">{error}<button className="btn btn-secondary btn-small" onClick={() => setRevision(v => v+1)}>Try again</button></div>}
-    {!loading && !error && <><section className="wallet-section"><h2 className="eyebrow">Coming up · {upcoming.length} {upcoming.length === 1 ? 'ticket' : 'tickets'}</h2>{upcoming.length ? <div className="wallet-upcoming">{upcoming.map(b => <Ticket key={b._id} booking={b} onCancel={isDemo ? canCancelDemoBooking(b) ? setToCancel : undefined : setToCancel}/>)}</div> : <div className="bookings-empty"><h3>No upcoming tickets</h3><p>Choose a film and reserve your next seats.</p><Link className="btn btn-primary" to="/movies">Browse movies</Link></div>}</section>
-    <section className="wallet-section"><h2 className="eyebrow">Used and cancelled · {history.length} {history.length === 1 ? 'ticket' : 'tickets'}</h2>{history.length ? <div className="wallet-history">{history.map(b => <Ticket key={b._id} booking={b} compact/>)}</div> : <div className="bookings-empty"><h3>No ticket history yet</h3><p>Past and cancelled tickets will appear here.</p></div>}<p className="wallet-footnote">Cancelled tickets stay here, so you can always see what happened.</p></section></>}
-    {toCancel && <CancelBookingModal booking={{ ...toCancel, showDate: toCancel.showDate || manilaDay(detail(toCancel).when), showTime: toCancel.showTime || detail(toCancel).when.toLocaleTimeString('en-GB', { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', hour12: false }) }} pending={cancelling} error={cancelError} onKeep={close} onCancel={confirm}/>}
+    {!loading && !error && <><section className="wallet-section"><h2 className="eyebrow">Coming up · {upcoming.length} {upcoming.length === 1 ? 'ticket' : 'tickets'}</h2>{upcoming.length ? <div className="wallet-upcoming">{upcoming.map(b => <Ticket key={b._id} booking={b} onCancel={isDemo ? canCancelDemoBooking(b) ? openCancellation : undefined : openCancellation}/>)}</div> : <div className="bookings-empty"><h3>No upcoming tickets</h3><p>Choose a film and reserve your next seats.</p><Link className="btn btn-primary" to="/movies">Browse movies</Link></div>}</section>
+    <section className="wallet-section"><h2 className="eyebrow">Used and cancelled · {history.length} {history.length === 1 ? 'ticket' : 'tickets'}</h2>{history.length ? <div className="wallet-history">{history.map(b => <Ticket key={b._id} booking={isDemo ? { ...b, cancellation: demoCancellationInfo(b) } : b} compact onRetryRefund={isDemo ? undefined : () => retryHistoryRefund(b)} refundLoading={refundRefresh.id === b._id && refundRefresh.loading} refundError={refundRefresh.id === b._id ? refundRefresh.error : ''}/>)}</div> : <div className="bookings-empty"><h3>No ticket history yet</h3><p>Past and cancelled tickets will appear here.</p></div>}<p className="wallet-footnote">Cancelled tickets stay here, so you can always see what happened.</p></section></>}
+    {toCancel && <CancelBookingModal booking={{ ...toCancel, showDate: toCancel.showDate || manilaDay(detail(toCancel).when), showTime: toCancel.showTime || detail(toCancel).when.toLocaleTimeString('en-GB', { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', hour12: false }) }} pending={cancelling} error={cancelError} refundInfo={refundPreview.info} refundLoading={refundPreview.loading} refundError={refundPreview.error} onRetryRefund={() => setRefundAttempt(value => value + 1)} onKeep={close} onCancel={confirm}/>}
   </div>;
 }

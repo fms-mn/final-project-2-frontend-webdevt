@@ -4,8 +4,9 @@ import { FiAlertTriangle, FiCalendar, FiInfo } from 'react-icons/fi';
 import { dayHeading, displayClock } from '../utils/manila';
 import { getDemoBookingReference } from '../data/demoBookings';
 import './CancelBookingModal.css';
+import PaymentRefundInfo from './PaymentRefundInfo';
 
-export default function CancelBookingModal({ booking, pending = false, error, onKeep, onCancel }) {
+export default function CancelBookingModal({ booking, pending = false, error, refundInfo, refundLoading, refundError, onRetryRefund, onKeep, onCancel }) {
   const dialogRef = useRef(null);
   const keepButtonRef = useRef(null);
   const [failedPoster, setFailedPoster] = useState(null);
@@ -17,7 +18,7 @@ export default function CancelBookingModal({ booking, pending = false, error, on
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     if (appRoot) appRoot.inert = true;
-    keepButtonRef.current?.focus();
+    keepButtonRef.current?.focus({ preventScroll: true });
 
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') {
@@ -67,10 +68,12 @@ export default function CancelBookingModal({ booking, pending = false, error, on
         </dl>
         </div>
         <p id="cancel-modal-explanation" className="cancel-confirm-explanation"><FiInfo aria-hidden="true" /><span>Your seats will become available again. This booking will remain in History as Cancelled.</span></p>
+        <PaymentRefundInfo info={refundInfo} loading={refundLoading} error={refundError} onRetry={onRetryRefund} />
+        {!refundLoading && refundInfo?.eligible === false && <p role="note">{refundInfo.reason}</p>}
         {error && <p className="booking-submit-error" role="alert">{error}</p>}
         <div className="booking-modal-actions">
           <button type="button" className="btn btn-secondary" onClick={onKeep} disabled={pending} ref={keepButtonRef}>Keep Booking</button>
-          <button type="button" className="btn btn-danger" onClick={onCancel} disabled={pending}>{pending ? 'Cancelling…' : 'Cancel Booking'}</button>
+          <button type="button" className="btn btn-danger" onClick={onCancel} disabled={pending || refundLoading || Boolean(refundError) || refundInfo?.eligible !== true}>{pending ? 'Cancelling…' : 'Cancel Booking'}</button>
         </div>
       </section>
     </div>,
