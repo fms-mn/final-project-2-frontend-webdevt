@@ -40,4 +40,19 @@ export function timeAtFraction(fraction, fromHour, toHour, step = 30) {
   return `${String(Math.floor(rounded / 60)).padStart(2, '0')}:${String(rounded % 60).padStart(2, '0')}`;
 }
 
+// Ready-made day ranges for scheduling, as { startDate, endDate } (both included).
+export const RANGES = [
+  ['next7', 'Next 7 days'], ['next14', 'Next 14 days'], ['thisweek', 'Rest of this week'], ['nextweek', 'Next week'],
+];
+export function rangeFor(kind, todayDay) {
+  const monday = weekStart(todayDay);
+  switch (kind) {
+    case 'next14': return { startDate: shiftDay(todayDay, 1), endDate: shiftDay(todayDay, 14) };
+    case 'thisweek': return { startDate: todayDay, endDate: shiftDay(monday, 6) };
+    case 'nextweek': return { startDate: shiftDay(monday, 7), endDate: shiftDay(monday, 13) };
+    case 'next7':
+    default: return { startDate: shiftDay(todayDay, 1), endDate: shiftDay(todayDay, 7) };
+  }
+}
+
 export { DAY_MS };
