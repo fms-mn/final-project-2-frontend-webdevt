@@ -26,7 +26,7 @@ function place(showing, from, to) {
   return { left: `${left}%`, width: `${width}%` };
 }
 
-export default function AdminShowings({ movies, scheduleFor }) {
+export default function AdminShowings({ movies, scheduleFor, focusShowing }) {
   const { busy, busyAction, error, notice, setError, setNotice, clear, run } = useAdminAction();
   const [view, setView] = useState('day'); // 'day' or 'week'
   const [date, setDate] = useState(today());
@@ -63,6 +63,15 @@ export default function AdminShowings({ movies, scheduleFor }) {
     if (scheduleFor) setBulk({ open: true, mode: 'many' });
   }, [scheduleFor]);
 
+  // Arriving from a movie's panel: go to that showing's day, then open it.
+  const [pendingId, setPendingId] = useState('');
+  useEffect(() => {
+    if (!focusShowing) return;
+    setView('day');
+    setDate(focusShowing.day);
+    setPendingId(focusShowing.id);
+  }, [focusShowing]);
+
   const everything = useMemo(() => Object.values(byDay).flat(), [byDay]);
   const showings = byDay[date] || [];
   const selected = everything.find((row) => row._id === selectedId);
@@ -82,6 +91,12 @@ export default function AdminShowings({ movies, scheduleFor }) {
     to = Math.min(to, 24);
     return { from, to, marks: Array.from({ length: Math.floor((to - from) / 2) + 1 }, (_, i) => from + i * 2).filter((hour) => hour < 24) };
   }, [showings]);
+
+  useEffect(() => {
+    if (!pendingId) return;
+    const row = (byDay[date] || []).find((item) => item._id === pendingId);
+    if (row) { choose(row); setPendingId(''); }
+  }, [pendingId, byDay, date]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const startedOrCancelled = selected && (selected.status !== 'scheduled' || new Date(selected.startTime) <= new Date());
   const locked = Boolean(selected && (startedOrCancelled || seatsSold(selected) > 0));
