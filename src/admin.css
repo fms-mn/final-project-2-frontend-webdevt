@@ -150,7 +150,7 @@
 .timeline-track { position: relative; height: 52px; border-radius: 9px; background: var(--a-ground); border: 1px solid var(--a-line); }
 .timeline-track.plain { height: 18px; background: none; border: 0; }
 .timeline-hours .timeline-track span { position: absolute; transform: translateX(-50%); font-size: 11px; color: var(--a-muted); }
-.timeline-block { position: absolute; top: 4px; bottom: 4px; display: flex; flex-direction: column; justify-content: center; gap: 1px; overflow: hidden; padding: 3px 7px; border: 0; border-radius: 7px; background: var(--a-block); color: #fff; text-align: left; cursor: pointer; font: inherit; }
+.timeline-block { position: absolute; top: 4px; bottom: 4px; display: flex; flex-direction: column; justify-content: center; gap: 1px; overflow: hidden; padding: 3px 7px; border: 0; border-radius: 7px; background: var(--movie-color, var(--a-block)); color: #fff; text-align: left; cursor: pointer; font: inherit; }
 .timeline-block b, .timeline-block small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .timeline-block b { font-size: 12px; }
 .timeline-block small { font-size: 11px; opacity: .85; }
@@ -205,6 +205,6 @@
 .seat-cell.blocked { background: var(--a-ink); color: var(--a-ink-on); }
 .seat-cell:disabled { cursor: not-allowed; opacity: .75; }
 .seat-cell:focus-visible { outline: 3px solid #FFC93C; outline-offset: 1px; }
-.timeline-block.unpublished { background: repeating-linear-gradient(135deg, var(--a-block) 0 8px, var(--a-block-alt) 8px 16px); }
+.timeline-block.unpublished { background: repeating-linear-gradient(135deg, var(--movie-color, var(--a-block)) 0 8px, color-mix(in srgb, var(--movie-color, var(--a-block)) 70%, #fff) 8px 16px); }
 .admin-status.hidden-tag { margin-left: 6px; border-color: var(--a-warn-line); background: var(--a-warn-bg); color: var(--a-warn-text); }
 .admin-status.moved-tag { margin-left: 6px; border-color: var(--a-ink); background: var(--a-paper); color: var(--a-ink); }

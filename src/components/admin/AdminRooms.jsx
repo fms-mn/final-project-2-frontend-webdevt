@@ -3,7 +3,7 @@ import { api } from '../../api';
 import ActionPending from '../ActionPending';
 import { describeError } from '../../utils/adminTools';
 import Feedback from './Feedback';
-import SeatGrid from './SeatGrid';
+import SeatGrid, { SeatPreview } from './SeatGrid';
 import useAdminAction from './useAdminAction';
 
 const blankRoom = { name: '', rows: 8, seatsPerRow: 10, isActive: true };
@@ -59,6 +59,7 @@ export default function AdminRooms() {
         <label>Rows (A to Z)<input required type="number" min="1" max="26" value={draft.rows} onChange={edit('rows')} /></label>
         <label>Seats per row<input required type="number" min="1" max="50" value={draft.seatsPerRow} onChange={edit('seatsPerRow')} /></label>
         <label className="admin-check"><input type="checkbox" checked={draft.isActive} onChange={(event) => setDraft({ ...draft, isActive: event.target.checked })} /> Active (can be scheduled)</label>
+        {!draft._id && <SeatPreview rows={Number(draft.rows)} seatsPerRow={Number(draft.seatsPerRow)} />}
         <p className="profile-help">The seat layout is locked once any showing has used the room; you can still rename it. A room with upcoming showings cannot be deactivated.</p>
         <div className="admin-actions">
           <button className="btn btn-primary btn-small" type="submit" disabled={busy} aria-busy={busyAction === 'save'}><ActionPending pending={busyAction === 'save'}>{busyAction === 'save' ? 'Saving...' : 'Save room'}</ActionPending></button>
@@ -74,7 +75,7 @@ export default function AdminRooms() {
         )}
       </form>
       <div className="admin-list">
-        {rooms.length === 0 && <div className="admin-panel">No rooms yet. Add one to start scheduling showings.</div>}
+        {rooms.length === 0 && <div className="admin-panel show-empty">No rooms yet. Add one to start scheduling showings.</div>}
         {rooms.map((room) => (
           <div className="admin-row" key={room._id}>
             <div>

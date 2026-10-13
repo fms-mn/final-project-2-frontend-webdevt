@@ -97,6 +97,7 @@ export default function AdminOverview({ movies, users, periodControlsTarget, onV
             summary={`Revenue for ${stats.daily.length} days, ${pesos(stats.revenue)} in total`}
           />
           {stats.daily.length === 0 && <p className="overview-chart-empty">No daily revenue data in this period.</p>}
+          {stats.tickets === 0 && <p className="overview-revenue-help">No sales in this period yet. Once customers book and pay, revenue shows here.</p>}
           <p className="overview-revenue-help">Sales are counted on the day the booking was made. Cancelled bookings are not counted.</p>
         </section>
         <div className="overview-metric-stack">

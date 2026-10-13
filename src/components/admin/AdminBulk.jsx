@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '../../api';
 import ActionPending from '../ActionPending';
 import { parseTimes } from '../../utils/adminTools';
 import { daysBetween, shiftDay, today } from '../../utils/manila';
+import Drawer from './Drawer';
 import Feedback from './Feedback';
 import useAdminAction from './useAdminAction';
 
@@ -11,11 +12,10 @@ const MAX_DAYS = 31;
 
 // Schedule one movie at several times over a range of days, or copy one day's showings to other days.
 // Every request is first run as a preview (nothing saved), so the admin sees what would happen.
-export default function AdminBulk({ movies, rooms, onDone, scheduleFor }) {
+export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mode, onModeChange, onClose, defaultDay }) {
   const { busy, busyAction, error, notice, setError, run, clear } = useAdminAction();
   const published = movies.filter((movie) => movie.status === 'published');
   const active = rooms.filter((room) => room.isActive);
-  const [mode, setMode] = useState('many');
   const [many, setMany] = useState({
     movie: '', auditorium: '', startDate: shiftDay(today(), 1), endDate: shiftDay(today(), 7), times: '10:00, 13:30, 17:00, 20:30', price: '400', weekdays: [0, 1, 2, 3, 4, 5, 6],
   });
@@ -23,19 +23,19 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor }) {
   const [hidden, setHidden] = useState(false);
   const [skip, setSkip] = useState(false);
   const [preview, setPreview] = useState(null);
-  const panel = useRef(null);
 
-  // Arriving from "Schedule showings" after adding a movie: open this panel with that movie chosen.
+  // Arriving from "Schedule showings" after adding a movie: that movie is already chosen.
   useEffect(() => {
     if (!scheduleFor) return;
-    setMode('many');
     setMany((current) => ({ ...current, movie: scheduleFor.movieId }));
     setPreview(null);
-    if (panel.current) {
-      panel.current.open = true;
-      panel.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
   }, [scheduleFor]);
+  // Opening from a day on the schedule starts the range on that day.
+  useEffect(() => {
+    if (!open || !defaultDay) return;
+    setMany((current) => ({ ...current, startDate: defaultDay, endDate: current.endDate < defaultDay ? shiftDay(defaultDay, 6) : current.endDate }));
+    setCopy((current) => ({ ...current, fromDate: defaultDay }));
+  }, [open, defaultDay]);
 
   const build = (dryRun) => {
     if (mode === 'many') {
@@ -54,6 +54,8 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor }) {
       fromDate: copy.fromDate, toDates, skipConflicts: skip, dryRun, ...(hidden ? { published: false } : {}),
     }];
   };
+
+  if (!open) return null;
 
   const send = async (dryRun) => {
     clear();
@@ -75,11 +77,10 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor }) {
   const editCopy = (field) => (event) => { setPreview(null); setCopy({ ...copy, [field]: event.target.value }); };
 
   return (
-    <details className="admin-panel admin-details" ref={panel} id="schedule-many">
-      <summary><h2>Schedule many showings</h2></summary>
+    <Drawer title={mode === 'many' ? 'Schedule many showings' : 'Copy a day'} onClose={onClose} wide>
       <div className="period-picker" role="group" aria-label="What to do">
-        <button type="button" className={`filter-btn ${mode === 'many' ? 'active' : ''}`} aria-pressed={mode === 'many'} onClick={() => { setMode('many'); setPreview(null); clear(); }}>One movie, many times</button>
-        <button type="button" className={`filter-btn ${mode === 'copy' ? 'active' : ''}`} aria-pressed={mode === 'copy'} onClick={() => { setMode('copy'); setPreview(null); clear(); }}>Copy a day</button>
+        <button type="button" className={`filter-btn ${mode === 'many' ? 'active' : ''}`} aria-pressed={mode === 'many'} onClick={() => { onModeChange('many'); setPreview(null); clear(); }}>One movie, many times</button>
+        <button type="button" className={`filter-btn ${mode === 'copy' ? 'active' : ''}`} aria-pressed={mode === 'copy'} onClick={() => { onModeChange('copy'); setPreview(null); clear(); }}>Copy a day</button>
       </div>
       <Feedback error={error} notice={notice} />
       <form className="admin-form" onSubmit={(event) => { event.preventDefault(); send(true); }}>
@@ -133,6 +134,6 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor }) {
           </div>
         </div>
       )}
-    </details>
+    </Drawer>
   );
 }
