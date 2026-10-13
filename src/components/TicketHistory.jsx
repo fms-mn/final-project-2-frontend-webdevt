@@ -24,7 +24,9 @@ function HistoryRow({ booking, getDetail, expanded, onToggle, onRetryRefund, ref
   const paymentLabels = { paid: 'Paid', refunded: 'Refunded', unpaid: 'Unpaid', failed: 'Failed', awaiting_approval: 'Awaiting approval', not_taken: 'No payment collected' };
   return <li className="history-record">
     <time className="history-time" dateTime={booking.showtime?.startTime || undefined}>{info.time}</time>
-    <article className="history-card">
+    <article className="history-card" onClick={event => {
+      if (!event.target.closest('.history-details, button, a, input, select, textarea')) onToggle();
+    }}>
       <div className="history-row">
         <div className="history-main">
         <h4 className="history-movie">{booking.movie?.title || 'Movie no longer in catalog'}</h4>
