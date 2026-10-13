@@ -1,13 +1,16 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ActionPending from '../components/ActionPending';
 import BackToHome from '../components/BackToHome';
+import PendingBookingNotice from '../components/PendingBookingNotice';
+import { postAuthDestination } from '../utils/pendingBooking';
 import './AuthForms.css';
 
 export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,8 +30,8 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await register(name, email, password);
-      navigate('/home');
+      const signedInUser = await register(name, email, password);
+      navigate(postAuthDestination(signedInUser, location.state?.from), { replace: true });
     } catch (err) {
       setError(err.message || 'Registration failed');
     } finally {
@@ -43,6 +46,7 @@ export default function Register() {
         <div className="auth-card">
           <h1>Create account</h1>
           <p className="subtitle">Join FILME to book your seats</p>
+          <PendingBookingNotice />
 
           {error && <div className="error-message" role="alert">{error}</div>}
 
@@ -94,7 +98,7 @@ export default function Register() {
           </form>
 
           <div className="auth-footer">
-            Already have an account? <Link to="/login">Sign in</Link>
+            Already have an account? <Link to="/login" state={location.state}>Sign in</Link>
           </div>
         </div>
       </div>

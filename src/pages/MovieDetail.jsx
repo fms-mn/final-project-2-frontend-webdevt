@@ -6,9 +6,11 @@ import { useMovie } from '../hooks/useMovies';
 import { DEMO_RULES, isDemoSlotSafe, listAuditoriums, listShowtimes } from '../data/demoSchedule';
 import { createDemoBooking, demoRemainingSeats, getReservedDemoSeats } from '../data/demoBookings';
 import { dayHeading, displayClock, manilaDay, shiftDay, today } from '../utils/manila';
-import { canEnterBooking } from '../utils/bookingHero';
+import { showingAvailability } from '../utils/bookingHero';
 import MovieDetails from '../components/MovieDetails';
 import BookingConfirmationModal from '../components/BookingConfirmationModal';
+import BookingAuthPrompt from '../components/BookingAuthPrompt';
+import { clearPendingBooking, readPendingBooking, restoreTentativeSeats, savePendingBooking } from '../utils/pendingBooking';
 import { MAX_SEATS_PER_BOOKING, toggleSeatSelection } from '../utils/seatSelection';
 import { bookingSchedule, chooseScheduleSelection, isScheduleSlotBookable, loadMovieSchedule } from '../utils/bookingSchedule';
 export { toggleSeatSelection } from '../utils/seatSelection';
@@ -39,6 +41,9 @@ export default function MovieDetail() {
   const [liveSchedule, setLiveSchedule] = useState({ movieId: '', slots: [], loading: true, error: '' });
   const [selectionNotice, setSelectionNotice] = useState('');
   const selectionInitialized = useRef(false);
+  const autoSelectShowing = useRef(true);
+  const pendingRestore = useRef(null);
+  const [authPromptOpen, setAuthPromptOpen] = useState(false);
   const [scheduleAttempt, setScheduleAttempt] = useState(0);
   const [scheduleError, setScheduleError] = useState('');
   const [liveSeats, setLiveSeats] = useState(null);
@@ -63,7 +68,13 @@ export default function MovieDetail() {
   const mobileBarRef = useRef(null);
   const pageHeadingRef = useRef(null);
 
-  useEffect(() => { selectionInitialized.current = false; setSelectionNotice(''); setSelectedDate(searchParams.get('date') || today()); setSelectedTime(searchParams.get('time') || ''); setSelectedShowtimeId(searchParams.get('showtime') || ''); setSelectedSeats([]); setBookingSuccess(null); setConfirmationOpen(false); }, [id, searchParams]);
+  useEffect(() => {
+    selectionInitialized.current = false;
+    autoSelectShowing.current = !searchParams.get('showtime');
+    const pending = readPendingBooking();
+    pendingRestore.current = pending?.movieId === id && pending.showtimeId === searchParams.get('showtime') && pending.date === searchParams.get('date') && pending.time === searchParams.get('time') ? pending : null;
+    setSelectionNotice(''); setSelectedDate(searchParams.get('date') || today()); setSelectedTime(searchParams.get('time') || ''); setSelectedShowtimeId(searchParams.get('showtime') || ''); setSelectedSeats([]); setBookingSuccess(null); setConfirmationOpen(false); setAuthPromptOpen(false);
+  }, [id, searchParams]);
   const rangeStart = today(), rangeEnd = shiftDay(rangeStart, 6);
   const demoSlots = previewBooking ? Array.from({ length: 7 }, (_, index) => shiftDay(rangeStart, index)).flatMap(date => listShowtimes(id, date).map(slot => ({ ...slot,
     startTime: `${date}T${slot.time}:00+08:00`, remainingSeats: demoRemainingSeats(id, date, slot.time),
@@ -89,7 +100,7 @@ export default function MovieDetail() {
   } : liveSeats && liveSeats.showtime?._id === selectedSlot?._id ? {
     ...liveSeats.showtime, verified: true, remainingSeats: liveSeats.seats.filter(seat => seat.status === 'available').length,
   } : null;
-  const showtimeUnavailable = !scheduleReady || !selectedSlot || !isScheduleSlotBookable(selectedSlot) || !verifiedShowing || !canEnterBooking(verifiedShowing, user?.role);
+  const showtimeUnavailable = !scheduleReady || !selectedSlot || !isScheduleSlotBookable(selectedSlot) || verifiedShowing?.verified !== true || showingAvailability(verifiedShowing) !== 'available' || user?.role === 'admin';
 
   const ticketPrice = previewBooking ? movie?.price || 0 : (liveSeats?.showtime?.ticketPrice ?? selectedSlot?.ticketPrice ?? 0) / 100;
   const isBookable = movie?.status === 'now_showing' && user?.role !== 'admin';
@@ -99,9 +110,10 @@ export default function MovieDetail() {
   useEffect(() => {
     if (!isBookable || !scheduleReady || booking || hold || bookingSuccess) return;
     const wasInitialized = selectionInitialized.current;
-    const next = chooseScheduleSelection(schedule, { date: selectedDate, showtimeId: selectedShowtimeId, time: selectedTime, preserveDate: wasInitialized });
+    const next = chooseScheduleSelection(schedule, { date: selectedDate, showtimeId: selectedShowtimeId, time: selectedTime, preserveDate: wasInitialized, autoSelect: autoSelectShowing.current });
     const invalid = wasInitialized && ((selectedDate && !schedule.dates.includes(selectedDate)) || (selectedShowtimeId && (!selectedSlot || !isScheduleSlotBookable(selectedSlot) || selectedSlot.time !== selectedTime)));
     selectionInitialized.current = true;
+    if (selectedShowtimeId && !next.slot) { autoSelectShowing.current = false; pendingRestore.current = null; }
     if (invalid || next.date !== selectedDate || (next.slot?.id || '') !== selectedShowtimeId || (next.slot?.time || '') !== selectedTime) {
       if (invalid) setSelectionNotice('Your selected showing is no longer available. Please choose another showing.');
       else if (!wasInitialized && selectedShowtimeId && next.slot?.id !== selectedShowtimeId) setSelectionNotice('That showing is no longer available. Please choose another showing.');
@@ -139,13 +151,27 @@ export default function MovieDetail() {
       .then(seats => { if (!controller.signal.aborted) setLiveSeats(seats); }).catch(error => { if (error.name !== 'AbortError') {
         setLiveSeats(null);
         if (error.status === 404 || error.status === 409) {
+          autoSelectShowing.current = false; pendingRestore.current = null;
           setSelectedShowtimeId(''); setSelectedTime(''); setSelectedSeats([]); setConfirmationOpen(false);
           setSelectionNotice('Your selected showing is no longer available. Please choose another showing.');
           setLiveSchedule(current => ({ ...current, slots: current.slots.filter(slot => slot._id !== selectedSlot._id) }));
         } else setScheduleError('Seat availability unavailable. Please retry.');
       } });
     return () => controller.abort();
-  }, [user?.role, previewBooking, selectedSlot?._id, selectedSlot?.startTime, scheduleAttempt, liveSchedule]);
+  }, [user?.id, user?.role, previewBooking, selectedSlot?._id, selectedSlot?.startTime, scheduleAttempt, liveSchedule]);
+
+  useEffect(() => {
+    const pending = pendingRestore.current;
+    if (!pending || user?.role !== 'user' || showtimeUnavailable || selectedSlot?.id !== pending.showtimeId) return;
+    const available = previewBooking
+      ? visibleRows.flatMap((row, index) => Array.from({ length: Math.min(seatsPerRow, seatCapacity - index * seatsPerRow) }, (_, i) => `${row}${i + 1}`)).filter(seat => !bookedSeats.includes(seat))
+      : liveSeats.seats.filter(seat => seat.status === 'available').map(seat => seat.label);
+    const restored = restoreTentativeSeats(pending.seats, available);
+    pendingRestore.current = null;
+    setSelectedSeats(restored.seats);
+    savePendingBooking({ ...pending, seats: restored.seats });
+    setSelectionNotice(restored.unavailable.length ? `Seats ${restored.unavailable.join(', ')} are no longer available. Your other choices were restored; please choose replacement seats.` : 'Your selected showing has been checked. Review your seats before confirming.');
+  }, [user?.id, user?.role, showtimeUnavailable, liveSeats, selectedSlot?.id, previewBooking]);
 
   useEffect(() => {
     if (previewBooking || !liveSeats || liveSeats.showtime?._id !== selectedSlot?._id || booking || hold || bookingSuccess) return;
@@ -197,13 +223,14 @@ export default function MovieDetail() {
       return;
     }
     setBookingError('');
+    const nextSeats = bookingSuccess ? [seatId] : toggleSeatSelection(selectedSeats, seatId, bookedSeats);
     if (bookingSuccess) {
       bookingLocked.current = false;
       setBookingSuccess(null);
-      setSelectedSeats([seatId]);
-    } else {
-      setSelectedSeats((prev) => toggleSeatSelection(prev, seatId, bookedSeats));
     }
+    setSelectedSeats(nextSeats);
+    const pending = readPendingBooking();
+    if (pending?.movieId === id && pending.showtimeId === selectedSlot.id && pending.date === selectedDate && pending.time === selectedSlot.time) savePendingBooking({ ...pending, seats: nextSeats });
   };
 
   const refreshSeats = useCallback(() => {
@@ -235,6 +262,7 @@ export default function MovieDetail() {
   }, [releaseHold, refreshSeats]);
 
   const finishPaid = (paidBooking) => {
+    clearPendingBooking();
     holdRef.current = null;
     setHold(null); setWalletPayment(null); setPayError('');
     setBookingSuccess(paidBooking);
@@ -273,7 +301,13 @@ export default function MovieDetail() {
   };
 
   const reviewBooking = () => {
-    if (selectedSeats.length === 0 || selectedSeats.length > MAX_SEATS_PER_BOOKING || showtimeUnavailable || booking || bookingSuccess) return;
+    if (showtimeUnavailable || booking || bookingSuccess) return;
+    if (!user) {
+      savePendingBooking({ movieId: id, showtimeId: selectedSlot.id, date: selectedDate, time: selectedSlot.time, seats: selectedSeats });
+      setAuthPromptOpen(true);
+      return;
+    }
+    if (user.role !== 'user' || selectedSeats.length === 0 || selectedSeats.length > MAX_SEATS_PER_BOOKING) return;
     setBookingError('');
     setConfirmationOpen(true);
   };
@@ -281,7 +315,9 @@ export default function MovieDetail() {
   const handleBooking = async () => {
     if (!confirmationOpen || bookingLocked.current || booking || bookingSuccess || showtimeUnavailable) return;
     if (!user || user.role !== 'user') {
-      navigate(user?.role === 'admin' ? '/admin' : '/login', { state: { from: { pathname: `/movie/${id}`, search: '', hash: '' } } });
+      setConfirmationOpen(false);
+      if (user?.role === 'admin') navigate('/admin');
+      else reviewBooking();
       return;
     }
 
@@ -303,7 +339,7 @@ export default function MovieDetail() {
       if (!previewBooking) api(`/showtimes/${selectedSlot._id}/seats`).then(setLiveSeats).catch(() => {});
       bookingLocked.current = false;
       if (result.status === 'pending') { holdRef.current = result; setHold(result); setPayError(''); } // now pay for it
-      else setBookingSuccess(result);
+      else { clearPendingBooking(); setBookingSuccess(result); }
     } catch (error) {
       bookingLocked.current = false;
       setBookingError(error.message || 'Booking failed');
@@ -336,6 +372,8 @@ export default function MovieDetail() {
       <div className="empty-state" style={{ minHeight: '60vh' }}>
         <div className="empty-state-icon">🎬</div>
         <h3>Movie not found</h3>
+        <p>This movie is no longer available. Please choose another movie or showing.</p>
+        <Link className="btn btn-secondary" to="/movies" onClick={() => clearPendingBooking()}>Browse other movies</Link>
       </div>
     );
   }
@@ -343,6 +381,7 @@ export default function MovieDetail() {
   return (
     <div className={`movie-detail booking-experience fade-in ${isComingSoon ? 'coming-soon-detail' : ''} ${isBookable ? 'booking-active' : ''} ${confirmationOpen ? 'modal-open' : ''}`} style={{ '--booking-mobile-bar-height': `${mobileBarHeight}px` }}>
       {user?.role === 'admin' && <p className="demo-catalog-notice">Admin preview — customer booking is disabled.</p>}
+      {searchParams.get('showtime') && !isBookable && user?.role !== 'admin' && <p role="status">This movie is no longer available for booking. Please choose another movie or showing.</p>}
       {isBookable && (
         <nav className="booking-progress" aria-label="Booking progress">
           <span className="booking-progress-mobile" aria-current="step">Step {confirmationOpen ? bookingSuccess ? 4 : 3 : 2} of 4 · {confirmationOpen ? bookingSuccess ? 'Complete' : 'Review booking' : 'Choose seats'}</span>
@@ -432,7 +471,7 @@ export default function MovieDetail() {
                   key={dateStr}
                   className={`date-btn ${selectedDate === dateStr ? 'active' : ''}`}
                   aria-pressed={selectedDate === dateStr}
-                  onClick={() => { bookingLocked.current = false; setSelectedDate(dateStr); setSelectedTime(''); setSelectedShowtimeId(''); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); setSelectionNotice(''); }}
+                  onClick={() => { autoSelectShowing.current = true; pendingRestore.current = null; clearPendingBooking(); bookingLocked.current = false; setSelectedDate(dateStr); setSelectedTime(''); setSelectedShowtimeId(''); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); setSelectionNotice(''); }}
                   disabled={booking}
                 >
                   <span className="day-name">{date.toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', weekday: 'short' })}</span>
@@ -454,7 +493,7 @@ export default function MovieDetail() {
               <button
                 key={slot.id}
                 className={`showtime-btn ${selectedSlot?.id === slot.id ? 'active' : ''}`}
-                onClick={() => { bookingLocked.current = false; setSelectedTime(slot.time); setSelectedShowtimeId(slot.id); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); setSelectionNotice(''); }}
+                onClick={() => { autoSelectShowing.current = true; pendingRestore.current = null; clearPendingBooking(); bookingLocked.current = false; setSelectedTime(slot.time); setSelectedShowtimeId(slot.id); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); setSelectionNotice(''); }}
                 aria-label={movie.title + ', ' + displayClock(slot.time) + ', ' + (previewBooking ? listAuditoriums().find(room => room.id === slot.auditoriumId)?.name : slot.auditorium?.name || 'Cinema')}
                 aria-pressed={selectedSlot?.id === slot.id}
                 disabled={booking || isSlotUnavailable(slot)}
@@ -534,7 +573,7 @@ export default function MovieDetail() {
             <br />{selectedSeats.length} of {MAX_SEATS_PER_BOOKING} seats selected. {selectedSeats.length >= MAX_SEATS_PER_BOOKING ? 'Limit reached. Deselect a seat to choose another.' : 'Maximum 10 seats per booking.'}
           </p>
           <div className="seat-selection-actions">
-            <button type="button" className="btn btn-secondary btn-small" disabled={!selectedSeats.length || booking || !!bookingSuccess || confirmationOpen} onClick={() => { setSelectedSeats([]); setBookingError(''); }}>Unselect all</button>
+            <button type="button" className="btn btn-secondary btn-small" disabled={!selectedSeats.length || booking || !!bookingSuccess || confirmationOpen} onClick={() => { clearPendingBooking(); setSelectedSeats([]); setBookingError(''); }}>Unselect all</button>
           </div>
           </div>
 
@@ -576,10 +615,10 @@ export default function MovieDetail() {
                   type="button"
                   className="btn btn-primary"
                   onClick={bookingSuccess ? () => { bookingLocked.current = false; setBookingSuccess(null); setSelectedSeats([]); setBookingError(''); } : reviewBooking}
-                  disabled={booking || selectedSeats.length === 0 || showtimeUnavailable}
+                  disabled={booking || (!!user && selectedSeats.length === 0) || showtimeUnavailable}
                   aria-busy={booking}
                 >
-                  {bookingSuccess ? 'Book another showing' : 'Continue to Confirmation'}
+                  {bookingSuccess ? 'Book another showing' : !user ? 'Sign in to reserve seats' : 'Continue to Confirmation'}
                 </button>
               </div>
               {bookingError && <p className="booking-submit-error" role="alert">{bookingError}</p>}
@@ -597,14 +636,15 @@ export default function MovieDetail() {
             <strong>₱{(selectedSeats.length * ticketPrice).toLocaleString('en-PH')}</strong>
           </div>
           <div className="booking-mobile-actions">
-            <button type="button" className="btn btn-primary" onClick={reviewBooking} disabled={selectedSeats.length === 0 || showtimeUnavailable || booking}>
-              Continue to Confirmation
+            <button type="button" className="btn btn-primary" onClick={reviewBooking} disabled={(!!user && selectedSeats.length === 0) || showtimeUnavailable || booking}>
+              {!user ? 'Sign in to reserve seats' : 'Continue to Confirmation'}
             </button>
           </div>
         </div>
       )}
 
       {/* Cast */}
+      {authPromptOpen && <BookingAuthPrompt movieTitle={movie.title} onClose={() => { setAuthPromptOpen(false); clearPendingBooking(); }} />}
       {movie.cast && movie.cast.length > 0 && (
         <div style={{ marginTop: '2.5rem' }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>Cast</h2>

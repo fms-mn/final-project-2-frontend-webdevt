@@ -18,12 +18,15 @@ test('schedule hides empty, past, cancelled and out-of-range dates; groups in Ma
   assert.equal(chooseScheduleSelection(schedule, {}).slot.id, 'later');
 });
 
-test('direct showing is preserved, sold-out date can be chosen, and invalid selection falls back safely', () => {
+test('direct showing is preserved and invalid explicit selections never substitute another screening', () => {
   const schedule = scheduleOf([slot('full', '2026-10-11T10:00:00+08:00', 0), slot('early', '2026-10-12T10:00:00+08:00'), slot('late', '2026-10-12T18:00:00+08:00')]);
   assert.equal(chooseScheduleSelection(schedule, { showtimeId: 'late' }).slot.id, 'late');
   assert.equal(chooseScheduleSelection(schedule, { date: '2026-10-12', time: '18:00' }).slot.id, 'late');
   assert.deepEqual(chooseScheduleSelection(schedule, { date: '2026-10-11', preserveDate: true }), { date: '2026-10-11', slot: null });
-  assert.equal(chooseScheduleSelection(schedule, { showtimeId: 'removed', date: '2026-10-13', preserveDate: true }).slot.id, 'early');
+  assert.deepEqual(chooseScheduleSelection(schedule, { showtimeId: 'removed', date: '2026-10-13', preserveDate: true }), { date: '2026-10-13', slot: null });
+  assert.equal(chooseScheduleSelection(schedule, { showtimeId: 'late', date: '2026-10-11' }).slot, null);
+  assert.equal(chooseScheduleSelection(schedule, { showtimeId: 'late', time: '10:00' }).slot, null);
+  assert.equal(chooseScheduleSelection(schedule, { date: '2026-10-12', autoSelect: false }).slot, null);
   const full = scheduleOf([slot('full', '2026-10-11T10:00:00+08:00', 0)]);
   assert.deepEqual(chooseScheduleSelection(full, {}), { date: '2026-10-11', slot: null });
   assert.deepEqual(chooseScheduleSelection(scheduleOf([]), {}), { date: '', slot: null });

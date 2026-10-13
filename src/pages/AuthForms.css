@@ -27,3 +27,6 @@
 :root[data-theme='dark'] .auth-form-page .form-group input:focus {border-color:var(--chair-focus)}
 @media(max-width:600px) {.auth-form-page {padding:24px 16px}.auth-form-page .auth-card {padding:24px}.auth-form-page .auth-card h1 {font-size:30px}}
 @media(prefers-reduced-motion:reduce) {.auth-form-page .form-group input {transition:none}}
+.auth-booking-notice {padding:16px;margin-bottom:20px;border:1px solid var(--border-color);border-radius:12px;background:var(--bg-secondary);color:var(--text-primary)}
+.auth-booking-notice p {margin:0 0 10px;line-height:1.5}
+.auth-booking-notice a {text-decoration:underline;text-underline-offset:3px}

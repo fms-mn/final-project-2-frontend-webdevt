@@ -7,6 +7,7 @@
 .filme-navbar .nav-link:hover { background: var(--nav-refined-active); color: var(--nav-refined-accent); }
 .filme-navbar .nav-link.active { background: var(--nav-refined-active); color: var(--nav-refined-accent); }
 .filme-navbar .nav-user { justify-self: end; display: flex; align-items: center; gap: 12px; min-width: 0; }
+.filme-navbar .nav-user > .nav-sign-in { display: flex; }
 .filme-navbar .theme-toggle { flex: none; width: 44px; height: 44px; min-width: 44px; padding: 0; border: 1px solid var(--nav-refined-border); border-radius: 50%; background: transparent; color: var(--nav-refined-ink); }
 .filme-navbar .nav-account-pill { display: flex; align-items: center; gap: 10px; padding: 5px 8px; min-height: 46px; border: 0; border-radius: 28px; color: var(--nav-refined-muted); min-width: 0; cursor: default; }
 .filme-navbar .nav-avatar { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 50%; background: #171a3d; color: #fff; font-size: 13px; font-weight: 700; }
@@ -38,3 +39,4 @@
   :root[data-theme='dark'] .filme-navbar .nav-links { background: var(--nav-refined-surface); border-color: var(--nav-refined-border); }
 }
 @media (max-width: 560px) { .navbar.filme-navbar { height: 68px; padding: 0 18px; gap: 10px; } .filme-navbar .nav-brand { font-size: 22px; } }
+@media (max-width: 560px) { .filme-navbar .nav-user {gap:8px} .filme-navbar .nav-user > .nav-sign-in {padding:8px;font-size:14px} }
