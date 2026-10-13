@@ -3,9 +3,11 @@ import { api } from '../../api';
 import ActionPending from '../ActionPending';
 import { describeError, pesos } from '../../utils/adminTools';
 import { dayHeading, fromInputValue, manilaClock, minutesOfDay, shiftDay, shortDate, toInputValue, today } from '../../utils/manila';
+import { findClash } from '../../utils/clashes';
 import { movieColor, timeAtFraction, weekDays, weekLabel } from '../../utils/schedule';
 import AdminBulk from './AdminBulk';
 import Drawer from './Drawer';
+import WhenPicker from './WhenPicker';
 import Feedback from './Feedback';
 import SeatGrid from './SeatGrid';
 import useAdminAction from './useAdminAction';
@@ -41,6 +43,8 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing }) {
   const [move, setMove] = useState({ startTime: '', auditorium: '' });
   const [blockedDraft, setBlockedDraft] = useState([]);
   const [bulk, setBulk] = useState({ open: false, mode: 'many' });
+  const [gapMinutes, setGapMinutes] = useState(15); // the cinema's gap between shows
+  const [otherDays, setOtherDays] = useState({}); // showings of days picked in a form that are not on screen
 
   const visibleDays = useMemo(() => (view === 'week' ? weekDays(date) : [date]), [view, date]);
 
@@ -57,6 +61,23 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing }) {
       .catch((err) => { if (err.name !== 'AbortError') setError(describeError(err)); });
     return () => controller.abort();
   }, [visibleDays, revision, setError]);
+
+  useEffect(() => {
+    api('/admin/settings').then((rules) => setGapMinutes(rules.turnaroundMinutes)).catch(() => {});
+  }, []);
+
+  // The form can pick any day, so look up that day's showings to warn about clashes.
+  const formDays = [draft?.startTime, move.startTime].map((value) => String(value || '').split('T')[0]).filter(Boolean);
+  const formDaysKey = formDays.join('|');
+  useEffect(() => { setOtherDays({}); }, [revision]);
+  useEffect(() => {
+    const missing = [...new Set(formDaysKey.split('|').filter(Boolean))].filter((day) => !byDay[day] && !otherDays[day]);
+    if (missing.length === 0) return undefined;
+    let current = true;
+    Promise.all(missing.map((day) => api(`/admin/showtimes?date=${day}&limit=200`).then((rows) => [day, rows]).catch(() => [day, []])))
+      .then((pairs) => { if (current) setOtherDays((existing) => ({ ...existing, ...Object.fromEntries(pairs) })); });
+    return () => { current = false; };
+  }, [formDaysKey, byDay]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Coming from "Schedule showings" after adding a movie: open the scheduler with it chosen.
   useEffect(() => {
@@ -208,6 +229,19 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing }) {
     </>
   );
 
+  // A warning when the chosen room, day and time would collide with another showing.
+  const clashWarning = (when, roomId, minutes, ignoreId) => {
+    const [whenDay, whenTime] = String(when || '').split('T');
+    const startIso = fromInputValue(when);
+    if (!startIso || !minutes || !roomId) return '';
+    const startMs = new Date(startIso).getTime();
+    const clash = findClash(byDay[whenDay] || otherDays[whenDay] || [], { auditorium: roomId, startMs, endMs: startMs + minutes * 60000, gapMinutes, ignoreId });
+    if (!clash) return '';
+    return `${clash.movie?.title} is on in this room from ${manilaClock(clash.startTime)} to ${manilaClock(clash.endTime)}. The room needs ${gapMinutes} minutes between shows, so pick another time or room.`;
+  };
+  const draftMovie = draft && movies.find((movie) => movie._id === draft.movie);
+  const draftMinutes = draftMovie?.duration || (selected ? (new Date(selected.endTime) - new Date(selected.startTime)) / 60000 : 0);
+
   const panelOpen = Boolean(draft);
   const panelTitle = adding ? 'Add showing' : selected?.movie?.title || 'Showing';
 
@@ -354,10 +388,14 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing }) {
                 {activeRooms.map((room) => <option key={room._id} value={room._id}>{room.name} · {room.rows * room.seatsPerRow} seats</option>)}
               </select>
             </label>
-            <div className="admin-pair">
-              <label>Start (Manila time)<input type="datetime-local" required value={draft.startTime} onChange={edit('startTime')} disabled={locked} /></label>
-              <label>Price per seat (₱)<input type="number" min="0" step="0.01" required value={draft.ticketPrice} onChange={edit('ticketPrice')} disabled={locked} /></label>
-            </div>
+            <label>Price per seat (₱)<input type="number" min="0" step="0.01" required value={draft.ticketPrice} onChange={edit('ticketPrice')} disabled={locked} /></label>
+            <WhenPicker
+              value={draft.startTime}
+              onChange={(startTime) => setDraft({ ...draft, startTime })}
+              disabled={locked}
+              minutes={draftMinutes}
+              problem={locked ? '' : clashWarning(draft.startTime, draft.auditorium, draftMinutes, selectedId)}
+            />
             {selected && (
               <p className="admin-warning" role="status">
                 {selected.status === 'cancelled' ? 'This showing was cancelled and cannot be edited.'
@@ -386,14 +424,17 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing }) {
               <form onSubmit={moveShowing} aria-label="Move this showing">
                 <h3>Move this showing</h3>
                 <p className="profile-help">Works even when tickets are sold. Customers keep their seats and the price they paid and see the new time. A new room must have all the booked seats.</p>
-                <div className="admin-pair">
-                  <label>New start (Manila time)<input type="datetime-local" required value={move.startTime} onChange={(event) => setMove({ ...move, startTime: event.target.value })} /></label>
-                  <label>Room
-                    <select value={move.auditorium} onChange={(event) => setMove({ ...move, auditorium: event.target.value })}>
-                      {activeRooms.map((room) => <option key={room._id} value={room._id}>{room.name}</option>)}
-                    </select>
-                  </label>
-                </div>
+                <label>Room
+                  <select value={move.auditorium} onChange={(event) => setMove({ ...move, auditorium: event.target.value })}>
+                    {activeRooms.map((room) => <option key={room._id} value={room._id}>{room.name}</option>)}
+                  </select>
+                </label>
+                <WhenPicker
+                  value={move.startTime}
+                  onChange={(startTime) => setMove({ ...move, startTime })}
+                  minutes={draftMinutes}
+                  problem={clashWarning(move.startTime, move.auditorium, draftMinutes, selectedId)}
+                />
                 <div className="admin-actions"><button type="submit" className="btn btn-secondary btn-small" disabled={busy} aria-busy={busyAction === 'move'}><ActionPending pending={busyAction === 'move'}>{busyAction === 'move' ? 'Moving...' : 'Move showing'}</ActionPending></button></div>
               </form>
 

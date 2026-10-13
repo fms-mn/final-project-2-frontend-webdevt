@@ -114,3 +114,43 @@
 .archive-preview p { margin: 0 0 8px; font-size: 14px; }
 .archive-preview ul { display: grid; gap: 4px; margin: 0 0 12px; padding-left: 18px; font-size: 14px; }
 .archive-preview li span { color: var(--a-muted); font-size: 12px; margin-left: 6px; }
+
+/* Picking a day and a time with taps instead of typing */
+.when-picker { display: grid; gap: 16px; }
+.when-field { display: grid; gap: 8px; }
+.when-label { color: var(--a-label); font-size: 12px; font-weight: 700; }
+.when-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.when-chip { min-height: 38px; padding: 0 12px; border: 1px solid var(--a-line); border-radius: 999px; background: var(--a-paper); color: var(--a-ink); font: 700 13px 'Instrument Sans Variable', sans-serif; cursor: pointer; }
+.when-chip:hover:not(:disabled) { border-color: var(--a-coral); }
+.when-chip.active { border-color: var(--a-ink); background: var(--a-ink); color: var(--a-ink-on); }
+.when-chip:disabled { cursor: not-allowed; opacity: .55; }
+.when-chip:focus-visible { outline: 3px solid var(--a-coral); outline-offset: 2px; }
+.admin-drawer label.when-other { display: flex; align-items: center; gap: 10px; color: var(--a-soft); font-size: 12px; font-weight: 600; }
+.when-other input, .when-other select { flex: 1; max-width: 220px; min-height: 38px; }
+.when-summary { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--a-ground); color: var(--a-ink); font-size: 14px; line-height: 1.5; }
+.when-problem { margin: 0; padding: 10px 12px; border: 1.5px solid var(--a-warn-line); border-radius: 10px; background: var(--a-warn-bg); color: var(--a-warn-text); font-size: 13px; line-height: 1.45; }
+
+/* Schedule showings: four short steps and a result that updates as you go */
+.bulk-mode { margin-bottom: 14px; }
+.bulk-steps { display: grid; gap: 14px; }
+.bulk-step { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--a-line-soft); border-radius: 12px; background: var(--a-paper); }
+.bulk-step h3 { display: flex; align-items: center; gap: 8px; margin: 0; font: 800 15px 'Instrument Sans Variable', sans-serif; }
+.bulk-step h3 span { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--a-ink); color: var(--a-ink-on); font-size: 12px; }
+.admin-drawer .bulk-step label { display: grid; gap: 5px; color: var(--a-label); font-size: 12px; font-weight: 700; }
+.admin-drawer .bulk-step label.admin-check, .admin-drawer .bulk-step label.when-other { display: flex; }
+.bulk-dates { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.bulk-hint { margin: 0; color: var(--a-muted); font-size: 13px; }
+.when-chip.small { min-height: 34px; padding: 0 11px; }
+.bulk-link { padding: 0 4px; border: 0; background: none; color: var(--a-coral); font: 700 12px 'Instrument Sans Variable', sans-serif; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.bulk-times { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; font-size: 13px; }
+.bulk-times li span { color: var(--a-muted); margin-left: 6px; }
+.bulk-footer { position: sticky; bottom: -28px; z-index: 2; display: grid; gap: 10px; margin: 16px -18px -28px; padding: 14px 18px max(14px, env(safe-area-inset-bottom)); border-top: 1px solid var(--a-line); background: var(--a-paper); box-shadow: 0 -8px 18px #12163a14; }
+.bulk-footer .btn { width: 100%; min-height: 48px; }
+.bulk-result { min-height: 22px; }
+.bulk-result p { margin: 0; font-size: 14px; line-height: 1.45; }
+.bulk-count b { font-size: 16px; }
+.bulk-problem { color: var(--a-warn-text); }
+.bulk-skipped { margin-top: 6px; padding: 8px 10px; border: 1.5px solid var(--a-warn-line); border-radius: 9px; background: var(--a-warn-bg); color: var(--a-warn-text); font-size: 13px; }
+.bulk-skipped summary { cursor: pointer; font-weight: 700; }
+.bulk-skipped ul { margin: 8px 0 0; padding-left: 18px; }
+@media (max-width: 480px) { .bulk-dates { grid-template-columns: 1fr; } }
