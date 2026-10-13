@@ -1,0 +1,19 @@
+.landing-features { --wave-x: -8px; --wave-y: -14px; --wave-number-scale: 1.14; --wave-shadow-rest: 12px 12px; --wave-shadow-lift: 22px 28px; }
+.landing-features .landing-feature-lift { display: grid; min-width: 0; border-radius: 24px; box-shadow: var(--wave-shadow-rest) 0 var(--landing-shadow); animation: landing-feature-wave 4s ease-in-out infinite; animation-delay: var(--wave-delay); animation-play-state: paused; }
+.landing-features .landing-feature-lift .landing-feature { box-shadow: none; }
+.landing-features .landing-feature-number { transform-origin: left center; animation: landing-feature-number-wave 4s ease-in-out infinite; animation-delay: var(--wave-delay); animation-play-state: paused; }
+.landing-features[data-wave-running='true'] :is(.landing-feature-lift, .landing-feature-number) { animation-play-state: running; }
+@keyframes landing-feature-wave {
+  0%, 55%, 100% { transform: translate(0, 0); box-shadow: var(--wave-shadow-rest) 0 var(--landing-shadow); }
+  15%, 35% { transform: translate(var(--wave-x), var(--wave-y)); box-shadow: var(--wave-shadow-lift) 0 var(--landing-shadow); }
+}
+@keyframes landing-feature-number-wave {
+  0%, 55%, 100% { transform: scale(1) rotate(0); }
+  15%, 35% { transform: scale(var(--wave-number-scale)) rotate(-3deg); }
+}
+@media (max-width: 800px) {
+  .landing-features { --wave-x: -4px; --wave-y: -6px; --wave-number-scale: 1.06; --wave-shadow-rest: 8px 8px; --wave-shadow-lift: 12px 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-features .landing-feature-lift, .landing-features .landing-feature-number { animation: none; transform: none; }
+}

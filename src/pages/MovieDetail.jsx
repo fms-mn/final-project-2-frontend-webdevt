@@ -1,11 +1,17 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useMovie } from '../hooks/useMovies';
-import { listAuditoriums, listShowtimes } from '../data/demoSchedule';
-import { createDemoBooking, getBookedSeats } from '../data/demoBookings';
+import { DEMO_RULES, isDemoSlotSafe, listAuditoriums, listShowtimes } from '../data/demoSchedule';
+import { createDemoBooking, demoRemainingSeats, getReservedDemoSeats } from '../data/demoBookings';
+import { dayHeading, displayClock, manilaDay, shiftDay, today } from '../utils/manila';
+import { canEnterBooking } from '../utils/bookingHero';
+import MovieDetails from '../components/MovieDetails';
 import BookingConfirmationModal from '../components/BookingConfirmationModal';
+import { MAX_SEATS_PER_BOOKING, toggleSeatSelection } from '../utils/seatSelection';
+import { bookingSchedule, chooseScheduleSelection, isScheduleSlotBookable, loadMovieSchedule } from '../utils/bookingSchedule';
+export { toggleSeatSelection } from '../utils/seatSelection';
 
 const ROWS = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
 const SEATS_PER_ROW = 10;
@@ -14,101 +20,152 @@ function ChairShape({ label }) {
   return <><span className="chair-backrest" /><span className="chair-cushion" /><span className="chair-label">{label}</span></>;
 }
 
-export function toggleSeatSelection(selectedSeats, seatId, bookedSeats) {
-  if (bookedSeats.includes(seatId)) return selectedSeats;
-  return selectedSeats.includes(seatId)
-    ? selectedSeats.filter((seat) => seat !== seatId)
-    : [...selectedSeats, seatId];
-}
-
-function getNextDays(count) {
-  const days = [];
-  const today = new Date();
-  for (let i = 0; i < count; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
-    days.push(d);
-  }
-  return days;
-}
-
-function formatDate(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-function initialSelection(movieId) {
-  const slots = listShowtimes(movieId);
-  const firstFuture = slots.find((slot) => new Date(`${formatDate(new Date())}T${slot.time}:00`).getTime() > Date.now());
-  const date = new Date();
-  if (!firstFuture) date.setDate(date.getDate() + 1);
-  return { date: formatDate(date), time: (firstFuture || slots[0])?.time || '' };
-}
+const formatDate = manilaDay;
 
 export default function MovieDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [id, searchParams]);
   const { user } = useAuth();
 
   const { movie, loading, notFound, error, reload, isDemo } = useMovie(id);
-  const previewBooking = isDemo || user?.id === 'demo-user';
-  const [selectedDate, setSelectedDate] = useState(() => searchParams.get('date') || initialSelection(id).date);
-  const [selectedTime, setSelectedTime] = useState(() => searchParams.get('time') || initialSelection(id).time);
+  const previewBooking = isDemo && user?.isDemo;
+  const [selectedDate, setSelectedDate] = useState(() => searchParams.get('date') || today());
+  const [selectedTime, setSelectedTime] = useState(() => searchParams.get('time') || '');
   const [selectedShowtimeId, setSelectedShowtimeId] = useState(() => searchParams.get('showtime') || '');
-  const [liveSlots, setLiveSlots] = useState([]);
+  const [liveSchedule, setLiveSchedule] = useState({ movieId: '', slots: [], loading: true, error: '' });
+  const [selectionNotice, setSelectionNotice] = useState('');
+  const selectionInitialized = useRef(false);
+  const [scheduleAttempt, setScheduleAttempt] = useState(0);
+  const [scheduleError, setScheduleError] = useState('');
   const [liveSeats, setLiveSeats] = useState(null);
+  const [clockRevision, refreshClock] = useState(0);
+  useEffect(() => { const timer = setInterval(() => refreshClock(value => value + 1), 30000); return () => clearInterval(timer); }, []);
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [booking, setBooking] = useState(false);
   const bookingLocked = useRef(false);
   const [bookingError, setBookingError] = useState('');
   const [bookingSuccess, setBookingSuccess] = useState(null);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
+  // Paying (live bookings): `hold` is the pending booking that keeps the seats while the customer pays.
+  const [hold, setHold] = useState(null);
+  const [walletPayment, setWalletPayment] = useState(null);
+  const [paying, setPaying] = useState(false);
+  const [payError, setPayError] = useState('');
+  const holdRef = useRef(null);
+  holdRef.current = hold;
   const [mobileBarHeight, setMobileBarHeight] = useState(128);
   const [seatMapScrollable, setSeatMapScrollable] = useState(false);
   const seatMapRef = useRef(null);
   const mobileBarRef = useRef(null);
   const pageHeadingRef = useRef(null);
 
-  const dates = getNextDays(7);
-  const showtimes = previewBooking ? listShowtimes(id) : liveSlots;
-  const selectedSlot = showtimes.find((slot) => slot.id === selectedShowtimeId) || showtimes.find((slot) => slot.time === selectedTime);
+  useEffect(() => { selectionInitialized.current = false; setSelectionNotice(''); setSelectedDate(searchParams.get('date') || today()); setSelectedTime(searchParams.get('time') || ''); setSelectedShowtimeId(searchParams.get('showtime') || ''); setSelectedSeats([]); setBookingSuccess(null); setConfirmationOpen(false); }, [id, searchParams]);
+  const rangeStart = today(), rangeEnd = shiftDay(rangeStart, 6);
+  const demoSlots = previewBooking ? Array.from({ length: 7 }, (_, index) => shiftDay(rangeStart, index)).flatMap(date => listShowtimes(id, date).map(slot => ({ ...slot,
+    startTime: `${date}T${slot.time}:00+08:00`, remainingSeats: demoRemainingSeats(id, date, slot.time),
+    bookable: isDemoSlotSafe(id, date, slot.time) && Date.parse(`${date}T${slot.time}:00+08:00`) > Date.now() + DEMO_RULES.salesCutoffMinutes * 60000,
+  }))) : [];
+  const schedule = bookingSchedule(previewBooking ? demoSlots : liveSchedule.movieId === id ? liveSchedule.slots : [], id, rangeStart, rangeEnd);
+  const scheduleLoading = !previewBooking && (liveSchedule.movieId !== id || liveSchedule.loading);
+  const scheduleLoadError = !previewBooking && liveSchedule.movieId === id ? liveSchedule.error : '';
+  const scheduleReady = !scheduleLoading && !scheduleLoadError;
+  const dates = schedule.dates.map(date => new Date(`${date}T12:00:00+08:00`));
+  const showtimes = schedule.slots.filter(slot => slot.date === selectedDate);
+  const selectedSlot = showtimes.find((slot) => slot.id === selectedShowtimeId);
   const auditorium = previewBooking ? listAuditoriums().find((item) => item.id === selectedSlot?.auditoriumId) : liveSeats?.auditorium;
-  const bookedSeats = previewBooking ? (movie ? getBookedSeats(id, selectedDate, selectedTime) : []) : (liveSeats?.seats || []).filter(seat => seat.status === 'booked').map(seat => seat.label);
+  const bookedSeats = previewBooking ? (movie && selectedSlot ? getReservedDemoSeats(id, selectedDate, selectedSlot.time) : []) : (liveSeats?.seats || []).filter(seat => seat.status !== 'available').map(seat => seat.label);
   const seatsPerRow = auditorium?.seatsPerRow ?? SEATS_PER_ROW;
   const seatCapacity = auditorium?.capacity ?? (auditorium?.rows && auditorium?.seatsPerRow ? auditorium.rows * auditorium.seatsPerRow : 8 * SEATS_PER_ROW);
   const visibleRows = ROWS.slice(0, Math.ceil(seatCapacity / seatsPerRow));
   const aisleAfter = seatsPerRow >= 6 && seatsPerRow % 2 === 0 ? seatsPerRow / 2 - 1 : -1;
-  const showtimeUnavailable = !selectedSlot || (previewBooking ? new Date(`${selectedDate}T${selectedTime}:00`).getTime() <= Date.now() : (!liveSeats || liveSeats.showtime?._id !== selectedSlot._id || new Date(selectedSlot.startTime).getTime() <= Date.now()));
-  const ticketPrice = previewBooking ? movie?.price || 0 : (selectedSlot?.ticketPrice || 0) / 100;
+  const verifiedShowing = previewBooking && selectedSlot ? { _id: selectedSlot.id,
+    startTime: selectedDate + 'T' + selectedSlot.time + ':00+08:00',
+    verified: isDemoSlotSafe(id, selectedDate, selectedSlot.time), remainingSeats: demoRemainingSeats(id, selectedDate, selectedSlot.time),
+    bookable: Date.parse(selectedDate + 'T' + selectedSlot.time + ':00+08:00') > Date.now() + DEMO_RULES.salesCutoffMinutes * 60000,
+  } : liveSeats && liveSeats.showtime?._id === selectedSlot?._id ? {
+    ...liveSeats.showtime, verified: true, remainingSeats: liveSeats.seats.filter(seat => seat.status === 'available').length,
+  } : null;
+  const showtimeUnavailable = !scheduleReady || !selectedSlot || !isScheduleSlotBookable(selectedSlot) || !verifiedShowing || !canEnterBooking(verifiedShowing, user?.role);
+
+  const ticketPrice = previewBooking ? movie?.price || 0 : (liveSeats?.showtime?.ticketPrice ?? selectedSlot?.ticketPrice ?? 0) / 100;
   const isBookable = movie?.status === 'now_showing' && user?.role !== 'admin';
   const isComingSoon = movie?.status === 'coming_soon';
   const isNotShowing = movie?.status === 'not_showing';
+  const isSlotUnavailable = slot => !isScheduleSlotBookable(slot);
+
+  useEffect(() => {
+    if (!isBookable || !scheduleReady || booking || hold || bookingSuccess) return;
+    const wasInitialized = selectionInitialized.current;
+    const next = chooseScheduleSelection(schedule, { date: selectedDate, showtimeId: selectedShowtimeId, time: selectedTime, preserveDate: wasInitialized });
+    const invalid = wasInitialized && ((selectedDate && !schedule.dates.includes(selectedDate)) || (selectedShowtimeId && (!selectedSlot || !isScheduleSlotBookable(selectedSlot) || selectedSlot.time !== selectedTime)));
+    selectionInitialized.current = true;
+    if (invalid || next.date !== selectedDate || (next.slot?.id || '') !== selectedShowtimeId || (next.slot?.time || '') !== selectedTime) {
+      if (invalid) setSelectionNotice('Your selected showing is no longer available. Please choose another showing.');
+      else if (!wasInitialized && selectedShowtimeId && next.slot?.id !== selectedShowtimeId) setSelectionNotice('That showing is no longer available. Please choose another showing.');
+      setSelectedDate(next.date); setSelectedShowtimeId(next.slot?.id || ''); setSelectedTime(next.slot?.time || '');
+      setSelectedSeats([]); setConfirmationOpen(false); setLiveSeats(null);
+    }
+  }, [isBookable, scheduleReady, liveSchedule, previewBooking, selectedDate, selectedShowtimeId, selectedTime, booking, hold, bookingSuccess, rangeStart, clockRevision]);
 
   useEffect(() => {
     if (previewBooking || !movie) return;
     const controller = new AbortController();
-    api(`/showtimes?movie=${encodeURIComponent(id)}&date=${selectedDate}`, { signal: controller.signal })
-      .then(slots => setLiveSlots(slots.map(slot => ({ ...slot, id: slot._id, time: new Date(slot.startTime).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', hour12: false }) }))))
-      .catch(error => { if (error.name !== 'AbortError') setBookingError(error.message); });
-    return () => controller.abort();
-  }, [id, selectedDate, previewBooking, movie]);
+    let running = false;
+    const update = async () => {
+      if (running || document.hidden || holdRef.current || bookingLocked.current) return;
+      running = true;
+      setLiveSchedule(current => current.movieId === id ? current : { movieId: id, slots: [], loading: true, error: '' });
+      try {
+        const slots = await loadMovieSchedule(api, id, rangeEnd, controller.signal);
+        if (!controller.signal.aborted) setLiveSchedule({ movieId: id, slots, loading: false, error: '' });
+      } catch (error) {
+        if (!controller.signal.aborted) setLiveSchedule(current => ({ ...current, movieId: id, loading: false, error: 'Showings unavailable. Please retry.' }));
+      } finally { running = false; }
+    };
+    update();
+    const timer = setInterval(update, 30000);
+    window.addEventListener('focus', update);
+    return () => { controller.abort(); clearInterval(timer); window.removeEventListener('focus', update); };
+  }, [id, previewBooking, movie, scheduleAttempt, rangeEnd]);
 
   useEffect(() => {
-    if (!previewBooking && liveSlots.length && !liveSlots.some(slot => slot.time === selectedTime)) {
-      setSelectedTime(liveSlots[0].time);
-    }
-  }, [previewBooking, liveSlots, selectedTime]);
-
-  useEffect(() => {
-    if (previewBooking || !selectedSlot) { setLiveSeats(null); return; }
+    if (user?.role === 'admin' || previewBooking || !selectedSlot) { setLiveSeats(null); return; }
     const controller = new AbortController();
+    setLiveSeats(null); setScheduleError('');
     api(`/showtimes/${selectedSlot._id}/seats`, { signal: controller.signal })
-      .then(setLiveSeats).catch(error => { if (error.name !== 'AbortError') setBookingError(error.message); });
+      .then(seats => { if (!controller.signal.aborted) setLiveSeats(seats); }).catch(error => { if (error.name !== 'AbortError') {
+        setLiveSeats(null);
+        if (error.status === 404 || error.status === 409) {
+          setSelectedShowtimeId(''); setSelectedTime(''); setSelectedSeats([]); setConfirmationOpen(false);
+          setSelectionNotice('Your selected showing is no longer available. Please choose another showing.');
+          setLiveSchedule(current => ({ ...current, slots: current.slots.filter(slot => slot._id !== selectedSlot._id) }));
+        } else setScheduleError('Seat availability unavailable. Please retry.');
+      } });
     return () => controller.abort();
-  }, [previewBooking, selectedSlot?._id]);
+  }, [user?.role, previewBooking, selectedSlot?._id, selectedSlot?.startTime, scheduleAttempt, liveSchedule]);
+
+  useEffect(() => {
+    if (previewBooking || !liveSeats || liveSeats.showtime?._id !== selectedSlot?._id || booking || hold || bookingSuccess) return;
+    const remainingSeats = liveSeats.seats.filter(seat => seat.status === 'available').length;
+    const current = liveSchedule.slots.find(slot => slot._id === liveSeats.showtime._id);
+    if (current && (current.remainingSeats !== remainingSeats || current.startTime !== liveSeats.showtime.startTime || (current.bookable === false) !== (liveSeats.showtime.bookable === false))) {
+      setLiveSchedule(state => ({ ...state, slots: state.slots.map(slot => slot._id === current._id ? { ...slot, ...liveSeats.showtime, remainingSeats } : slot) }));
+    }
+  }, [liveSeats, previewBooking, selectedSlot?._id, booking, hold, bookingSuccess]);
+
+  useEffect(() => {
+    if (booking || hold || bookingSuccess || showtimeUnavailable) return;
+    const unavailable = selectedSeats.filter(seat => bookedSeats.includes(seat));
+    if (unavailable.length) {
+      setSelectedSeats(current => current.filter(seat => !bookedSeats.includes(seat)));
+      setConfirmationOpen(false);
+      setSelectionNotice('Some selected seats are no longer available. Please check your selection.');
+    }
+  }, [liveSeats, clockRevision, selectedSeats, booking, hold, bookingSuccess, showtimeUnavailable]);
 
   useEffect(() => {
     const viewport = seatMapRef.current;
@@ -136,6 +193,10 @@ export default function MovieDetail() {
 
   const toggleSeat = (seatId) => {
     if (booking || showtimeUnavailable || bookedSeats.includes(seatId)) return;
+    if (!bookingSuccess && !selectedSeats.includes(seatId) && selectedSeats.length >= MAX_SEATS_PER_BOOKING) {
+      setBookingError('You can select a maximum of 10 seats. Deselect a seat to choose another.');
+      return;
+    }
     setBookingError('');
     if (bookingSuccess) {
       bookingLocked.current = false;
@@ -146,14 +207,74 @@ export default function MovieDetail() {
     }
   };
 
-  const closeConfirmation = useCallback(() => {
-    if (bookingLocked.current) return;
-    setConfirmationOpen(false);
-    setBookingError('');
+  const refreshSeats = useCallback(() => {
+    if (previewBooking || !selectedSlot) return;
+    api(`/showtimes/${selectedSlot._id}/seats`).then(setLiveSeats).catch(() => {});
+  }, [previewBooking, selectedSlot?._id]);
+
+  // Gives the held seats back (best effort: they are released by themselves when the time runs out).
+  const releaseHold = useCallback(() => {
+    const current = holdRef.current;
+    holdRef.current = null;
+    setHold(null); setWalletPayment(null); setPayError(''); setPaying(false);
+    return current ? api(`/bookings/${current._id}/release`, { method: 'POST' }).catch(() => {}) : Promise.resolve();
+  }, []);
+  useEffect(() => () => { // leaving the page while paying
+    if (holdRef.current) api(`/bookings/${holdRef.current._id}/release`, { method: 'POST' }).catch(() => {});
   }, []);
 
+  const closeConfirmation = useCallback(() => {
+    if (bookingLocked.current) return;
+    if (holdRef.current) releaseHold().then(refreshSeats);
+    setConfirmationOpen(false);
+    setBookingError('');
+  }, [releaseHold, refreshSeats]);
+
+  const holdExpired = useCallback(() => {
+    releaseHold().then(refreshSeats);
+    setBookingError('Your seats were released because the payment time ran out. Please confirm to reserve them again.');
+  }, [releaseHold, refreshSeats]);
+
+  const finishPaid = (paidBooking) => {
+    holdRef.current = null;
+    setHold(null); setWalletPayment(null); setPayError('');
+    setBookingSuccess(paidBooking);
+    refreshSeats();
+  };
+
+  const payFailed = (error) => {
+    if (error.status === 409) { // the hold ran out, or the showing changed
+      holdRef.current = null;
+      setHold(null); setWalletPayment(null);
+      setBookingError(error.message);
+      refreshSeats();
+    } else {
+      setWalletPayment(null);
+      setPayError(error.message || 'The payment could not be completed.');
+    }
+  };
+
+  const handlePay = async (input) => {
+    if (!hold || paying) return;
+    setPaying(true); setPayError('');
+    try {
+      const result = await api(`/bookings/${hold._id}/pay`, { method: 'POST', body: input });
+      if (result.awaitingApproval) setWalletPayment(result.payment);
+      else finishPaid(result.booking);
+    } catch (error) { payFailed(error); } finally { setPaying(false); }
+  };
+
+  const handleAuthorize = async (approve) => {
+    if (!walletPayment || paying) return;
+    setPaying(true); setPayError('');
+    try {
+      const result = await api(`/payments/${walletPayment._id}/authorize`, { method: 'POST', body: { approve } });
+      finishPaid(result.booking);
+    } catch (error) { payFailed(error); } finally { setPaying(false); }
+  };
+
   const reviewBooking = () => {
-    if (selectedSeats.length === 0 || showtimeUnavailable || booking || bookingSuccess) return;
+    if (selectedSeats.length === 0 || selectedSeats.length > MAX_SEATS_PER_BOOKING || showtimeUnavailable || booking || bookingSuccess) return;
     setBookingError('');
     setConfirmationOpen(true);
   };
@@ -165,7 +286,7 @@ export default function MovieDetail() {
       return;
     }
 
-    if (selectedSeats.length === 0) return;
+    if (selectedSeats.length === 0 || selectedSeats.length > MAX_SEATS_PER_BOOKING) return;
 
     bookingLocked.current = true;
     setBooking(true);
@@ -177,11 +298,13 @@ export default function MovieDetail() {
         movie,
         seats: selectedSeats,
         showDate: selectedDate,
-        showTime: selectedTime,
+        showTime: selectedSlot.time,
+        showingId: selectedSlot.id,
       }) : await api('/bookings', { method: 'POST', body: { showtime: selectedSlot._id, seats: selectedSeats } });
       if (!previewBooking) api(`/showtimes/${selectedSlot._id}/seats`).then(setLiveSeats).catch(() => {});
       bookingLocked.current = false;
-      setBookingSuccess(result);
+      if (result.status === 'pending') { holdRef.current = result; setHold(result); setPayError(''); } // now pay for it
+      else setBookingSuccess(result);
     } catch (error) {
       bookingLocked.current = false;
       setBookingError(error.message || 'Booking failed');
@@ -220,7 +343,7 @@ export default function MovieDetail() {
 
   return (
     <div className={`movie-detail booking-experience fade-in ${isComingSoon ? 'coming-soon-detail' : ''} ${isBookable ? 'booking-active' : ''} ${confirmationOpen ? 'modal-open' : ''}`} style={{ '--booking-mobile-bar-height': `${mobileBarHeight}px` }}>
-      {isDemo && <p className="demo-catalog-notice">Preview catalog · This is a sample movie.</p>}
+      {user?.role === 'admin' && <p className="demo-catalog-notice">Admin preview — customer booking is disabled.</p>}
       {isBookable && (
         <nav className="booking-progress" aria-label="Booking progress">
           <span className="booking-progress-mobile" aria-current="step">Step {confirmationOpen ? bookingSuccess ? 4 : 3 : 2} of 4 · {confirmationOpen ? bookingSuccess ? 'Complete' : 'Review booking' : 'Choose seats'}</span>
@@ -245,14 +368,14 @@ export default function MovieDetail() {
             {isNotShowing && <span className="booking-eyebrow">No showings right now</span>}
             {isBookable && <span className="booking-eyebrow">Choose your seats</span>}
             <h1 ref={pageHeadingRef} tabIndex={-1}>{movie.title}</h1>
-            {isBookable && <p className="booking-mobile-context">{new Date(`${selectedDate}T00:00:00`).toLocaleDateString('en-PH',{weekday:'short',day:'numeric',month:'short'})} · {auditorium?.name || 'Cinema'}</p>}
+            {isBookable && <p className="booking-mobile-context">{selectedDate ? dayHeading(selectedDate) : 'No upcoming showtimes'} · {selectedSlot ? auditorium?.name || selectedSlot.auditorium?.name || 'Cinema' : 'Select a showing'}</p>}
             <div className="movie-detail-tags">
               {movie.genre.map((g) => (
                 <span key={g} className="tag">{g}</span>
               ))}
               <span className="tag">⭐ {movie.rating}</span>
             </div>
-            <p>{movie.description}</p>
+            <MovieDetails movie={movie} isDemo={isDemo} />
             {isNotShowing && <p className="movie-detail-closed" role="status">This movie has no showings to book right now. Please check back soon.</p>}
             <div className="movie-detail-stats">
               <div className="stat">
@@ -275,7 +398,7 @@ export default function MovieDetail() {
               )}
               {!isComingSoon && !isNotShowing && <div className="stat">
                 <span className="stat-label">Price</span>
-                <span className="stat-value stat-price">₱{ticketPrice}</span>
+                <span className="stat-value stat-price">{selectedSlot ? '\u20b1' + ticketPrice : 'Choose a showing'}</span>
               </div>}
             </div>
           </div>
@@ -286,16 +409,20 @@ export default function MovieDetail() {
       <div className="booking-main">
       {isBookable && (
         <div className="booking-section">
+          <div className="booking-selection">
           <div className="booking-heading">
             <div>
               <span className="booking-eyebrow">Your cinema experience</span>
               <h2>Choose your seats</h2>
               <p>Pick a showtime, then choose your favorite seats below.</p>
             </div>
-            {movie.price != null && <span className="booking-price">{previewBooking ? '' : 'from '}₱{movie.price} <small>/ seat</small></span>}
+            <span className="booking-price">₱{ticketPrice} <small>/ seat</small></span>
           </div>
 
-          <div className="booking-schedule">
+          {(scheduleError || scheduleLoadError) && <div className="booking-submit-error" role="alert">{scheduleError || scheduleLoadError} <button type="button" className="btn btn-secondary" onClick={() => setScheduleAttempt(value => value + 1)}>Retry</button></div>}
+          {selectionNotice && <p role="status">{selectionNotice}</p>}
+          {scheduleLoading ? <div className="booking-schedule" role="status">Loading upcoming showtimes…</div> : !scheduleReady ? null : !dates.length ? <div className="booking-schedule"><p role="status">No upcoming showtimes</p><Link className="btn btn-secondary" to="/movies">Browse other movies</Link></div> : <>
+          <div className="booking-schedule" role="region" aria-label="Choose booking date and showtime">
           <div>
           <h3 style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
             Select Date
@@ -303,18 +430,17 @@ export default function MovieDetail() {
           <div className="date-selector">
             {dates.map((date) => {
               const dateStr = formatDate(date);
-              const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-              const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
               return (
                 <button
                   key={dateStr}
                   className={`date-btn ${selectedDate === dateStr ? 'active' : ''}`}
-                  onClick={() => { bookingLocked.current = false; setSelectedDate(dateStr); setSelectedShowtimeId(''); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); }}
+                  aria-pressed={selectedDate === dateStr}
+                  onClick={() => { bookingLocked.current = false; setSelectedDate(dateStr); setSelectedTime(''); setSelectedShowtimeId(''); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); setSelectionNotice(''); }}
                   disabled={booking}
                 >
-                  <span className="day-name">{dayNames[date.getDay()]}</span>
-                  <span className="day-num">{date.getDate()}</span>
-                  <span className="month">{monthNames[date.getMonth()]}</span>
+                  <span className="day-name">{date.toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', weekday: 'short' })}</span>
+                  <span className="day-num">{date.toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', day: 'numeric' })}</span>
+                  <span className="month">{date.toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', month: 'short' })}</span>
                 </button>
               );
             })}
@@ -326,21 +452,29 @@ export default function MovieDetail() {
             Select Showtime
           </h3>
           <div className="showtime-selector">
-            {showtimes.length === 0 && <p>No showtimes are scheduled for this movie.</p>}
+            {!!showtimes.length && !showtimes.some(slot => !isSlotUnavailable(slot)) && <p role="status">{showtimes.every(slot => slot.remainingSeats <= 0) ? 'All showtimes on this date are sold out.' : 'Booking is currently unavailable for this date.'}</p>}
             {showtimes.map((slot) => (
               <button
                 key={slot.id}
                 className={`showtime-btn ${selectedSlot?.id === slot.id ? 'active' : ''}`}
-                onClick={() => { bookingLocked.current = false; setSelectedTime(slot.time); setSelectedShowtimeId(slot.id); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); }}
-                disabled={booking || (previewBooking ? new Date(`${selectedDate}T${slot.time}:00`).getTime() <= Date.now() : new Date(slot.startTime).getTime() <= Date.now())}
+                onClick={() => { bookingLocked.current = false; setSelectedTime(slot.time); setSelectedShowtimeId(slot.id); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); setSelectionNotice(''); }}
+                aria-label={movie.title + ', ' + displayClock(slot.time) + ', ' + (previewBooking ? listAuditoriums().find(room => room.id === slot.auditoriumId)?.name : slot.auditorium?.name || 'Cinema')}
+                aria-pressed={selectedSlot?.id === slot.id}
+                disabled={booking || isSlotUnavailable(slot)}
               >
-                {slot.time}
+                {displayClock(slot.time)} · {previewBooking ? listAuditoriums().find(room => room.id === slot.auditoriumId)?.name : slot.auditorium?.name || 'Cinema'}
+                {slot.remainingSeats <= 0 ? ' · Sold out' : isSlotUnavailable(slot) ? ' · Unavailable' : ''}
               </button>
             ))}
           </div>
           </div>
           </div>
 
+          </>}
+          <div className="booking-showing-info">
+          {showtimes.some(slot => !isSlotUnavailable(slot)) && <p role="status">{showtimeUnavailable ? 'Select an available showing to enable the seat map.' : (auditorium?.name || 'Cinema') + ' · ' + verifiedShowing.remainingSeats + ' seats available'}</p>}
+          {selectedSlot && <p className="booking-showing-meta">{[selectedSlot.format, selectedSlot.language, selectedSlot.subtitles && 'Subtitles: ' + selectedSlot.subtitles].filter(Boolean).join(' · ')}</p>}
+          </div>
           <div className="booking-seat-panel">
           <div className="screen-indicator">
             <div className="screen-line" aria-hidden="true" />
@@ -400,11 +534,16 @@ export default function MovieDetail() {
           </div>
           <p className="seat-selection-summary" aria-live="polite">
             Selected: {selectedSeats.length ? [...selectedSeats].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).join(', ') : 'None'}
+            <br />{selectedSeats.length} of {MAX_SEATS_PER_BOOKING} seats selected. {selectedSeats.length >= MAX_SEATS_PER_BOOKING ? 'Limit reached. Deselect a seat to choose another.' : 'Maximum 10 seats per booking.'}
           </p>
+          <div className="seat-selection-actions">
+            <button type="button" className="btn btn-secondary btn-small" disabled={!selectedSeats.length || booking || !!bookingSuccess || confirmationOpen} onClick={() => { setSelectedSeats([]); setBookingError(''); }}>Unselect all</button>
+          </div>
+          </div>
+
           </div>
 
           {/* Booking Summary */}
-          {selectedSlot && (
             <div className="booking-summary">
               <span className="booking-eyebrow">Your ticket</span><h3>{movie.title}</h3>
               <div className="summary-row">
@@ -413,23 +552,23 @@ export default function MovieDetail() {
               </div>
               <div className="summary-row">
                 <span className="label">Date</span>
-                <span className="value">{new Date(`${selectedDate}T00:00:00`).toLocaleDateString('en-PH',{weekday:'short',day:'numeric',month:'short'})}</span>
+                <span className="value">{selectedDate ? new Date(`${selectedDate}T00:00:00+08:00`).toLocaleDateString('en-PH',{timeZone:'Asia/Manila',weekday:'short',day:'numeric',month:'short'}) : 'Not selected'}</span>
               </div>
               <div className="summary-row">
                 <span className="label">Room</span>
-                <span className="value">{auditorium?.name || 'Cinema'}</span>
+                <span className="value">{selectedSlot ? auditorium?.name || selectedSlot.auditorium?.name || 'Cinema' : 'Select a showing'}</span>
               </div>
               <div className="summary-row">
                 <span className="label">Time</span>
-                <span className="value">{selectedTime}</span>
+                <span className="value">{selectedSlot ? displayClock(selectedSlot.time) : 'Select a showtime'}</span>
               </div>
               <div className="summary-row">
                 <span className="label">Seats</span>
-                <span className="value">{[...selectedSeats].sort().join(', ')}</span>
+                <span className="value">{[...selectedSeats].sort().join(', ') || 'None'}</span>
               </div>
               <div className="summary-row">
                 <span className="label">Price per seat</span>
-                <span className="value">₱{ticketPrice}</span>
+                <span className="value">{selectedSlot ? `₱${ticketPrice}` : 'Select a showing'}</span>
               </div>
               <div className="summary-row summary-total">
                 <span className="label">Total</span>
@@ -448,7 +587,6 @@ export default function MovieDetail() {
               </div>
               {bookingError && <p className="booking-submit-error" role="alert">{bookingError}</p>}
             </div>
-          )}
         </div>
       )}
       </div>
@@ -484,10 +622,11 @@ export default function MovieDetail() {
       )}
       {confirmationOpen && (
         <BookingConfirmationModal
-          draft={{ movieTitle: movie.title, showDate: selectedDate, showTime: selectedTime, auditoriumName: auditorium?.name || 'Cinema', seats: selectedSeats, unitPrice: ticketPrice, totalPrice: selectedSeats.length * ticketPrice }}
+          draft={{ isDemo: previewBooking, movieTitle: movie.title, showDate: selectedDate, showTime: selectedSlot?.time || selectedTime, auditoriumName: auditorium?.name || 'Cinema', seats: selectedSeats, unitPrice: ticketPrice, totalPrice: selectedSeats.length * ticketPrice }}
           booking={bookingSuccess}
           pending={booking}
           error={bookingError}
+          payment={hold ? { hold, walletPayment, pending: paying, error: payError, onPay: handlePay, onAuthorize: handleAuthorize, onRelease: closeConfirmation, onExpire: holdExpired } : null}
           onConfirm={handleBooking}
           onClose={closeConfirmation}
           onViewBookings={() => navigate('/my-bookings')}

@@ -371,59 +371,6 @@ input, select {
   max-width: 680px;
 }
 
-/* The featured movie's trailer, behind the text and under the dark overlay (.hero::before). It
-   fades in once YouTube reports that the video is playing; until then the poster shows. */
-.hero-trailer {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 1.2s ease;
-  container-type: size;
-}
-
-.hero-trailer.is-playing {
-  opacity: 1;
-}
-
-/* Cover the banner like a background image: a 16:9 frame at least as big as the banner. */
-.hero-trailer-frame iframe {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: max(100cqw, 177.78cqh);
-  height: max(100cqh, 56.25cqw);
-  transform: translate(-50%, -50%);
-  border: 0;
-}
-
-.hero-sound {
-  position: absolute;
-  right: clamp(1rem, 4vw, 3rem);
-  bottom: clamp(1rem, 4vw, 2.5rem);
-  z-index: 3;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  border-radius: var(--radius-full);
-  background: rgba(10, 10, 15, 0.55);
-  color: #fff;
-  font-size: 1.15rem;
-  cursor: pointer;
-  backdrop-filter: blur(6px);
-}
-
-.hero-sound:hover,
-.hero-sound:focus-visible {
-  background: rgba(10, 10, 15, 0.8);
-  border-color: #fff;
-}
-
 .hero-badge {
   display: inline-flex;
   align-items: center;
@@ -797,6 +744,263 @@ input, select {
   color: var(--text-secondary);
   font-size: 0.72rem;
   font-weight: 600;
+}
+
+/* Trailer preview: a larger panel that opens beside a movie card while the pointer rests on it.
+   It lives on the page itself (a portal), so it can be bigger than the card. */
+.movie-card.is-previewing {
+  transform: translateY(-8px) scale(1.02);
+  border-color: var(--accent-primary);
+  box-shadow: var(--shadow-glow), 0 18px 50px rgba(0, 0, 0, 0.45);
+}
+
+.trailer-pop {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: #0d1020;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.65), 0 0 46px rgba(233, 69, 96, 0.32);
+  color: #f0f0f5;
+  pointer-events: none; /* the card underneath keeps the hover and the click */
+  opacity: 0;
+  transform: translateX(-26px) scale(0.9);
+  transform-origin: left center;
+  transition: opacity 0.28s ease, transform 0.46s cubic-bezier(0.2, 0.9, 0.25, 1.12);
+}
+
+.trailer-pop.side-left {
+  transform: translateX(26px) scale(0.9);
+  transform-origin: right center;
+}
+
+.trailer-pop.side-over {
+  transform: translateY(20px) scale(0.9);
+  transform-origin: center bottom;
+}
+
+.trailer-pop.is-open {
+  opacity: 1;
+  transform: none;
+}
+
+.trailer-pop-screen {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #05060d;
+}
+
+.trailer-pop-player,
+.trailer-pop-screen iframe,
+.trailer-pop-screen video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  object-fit: cover;
+  opacity: 0;
+  transform: scale(1.3);
+  transition: opacity 0.5s ease;
+}
+
+.trailer-pop-player {
+  transform: none; /* the iframe inside is what gets enlarged */
+}
+
+/* The player is drawn 1.5x the size of the screen and shifted so that only its middle shows:
+   the top edge (channel and title) and the bottom strip (logo, "More videos") fall outside.
+   A bigger frame, not a scaled one, so the video stays sharp. */
+.trailer-pop-player iframe {
+  position: absolute;
+  inset: auto;
+  left: -25%;
+  top: -17.5%;
+  width: 150%;
+  height: 150%;
+  border: 0;
+  transform: none;
+}
+
+.trailer-pop-screen video {
+  transform: none;
+}
+
+.trailer-pop.is-ready .trailer-pop-player,
+.trailer-pop.is-ready .trailer-pop-screen iframe,
+.trailer-pop.is-ready .trailer-pop-screen video {
+  opacity: 1;
+}
+
+.trailer-pop-loader {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, #0b0d1c 30%, #1c2040 50%, #0b0d1c 70%) 0 0 / 200% 100%;
+  animation: preview-shimmer 1.2s linear infinite;
+  transition: opacity 0.4s ease;
+}
+
+.trailer-pop.is-ready .trailer-pop-loader {
+  opacity: 0;
+}
+
+.trailer-pop-still {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 25%;
+  filter: brightness(0.35) saturate(0.8) blur(2px);
+  transform: scale(1.05);
+}
+
+.trailer-pop-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
+}
+
+.trailer-pop-tag {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.28rem 0.75rem;
+  border-radius: var(--radius-full);
+  background: rgba(8, 10, 24, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  z-index: 1;
+}
+
+.trailer-pop-bars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 11px;
+}
+
+.trailer-pop-bars i {
+  width: 3px;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent-primary);
+  transform-origin: bottom;
+  animation: preview-bars 0.9s ease-in-out infinite;
+}
+
+.trailer-pop-bars i:nth-child(2) { animation-delay: 0.2s; }
+.trailer-pop-bars i:nth-child(3) { animation-delay: 0.4s; }
+
+.trailer-pop.is-empty .trailer-pop-bars i {
+  animation-play-state: paused;
+  transform: scaleY(0.4);
+}
+
+.trailer-pop-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.9rem 1.1rem 1.1rem;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.35s ease 0.15s, transform 0.4s ease 0.15s;
+}
+
+.trailer-pop.is-open .trailer-pop-info {
+  opacity: 1;
+  transform: none;
+}
+
+.trailer-pop-info strong {
+  font-size: 1.15rem;
+  line-height: 1.25;
+}
+
+.trailer-pop-meta {
+  color: #a0a0b8;
+  font-size: 0.82rem;
+}
+
+.trailer-pop-info p {
+  margin: 0.2rem 0 0;
+  color: #c8c8d8;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.trailer-pop-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 59;
+  background: rgba(4, 5, 14, 0.72);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.trailer-pop-backdrop.is-open {
+  opacity: 1;
+}
+
+.trailer-pop-hint {
+  margin-top: 0.35rem;
+  color: #8a8aa6;
+  font-size: 0.72rem;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+/* On a touch screen, holding a card must not select it or open the phone's own link menu. */
+@media (hover: none) {
+  .movie-card {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .movie-card img {
+    -webkit-user-drag: none;
+  }
+}
+
+@keyframes preview-shimmer {
+  to { background-position: -200% 0; }
+}
+
+@keyframes preview-bars {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trailer-pop,
+  .trailer-pop.side-left,
+  .trailer-pop.side-over { transform: none; transition: opacity 0.2s ease; }
+  .trailer-pop-loader,
+  .trailer-pop-bars i { animation: none; }
+  .trailer-pop-info { transition: none; }
 }
 
 /* ============================

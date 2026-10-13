@@ -24,21 +24,22 @@ function RootEntry() {
 }
 
 function AppContent() {
-  const { loading } = useAuth();
+  const { loading, user } = useAuth();
   const isLanding = useLocation().pathname === '/';
   if (loading) return <div className="loading" style={{ minHeight: '100vh' }}><div className="spinner" /></div>;
 
   return (
     <div className="app">
       {!isLanding && <Navbar />}
+      {user?.isDemo && <div className="demo-mode-banner" role="status"><strong>Demo mode — bookings are simulated</strong><span>{user.role === 'admin' ? 'Admin preview. Customer booking is disabled.' : 'Saved in this browser. No real tickets or payments.'}</span></div>}
       <main className={isLanding ? 'landing-main' : 'main-content'}>
         <Routes>
           <Route path="/" element={<RootEntry />} />
-          <Route path="/home" element={<ProtectedRoute role="user"><Home /></ProtectedRoute>} />
+          <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
           <Route path="/tonight" element={<Navigate to="/home" replace />} />
           <Route path="/showtimes" element={<Navigate to="/home" replace />} />
           <Route path="/movies" element={<Movies />} />
-          <Route path="/movie/:id" element={<ProtectedRoute role="user"><MovieDetail /></ProtectedRoute>} />
+          <Route path="/movie/:id" element={<ProtectedRoute><MovieDetail /></ProtectedRoute>} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/my-bookings" element={<ProtectedRoute role="user"><MyBookings /></ProtectedRoute>} />
@@ -47,7 +48,7 @@ function AppContent() {
         </Routes>
       </main>
       {!isLanding && <BackToTop />}
-      {!isLanding && <footer className="footer"><div className="footer-content"><div className="footer-brand"><img src="/filme-mark.svg" alt="" /><strong>FILME</strong></div><p>Pick a film, choose your seats, show your code at the door.</p></div></footer>}
+      {!isLanding && <footer className="footer"><div className="footer-content"><div className="footer-brand"><img src="/filme-mark.svg" alt="" /><strong>FILME</strong></div><p>{user?.isDemo ? 'Demo bookings are simulated and cannot be used for cinema admission.' : 'Pick a film, choose your seats, show your code at the door.'}</p></div></footer>}
     </div>
   );
 }

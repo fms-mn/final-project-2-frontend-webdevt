@@ -92,7 +92,7 @@ export default function Login() {
 
           {import.meta.env.DEV && (
             <div className="demo-login">
-              <p>Preview either side of FILME without starting the database.</p>
+              <p>Explore FILME with sample films and simulated bookings.</p>
               <button type="button" className="btn btn-secondary" onClick={() => handleDemoLogin('user')} disabled={loading}>
                 Continue as Demo User
               </button>

@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { isReleased, normalizeMovie } from './movies.js';
-import { DEMO_TICKET_PRICE } from '../constants/pricing.js';
 
 const apiMovie = {
   _id: '507f1f77bcf86cd799439011',
@@ -28,7 +27,7 @@ test('normalizeMovie gives the pages the shape they expect', () => {
   assert.equal(movie.description, 'Paul unites the Fremen.');
   assert.deepEqual(movie.genre, ['Sci-Fi']);
   assert.equal(movie.status, 'now_showing');
-  assert.equal(movie.price, DEMO_TICKET_PRICE);
+  assert.equal(movie.price, undefined, 'production prices come from showings, never fixtures');
   assert.equal(movie.releaseDate, apiMovie.releaseDate);
 });
 

@@ -1,129 +1,126 @@
-import { useEffect, useRef, useState } from 'react';
-import { FiVolume2, FiVolumeX } from 'react-icons/fi';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { createTrailerPlayback } from '../utils/trailerPlayback';
+import { loadYouTubeApi } from '../utils/youtubeApi';
 
-// Loads YouTube's player script once for the whole app.
-let apiPromise;
-function loadYouTubeApi() {
-  if (window.YT && window.YT.Player) return Promise.resolve(window.YT);
-  if (!apiPromise) {
-    apiPromise = new Promise((resolve, reject) => {
-      const previous = window.onYouTubeIframeAPIReady;
-      window.onYouTubeIframeAPIReady = () => {
-        if (previous) previous();
-        resolve(window.YT);
-      };
-      const script = document.createElement('script');
-      script.src = 'https://www.youtube.com/iframe_api';
-      script.async = true;
-      script.onerror = () => {
-        apiPromise = undefined;
-        reject(new Error('The YouTube player could not be loaded'));
-      };
-      document.head.appendChild(script);
-    });
-  }
-  return apiPromise;
-}
-
-// Mounted only after the visitor asks to watch. The poster stays visible until playback begins.
-export default function HeroTrailer({ videoId }) {
-  const shellRef = useRef(null);
+const HeroTrailer = forwardRef(function HeroTrailer({ media, poster, active, reducedMotion, manualPaused, muted, onManualPause, onMutedChange, onStatus, onEnded, onFailure, onFullscreenChange }, ref) {
+  const videoRef = useRef(null);
   const mountRef = useRef(null);
   const playerRef = useRef(null);
-  const [playing, setPlaying] = useState(false);
-  const [muted, setMuted] = useState(true);
+  const sessionRef = useRef(null);
+  const adapterRef = useRef(null);
+  const latest = useRef(null);
+  const [frameVisible, setFrameVisible] = useState(false);
+  latest.current = { active, reducedMotion, manualPaused, muted, onManualPause, onMutedChange, onStatus, onEnded, onFailure, onFullscreenChange };
+
+  useImperativeHandle(ref, () => ({
+    resume: () => sessionRef.current?.resume(),
+    pause: () => sessionRef.current?.pause(),
+  }), []);
 
   useEffect(() => {
-    const shell = shellRef.current;
+    let disposed = false;
+    let readinessTimeout;
+    const video = videoRef.current;
     const mount = mountRef.current;
-    let cancelled = false;
-    let inView = true;
-    let player = null;
-    let observer = null;
-
-    const sync = () => {
-      if (!player || typeof player.playVideo !== 'function') return;
-      if (inView && !document.hidden) player.playVideo();
-      else player.pauseVideo();
+    const native = media.kind === 'video';
+    const policy = () => ({ active: latest.current.active && !document.hidden, autoplay: !latest.current.reducedMotion, manualPaused: latest.current.manualPaused });
+    const adapter = native ? {
+      play: () => video.play(), pause: () => video.pause(), rewind: () => { video.currentTime = 0; },
+      setMuted: value => { video.muted = value; },
+      destroy: () => { video.pause(); video.removeAttribute('src'); video.load(); },
+    } : {
+      play: () => playerRef.current?.playVideo(), pause: () => playerRef.current?.pauseVideo(), rewind: () => playerRef.current?.seekTo(0, true),
+      setMuted: value => { if (value) playerRef.current?.mute(); else playerRef.current?.unMute(); },
+      destroy: () => { playerRef.current?.destroy(); playerRef.current = null; mount?.replaceChildren(); },
     };
-    const onVisibility = () => sync();
-
-    loadYouTubeApi()
-      .then((YT) => {
-        if (cancelled) return;
-        // YouTube replaces the element it is given, so give it a throwaway one inside our own.
+    adapterRef.current = adapter;
+    const session = createTrailerPlayback(adapter, policy(), {
+      onStatus: status => {
+        if (disposed) return;
+        setFrameVisible(status === 'playing');
+        if (['ready', 'playing', 'blocked', 'failed'].includes(status)) clearTimeout(readinessTimeout);
+        latest.current.onStatus(status);
+      },
+      onManualPause: value => latest.current.onManualPause(value),
+      onEnded: () => latest.current.onEnded(),
+      onFailure: () => latest.current.onFailure(),
+    });
+    sessionRef.current = session;
+    latest.current.onStatus('loading');
+    setFrameVisible(false);
+    // A source that never becomes ready is failed once; this is not a playback/advance timer.
+    readinessTimeout = setTimeout(() => session.fail(), 15000);
+    const listeners = [];
+    const listen = (name, handler) => { video.addEventListener(name, handler); listeners.push([name, handler]); };
+    if (native) {
+      listen('loadedmetadata', () => session.ready());
+      listen('playing', () => session.playing());
+      listen('pause', () => { if (!video.ended) session.paused(policy().active); });
+      listen('ended', () => session.ended());
+      listen('error', () => session.fail());
+      listen('volumechange', () => latest.current.onMutedChange(video.muted));
+      listen('fullscreenchange', () => { video.controls = document.fullscreenElement === video; });
+      listen('webkitbeginfullscreen', () => latest.current.onFullscreenChange(true));
+      listen('webkitendfullscreen', () => latest.current.onFullscreenChange(false));
+      video.muted = latest.current.muted;
+      video.src = media.src;
+      video.load();
+    } else {
+      loadYouTubeApi().then(YT => {
+        if (disposed) return;
         const target = document.createElement('div');
         mount.appendChild(target);
-        player = new YT.Player(target, {
-          videoId,
-          playerVars: {
-            autoplay: 1, mute: 1, controls: 0, loop: 1, playlist: videoId, rel: 0, playsinline: 1,
-            modestbranding: 1, disablekb: 1, fs: 0, iv_load_policy: 3,
-          },
+        playerRef.current = new YT.Player(target, {
+          videoId: media.videoId, host: 'https://www.youtube-nocookie.com',
+          playerVars: { autoplay: 0, controls: 0, playsinline: 1, rel: 0, fs: 0, disablekb: 1, iv_load_policy: 3, origin: window.location.origin },
           events: {
-            onReady: (event) => {
-              event.target.mute();
-              event.target.playVideo();
+            onReady: ({ target: player }) => {
+              if (disposed) return;
+              playerRef.current = player;
+              const iframe = player.getIframe();
+              iframe.title = media.title + ' trailer';
+              iframe.allow = 'autoplay; encrypted-media';
+              iframe.tabIndex = -1;
+              iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+              adapter.setMuted(latest.current.muted);
+              session.update(policy());
+              session.ready();
             },
-            onStateChange: (event) => {
-              if (event.data === YT.PlayerState.PLAYING) setPlaying(true);
+            onStateChange: ({ data }) => {
+              if (disposed) return;
+              if (data !== YT.PlayerState.PLAYING) setFrameVisible(false);
+              if (data === YT.PlayerState.PLAYING) { session.playing(); latest.current.onMutedChange(playerRef.current?.isMuted() ?? true); }
+              if (data === YT.PlayerState.PAUSED) session.paused();
+              if (data === YT.PlayerState.ENDED) session.ended();
             },
-            onError: () => setPlaying(false),
+            onAutoplayBlocked: () => { if (!disposed) session.blocked(); },
+            onError: () => { if (!disposed) session.fail(); },
           },
         });
-        playerRef.current = player;
-        if ('IntersectionObserver' in window) {
-          observer = new IntersectionObserver(([entry]) => {
-            inView = entry.isIntersecting;
-            sync();
-          }, { threshold: 0.2 });
-          observer.observe(shell);
-        }
-        document.addEventListener('visibilitychange', onVisibility);
-      })
-      .catch(() => {}); // the banner just keeps its poster
-
-    return () => {
-      cancelled = true;
-      document.removeEventListener('visibilitychange', onVisibility);
-      if (observer) observer.disconnect();
-      if (player && typeof player.destroy === 'function') player.destroy();
-      playerRef.current = null;
-      mount.replaceChildren();
-      setPlaying(false);
-      setMuted(true);
-    };
-  }, [videoId]);
-
-  const toggleSound = () => {
-    const player = playerRef.current;
-    if (!player) return;
-    if (muted) {
-      player.unMute();
-      player.setVolume(60);
-    } else {
-      player.mute();
+      }).catch(() => { if (!disposed) session.fail(); });
     }
-    setMuted(!muted);
-  };
+    return () => {
+      disposed = true;
+      clearTimeout(readinessTimeout);
+      listeners.forEach(([name, handler]) => video.removeEventListener(name, handler));
+      session.destroy();
+      sessionRef.current = null;
+      adapterRef.current = null;
+    };
+  }, [media.kind, media.src, media.videoId, media.title]);
 
-  return (
-    <>
-      <div ref={shellRef} className={`hero-trailer ${playing ? 'is-playing' : ''}`} aria-hidden="true">
-        <div ref={mountRef} className="hero-trailer-frame" />
-      </div>
-      {playing && (
-        <button
-          type="button"
-          className="hero-sound"
-          onClick={toggleSound}
-          aria-pressed={!muted}
-          aria-label={muted ? 'Turn trailer sound on' : 'Turn trailer sound off'}
-          title={muted ? 'Sound on' : 'Sound off'}
-        >
-          {muted ? <FiVolumeX aria-hidden="true" /> : <FiVolume2 aria-hidden="true" />}
-        </button>
-      )}
-    </>
-  );
-}
+  useEffect(() => {
+    sessionRef.current?.update({ active, autoplay: !reducedMotion, manualPaused });
+  }, [active, reducedMotion, manualPaused]);
+  useEffect(() => { adapterRef.current?.setMuted(muted); }, [muted]);
+
+  return <div data-trailer-title={media.title} className={'cinema-media-frame' + (frameVisible ? ' has-frame' : '')}>
+    {poster && <img className="cinema-media-poster" src={poster} alt="" />}
+    {media.kind === 'video' ? <video ref={videoRef} className="cinema-video" style={media.letterboxInset ? {
+      '--video-height': `${100 / (1 - 2 * media.letterboxInset)}%`,
+      '--video-top': `${-100 * media.letterboxInset / (1 - 2 * media.letterboxInset)}%`,
+    } : undefined} playsInline muted preload="metadata" aria-label={media.label || media.title + ' trailer'} />
+      : <div className="cinema-youtube" ref={mountRef} />}
+  </div>;
+});
+export default HeroTrailer;
