@@ -303,7 +303,7 @@ export default function MovieDetail() {
   };
 
   const reviewBooking = () => {
-    if (showtimeUnavailable || booking || bookingSuccess || selectedSeats.length === 0 || selectedSeats.length > MAX_SEATS_PER_BOOKING) return;
+    if (!isBookable || showtimeUnavailable || booking || bookingSuccess || selectedSeats.length === 0 || selectedSeats.length > MAX_SEATS_PER_BOOKING) return;
     if (!user) {
       savePendingBooking({ movieId: id, showtimeId: selectedSlot.id, date: selectedDate, time: selectedSlot.time, seats: selectedSeats });
       setAuthPromptOpen(true);
@@ -658,7 +658,7 @@ export default function MovieDetail() {
       )}
 
       {/* Cast */}
-      {authPromptOpen && !user && <BookingAuthPrompt movieTitle={movie.title} showing={selectedSlot ? { date: selectedDate, time: selectedSlot.time, cinema: auditorium?.name || selectedSlot.auditorium?.name || 'Cinema', seats: selectedSeats } : null} onClose={closeAuthPrompt} backLabel={fromHome ? 'Back to home' : 'Back to movies'} onBack={backToBrowsing} />}
+      {authPromptOpen && !user && <BookingAuthPrompt movieTitle={movie.title} showing={selectedSlot ? { date: selectedDate, time: selectedSlot.time, cinema: auditorium?.name || selectedSlot.auditorium?.name || 'Cinema', seats: selectedSeats, totalPrice: selectedSeats.length * ticketPrice } : null} onClose={closeAuthPrompt} backLabel={fromHome ? 'Back to home' : 'Back to movies'} onBack={backToBrowsing} />}
       {movie.cast && movie.cast.length > 0 && (
         <div style={{ marginTop: '2.5rem' }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>Cast</h2>

@@ -34,10 +34,10 @@
 .booking-auth-intro { margin: 0 0 22px; font-size: 18px; line-height: 1.5; color: var(--account-muted); }
 .booking-auth-actions { display: grid; gap: 12px; }
 .booking-auth-actions a { display: flex; align-items: center; justify-content: center; min-height: 56px; padding: 12px 18px; border: 1px solid var(--account-border); border-radius: 14px; font-size: 18px; font-weight: 700; line-height: 1.3; text-align: center; text-decoration: none; }
-.booking-auth-actions .booking-auth-create { border-color: #912139; background: #912139; color: #fff; }
-.booking-auth-create:hover { background: #791a30; }
-.booking-auth-login { color: var(--account-text); background: transparent; }
-.booking-auth-login:hover { background: #8598bd18; }
+.booking-auth-actions .booking-auth-login { border-color: #912139; background: #912139; color: #fff; }
+.booking-auth-login:hover { background: #791a30; }
+.booking-auth-create { color: var(--account-text); background: transparent; }
+.booking-auth-create:hover { background: #8598bd18; }
 .booking-auth-context { margin: 18px 0 0; font-size: 14px; line-height: 1.45; color: var(--account-muted); }
 .booking-auth-disclaimer { margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: var(--account-muted); }
 .booking-auth-back { align-self: center; margin-top: 14px; min-height: 44px; padding: 8px; border: 0; background: transparent; color: var(--account-muted); font-size: 16px; }
