@@ -158,3 +158,4 @@
 /* "Showings are scheduled, but the movie is still a draft": offer to publish it */
 .publish-prompt { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
 .publish-prompt-actions { display: flex; gap: 8px; }
+.bulk-step h3 .bulk-pick-many { margin-left: auto; color: var(--a-muted); font: 500 12px 'Instrument Sans Variable', sans-serif; }

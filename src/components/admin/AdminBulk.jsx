@@ -7,7 +7,7 @@ import { describeError, pesos } from '../../utils/adminTools';
 const reasons = (err) => (err.errors ? Object.values(err.errors).join(' ') : describeError(err));
 import { daysBetween, shiftDay, today } from '../../utils/manila';
 import { RANGES, rangeFor } from '../../utils/schedule';
-import { COMMON_TIMES, TIME_OPTIONS, clock12, endsText } from '../../utils/timeSlots';
+import { COMMON_TIMES, TIME_OPTIONS, clock12, defaultStart, endsText, quickDays } from '../../utils/timeSlots';
 import Drawer from './Drawer';
 import Feedback from './Feedback';
 
@@ -20,7 +20,7 @@ const dayLabel = (day) => new Date(`${day}T12:00:00+08:00`).toLocaleDateString('
 // Schedule many showings, or copy one day to other days. The admin taps a movie, a room, some days
 // and some times; the screen works out the rest and checks it against the schedule as they go, so
 // "Schedule 27 showings" is a button they press once they have seen what will happen.
-export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mode, onModeChange, onClose, defaultDay }) {
+export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mode, onModeChange, onClose, defaultDay, preset }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   // Drafts can be scheduled too (customers see the showings once the movie is published); archived ones cannot.
@@ -29,6 +29,8 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
 
   const [movie, setMovie] = useState('');
   const [room, setRoom] = useState('');
+  const [span, setSpan] = useState('many'); // 'one': just one day, 'many': a range of days
+  const [oneDay, setOneDay] = useState(today());
   const [range, setRange] = useState('next7');
   const [custom, setCustom] = useState({ startDate: shiftDay(today(), 1), endDate: shiftDay(today(), 7) });
   const [weekdays, setWeekdays] = useState(ALL_DAYS);
@@ -44,6 +46,18 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
 
   // Arriving from "Schedule showings" after adding a movie: that movie is already chosen.
   useEffect(() => { if (scheduleFor) setMovie(scheduleFor.movieId); }, [scheduleFor]);
+  // Opened from "+ Add showing" (one day, maybe a clicked time and room) or from "Many days".
+  useEffect(() => {
+    if (!open || !preset) return;
+    setSpan(preset.span || 'many');
+    if (preset.span === 'one') {
+      const day = preset.day || today();
+      setOneDay(day);
+      setTimes([preset.time || defaultStart(day).split('T')[1]]);
+    }
+    if (preset.room) setRoom(preset.room);
+    setPreview(null);
+  }, [open, preset]);
   // Opening from a day on the schedule: copy that day, and start the new showings after it.
   useEffect(() => {
     if (!open || !defaultDay) return;
@@ -52,7 +66,7 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
 
   const chosenMovie = published.find((item) => item._id === (movie || published[0]?._id));
   const chosenRoom = active.find((item) => item._id === (room || active[0]?._id));
-  const manyDates = range === 'custom' ? custom : rangeFor(range, today());
+  const manyDates = span === 'one' ? { startDate: oneDay, endDate: oneDay } : (range === 'custom' ? custom : rangeFor(range, today()));
   const copyDates = copyRange === 'custom' ? copyCustom : rangeFor(copyRange, today());
 
   // What would be sent, or why nothing can be sent yet.
@@ -60,7 +74,7 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
     if (mode === 'many') {
       if (!chosenMovie || !chosenRoom) return { problem: 'Add a movie (it can be a draft) and an active room first.' };
       if (times.length === 0) return { problem: 'Pick at least one start time.' };
-      if (weekdays.length === 0) return { problem: 'Pick at least one day of the week.' };
+      if (span === 'many' && weekdays.length === 0) return { problem: 'Pick at least one day of the week.' };
       const cents = Math.round(Number(price) * 100);
       if (!Number.isFinite(cents) || cents < 0 || price === '') return { problem: 'Enter the price per seat.' };
       if (!manyDates.startDate || !manyDates.endDate || manyDates.endDate < manyDates.startDate) return { problem: 'Choose the first and last day.' };
@@ -69,7 +83,7 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
         path: '/showtimes/bulk',
         body: {
           movie: chosenMovie._id, auditorium: chosenRoom._id, startDate: manyDates.startDate, endDate: manyDates.endDate, times,
-          weekdays: weekdays.length === 7 ? undefined : weekdays, ticketPrice: cents, published: !hidden,
+          weekdays: span === 'one' || weekdays.length === 7 ? undefined : weekdays, ticketPrice: cents, published: !hidden,
         },
       };
     }
@@ -79,7 +93,7 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
     if (toDates.length === 0) return { problem: 'Choose at least one day to copy to (other than the day being copied).' };
     if (toDates.length > MAX_DAYS) return { problem: `Choose at most ${MAX_DAYS} days at a time.` };
     return { path: '/showtimes/copy', body: { fromDate: copyFrom, toDates, ...(hidden ? { published: false } : {}) } };
-  }, [mode, chosenMovie, chosenRoom, times, weekdays, price, manyDates.startDate, manyDates.endDate, hidden, copyFrom, copyDates.startDate, copyDates.endDate]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [mode, span, chosenMovie, chosenRoom, times, weekdays, price, manyDates.startDate, manyDates.endDate, hidden, copyFrom, copyDates.startDate, copyDates.endDate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Check the request against the schedule a moment after the admin stops changing things.
   useEffect(() => {
@@ -112,7 +126,7 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
     setBusy(true);
     try {
       const done = await api(request.path, { method: 'POST', body: { ...request.body, skipConflicts: skipped > 0, dryRun: false } });
-      onDone(`${done.createdCount} showing${done.createdCount === 1 ? '' : 's'} scheduled${done.skippedCount ? `, ${done.skippedCount} skipped` : ''}`, mode === 'many' ? chosenMovie?._id : null);
+      onDone(`${done.createdCount} showing${done.createdCount === 1 ? '' : 's'} scheduled${done.skippedCount ? `, ${done.skippedCount} skipped` : ''}`, mode === 'many' ? chosenMovie?._id : null, mode === 'many' && span === 'one' ? oneDay : null);
     } catch (err) {
       setError(reasons(err));
     } finally {
@@ -145,7 +159,7 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
   );
 
   return (
-    <Drawer title={mode === 'many' ? 'Schedule showings' : 'Copy a day'} onClose={onClose} wide>
+    <Drawer title={mode === 'copy' ? 'Copy a day' : span === 'one' ? 'Add showings' : 'Schedule showings'} onClose={onClose} wide>
       <div className="when-chips bulk-mode" role="group" aria-label="What to do">
         <button type="button" className={`when-chip${mode === 'many' ? ' active' : ''}`} aria-pressed={mode === 'many'} onClick={() => onModeChange('many')}>New showings</button>
         <button type="button" className={`when-chip${mode === 'copy' ? ' active' : ''}`} aria-pressed={mode === 'copy'} onClick={() => onModeChange('copy')}>Copy a day</button>
@@ -169,25 +183,46 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
           </section>
 
           <section className="bulk-step">
-            <h3><span>2</span> Which days</h3>
-            {rangePicker(range, setRange, manyDates, custom, setCustom)}
-            <div className="when-chips" role="group" aria-label="Days of the week">
-              {WEEKDAYS.map(([name, value]) => (
-                <button key={name} type="button" className={`when-chip small${weekdays.includes(value) ? ' active' : ''}`} aria-pressed={weekdays.includes(value)} onClick={() => toggleWeekday(value)}>{name}</button>
-              ))}
-              <button type="button" className="bulk-link" onClick={() => setWeekdays(ALL_DAYS)}>Every day</button>
-              <button type="button" className="bulk-link" onClick={() => setWeekdays([1, 2, 3, 4, 5])}>Weekdays</button>
-              <button type="button" className="bulk-link" onClick={() => setWeekdays([6, 0])}>Weekends</button>
+            <h3><span>2</span> {span === 'one' ? 'Which day' : 'Which days'}</h3>
+            <div className="when-chips" role="group" aria-label="One day or several">
+              <button type="button" className={`when-chip small${span === 'one' ? ' active' : ''}`} aria-pressed={span === 'one'} onClick={() => setSpan('one')}>Just one day</button>
+              <button type="button" className={`when-chip small${span === 'many' ? ' active' : ''}`} aria-pressed={span === 'many'} onClick={() => setSpan('many')}>Several days</button>
             </div>
+            {span === 'one' ? (
+              <>
+                <div className="when-chips" role="group" aria-label="Day">
+                  {quickDays(today()).map((item) => (
+                    <button key={item.day} type="button" className={`when-chip${oneDay === item.day ? ' active' : ''}`} aria-pressed={oneDay === item.day} onClick={() => setOneDay(item.day)}>{item.label}</button>
+                  ))}
+                </div>
+                <label className="when-other">Another day
+                  <input type="date" min={today()} value={oneDay} onChange={(event) => event.target.value && setOneDay(event.target.value)} />
+                </label>
+                {oneDay && <p className="bulk-hint">{dayLabel(oneDay)}</p>}
+              </>
+            ) : (
+              <>
+                {rangePicker(range, setRange, manyDates, custom, setCustom)}
+                <div className="when-chips" role="group" aria-label="Days of the week">
+                  {WEEKDAYS.map(([name, value]) => (
+                    <button key={name} type="button" className={`when-chip small${weekdays.includes(value) ? ' active' : ''}`} aria-pressed={weekdays.includes(value)} onClick={() => toggleWeekday(value)}>{name}</button>
+                  ))}
+                  <button type="button" className="bulk-link" onClick={() => setWeekdays(ALL_DAYS)}>Every day</button>
+                  <button type="button" className="bulk-link" onClick={() => setWeekdays([1, 2, 3, 4, 5])}>Weekdays</button>
+                  <button type="button" className="bulk-link" onClick={() => setWeekdays([6, 0])}>Weekends</button>
+                </div>
+              </>
+            )}
           </section>
 
           <section className="bulk-step">
-            <h3><span>3</span> Start times</h3>
+            <h3><span>3</span> Start times <small className="bulk-pick-many">tap as many as you like</small></h3>
             <div className="when-chips" role="group" aria-label="Start times">
               {[...COMMON_TIMES, ...extraTimes].map((clock) => (
                 <button key={clock} type="button" className={`when-chip${times.includes(clock) ? ' active' : ''}`} aria-pressed={times.includes(clock)} onClick={() => toggleTime(clock)}>{clock12(clock)}</button>
               ))}
             </div>
+            <div className="when-chips"><button type="button" className="bulk-link" onClick={() => setTimes((current) => [...new Set([...current, ...COMMON_TIMES])].sort())}>Select all usual times</button><button type="button" className="bulk-link" onClick={() => setTimes([])}>Clear</button></div>
             <label className="when-other">Add another time
               <select value="" onChange={(event) => event.target.value && toggleTime(event.target.value)}>
                 <option value="">Choose…</option>
@@ -229,7 +264,7 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
             <>
               <p className="bulk-count">
                 <b>{count}</b> showing{count === 1 ? '' : 's'} will be scheduled
-                {mode === 'many' && chosenMovie && chosenRoom && count > 0 ? <> for <b>{chosenMovie.title}</b> in {chosenRoom.name}, {weekdaySummary}, at {pesos(Math.round(Number(price) * 100))} a seat</> : null}.
+                {mode === 'many' && chosenMovie && chosenRoom && count > 0 ? <> for <b>{chosenMovie.title}</b> in {chosenRoom.name}, {span === 'one' ? `on ${dayLabel(oneDay)}` : weekdaySummary}, at {pesos(Math.round(Number(price) * 100))} a seat</> : null}.
               </p>
               {count === 0 && skipped > 0 && <p className="bulk-problem">Every one of these times clashes with something already scheduled (or has passed). Pick other times or days{mode === 'many' ? ', or another room' : ''}.</p>}
               {skipped > 0 && (
