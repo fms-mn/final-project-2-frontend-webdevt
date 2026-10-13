@@ -7,7 +7,7 @@
 .history-search {flex:1;min-width:min(100%,240px)}
 .history-controls input,.history-controls select {width:100%;min-height:44px;border:1px solid var(--border-color);border-radius:10px;padding:10px 12px;background:var(--bg-card);color:var(--text-primary);font:inherit;font-size:15px}
 .history-count {font-size:13px;color:var(--text-muted);margin:12px 0}
-.history-columns,.history-row {display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr) minmax(0,.7fr) minmax(0,1fr) 110px;gap:16px;align-items:center;padding:16px}
+.history-columns,.history-row {display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr) minmax(0,.7fr) minmax(0,1fr) 120px;gap:16px;align-items:center;padding:16px}
 .history-columns {color:var(--text-muted);font-size:12px;font-weight:700}
 .history-list {list-style:none;padding:0;margin:0;border:1px solid var(--border-color);border-radius:14px;overflow:hidden;background:var(--bg-card)}
 .history-record + .history-record {border-top:1px solid var(--border-color)}
@@ -21,7 +21,7 @@
 .history-expand[aria-expanded='true'] svg {transform:rotate(180deg)}
 .history-details {padding:0 20px 20px;border-top:1px solid var(--border-color);background:var(--bg-secondary);color:var(--text-primary);overflow-wrap:anywhere}
 .history-details[hidden] {display:none}
-.history-details dl {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 24px;margin:16px 0}
+.history-details dl {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 24px;margin:16px 0}
 .history-details dt {font-size:12px;color:var(--text-muted)}
 .history-details dd {margin:3px 0 0;font-size:14px;line-height:1.5}
 .history-load-more {min-height:44px;margin-top:16px}
@@ -35,6 +35,7 @@
   .history-seats {grid-column:1;grid-row:3}
   .history-status {grid-column:2;grid-row:3;max-width:140px;text-align:right}
   .history-expand {grid-column:1/-1;justify-self:start;margin-top:2px;min-width:110px}
+  .history-details dl {grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:560px) {
   .history-controls {align-items:stretch;gap:12px}
