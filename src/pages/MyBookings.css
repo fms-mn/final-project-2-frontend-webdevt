@@ -15,6 +15,7 @@
 
 .bookings-page.wallet-timeline-page {--wallet-bg:#e8eaf5;--wallet-ink:#172347;--wallet-muted:#637297;--wallet-card:#fff;--wallet-control:#eff0f8;--wallet-divider:#dce2f1;--wallet-accent:#c82448;--wallet-accent-fill:#c82448;--wallet-soft:#fbe6ec;--wallet-seat-border:#f3b5c5;--wallet-refund-ink:#7f3046;max-width:1340px;padding:42px clamp(22px,4vw,54px);background:var(--wallet-bg);color:var(--wallet-ink)}
 .main-content:has(.wallet-timeline-page) {background:#e8eaf5}
+html:has(.wallet-timeline-page) {scrollbar-gutter:stable}
 .wallet-timeline-page .wallet-heading {margin-bottom:30px}
 .wallet-timeline-page .wallet-heading .eyebrow {font:600 12px/1.5 'JetBrains Mono Variable',monospace;letter-spacing:.17em;text-transform:uppercase;color:var(--wallet-accent)}
 .wallet-timeline-page .wallet-heading h1 {font-size:clamp(36px,3.8vw,52px);line-height:1.1;letter-spacing:-.025em;margin-top:6px;color:var(--wallet-ink)}

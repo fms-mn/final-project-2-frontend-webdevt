@@ -16,26 +16,26 @@ export function selectHistory(bookings, { filter = 'all', query = '', order = 'n
   });
 }
 
-export async function loadCustomerBookings(request, signal) {
-  const records = new Map();
-  for (let page = 1; ; page += 1) {
-    const result = await request(`/bookings/my?limit=200&page=${page}`, { signal });
-    if (!Array.isArray(result)) throw new Error('Booking information is unavailable. Please try again.');
-    const before = records.size;
-    for (const booking of result) records.set(booking._id, booking);
-    if (result.length < 200) return [...records.values()];
-    if (records.size === before) throw new Error('Booking pages could not be verified. Please try again.');
+export async function loadCustomerBookings(request, { scope, page = 1, filter = 'all', query = '', order = 'newest', signal }) {
+  const params = new URLSearchParams({ scope, limit: scope === 'history' ? '5' : '50', page: String(page), filter, search: query, order });
+  const result = await request(`/bookings/my?${params}`, { signal });
+  if (!Array.isArray(result?.records) || !Number.isInteger(result.total) || result.total < 0
+    || !Number.isInteger(result.overallTotal) || result.overallTotal < result.total
+    || result.page !== page || typeof result.hasMore !== 'boolean'
+    || (result.hasMore ? result.nextPage !== page + 1 : result.nextPage !== null)) {
+    throw new Error('Booking information is unavailable. Please try again.');
   }
+  return result;
 }
 
-export function groupHistory(bookings, visibleCount) {
+export function groupHistory(bookings, visibleCount = bookings.length, dayCounts) {
   const dayOf = booking => Number.isFinite(bookingWhen(booking).getTime()) ? manilaDay(bookingWhen(booking)) : 'unknown';
   const totals = new Map();
   for (const booking of bookings) { const day = dayOf(booking); totals.set(day, (totals.get(day) || 0) + 1); }
   const groups = new Map();
   for (const booking of bookings.slice(0, visibleCount)) {
     const day = dayOf(booking);
-    if (!groups.has(day)) groups.set(day, { day, total: totals.get(day), bookings: [] });
+    if (!groups.has(day)) groups.set(day, { day, total: dayCounts?.[day] ?? totals.get(day), bookings: [] });
     groups.get(day).bookings.push(booking);
   }
   return [...groups.values()];
