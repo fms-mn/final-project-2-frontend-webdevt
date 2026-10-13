@@ -27,7 +27,7 @@ export default function TrailerShowcase(props) {
   return <ShowcaseSession key={props.selectedDate + ':' + entries.map(entry => entry.key).join('|')} {...props} entries={entries} />;
 }
 
-function ShowcaseSession({ entries, loading, error }) {
+function ShowcaseSession({ entries, loading, error, onBookTickets }) {
   const [playlist, setPlaylist] = useState(() => initialPlaylist(entries));
   const [manualPaused, setManualPaused] = useState(false);
   const [muted, setMuted] = useState(true);
@@ -116,6 +116,7 @@ function ShowcaseSession({ entries, loading, error }) {
         </div>}
         <p className="cinema-status" role="status">{message}</p>
         {error && <p className="cinema-error">{error}</p>}
+        {showMovie && onBookTickets && <button type="button" className="btn btn-primary cinema-book-tickets" onClick={() => onBookTickets(current.movie)}>Book Tickets</button>}
       </div>
     </div>
   </section>;

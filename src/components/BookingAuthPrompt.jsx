@@ -5,7 +5,7 @@ import { FiCheck, FiX } from 'react-icons/fi';
 import { displayClock, shortDate } from '../utils/manila';
 import './bookingAuthPrompt.css';
 
-export default function BookingAuthPrompt({ movieTitle, showing, onAuthenticate, onClose, backLabel, onBack }) {
+export default function BookingAuthPrompt({ movieTitle, showing, onClose, backLabel, onBack }) {
   const dialog = useRef(null);
   useEffect(() => {
     const previousFocus = document.activeElement;
@@ -32,7 +32,7 @@ export default function BookingAuthPrompt({ movieTitle, showing, onAuthenticate,
       </section>
       <section className="booking-auth-next" aria-label="Account options">
         <p className="booking-auth-intro">You need an account to book tickets. It only takes a minute.</p>
-        <div className="booking-auth-actions"><Link className="booking-auth-create" to="/register" onClick={onAuthenticate}>Create account</Link><Link className="booking-auth-login" to="/login" onClick={onAuthenticate}>Log in</Link></div>
+        <div className="booking-auth-actions"><Link className="booking-auth-create" to="/register">Create account</Link><Link className="booking-auth-login" to="/login">Log in</Link></div>
         <p className="booking-auth-context" id="booking-auth-description">Sign in to continue booking. We’ll keep your selected movie and showing.</p>
         <p className="booking-auth-disclaimer">Seat choices are tentative. No seats are held until you confirm a booking.</p>
         <button className="booking-auth-back" type="button" onClick={onBack}>{backLabel}</button>

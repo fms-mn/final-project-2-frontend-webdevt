@@ -22,7 +22,7 @@ export default function MovieCard({ movie, showShowtimes = false, previewOnHover
   const releaseLabel = Number.isNaN(release.getTime()) ? '' : release.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 
   return (
-    <Link ref={cardRef} to={`/movie/${movie._id}`} state={{ promptAccount: true, browsingPage: 'movies' }} className={`movie-card${refined ? ' movie-card-refined' : ''}${preview.visible ? ' is-previewing' : ''}`} aria-label={refined ? `${movie.title}: ${isShowing ? 'Choose a showing' : 'View details'}` : undefined} {...(refined ? {} : preview.handlers)}>
+    <Link ref={cardRef} to={`/movie/${movie._id}`} state={{ browsingPage: 'movies' }} className={`movie-card${refined ? ' movie-card-refined' : ''}${preview.visible ? ' is-previewing' : ''}`} aria-label={refined ? `${movie.title}: ${isShowing ? 'Choose a showing' : 'View details'}` : undefined} {...(refined ? {} : preview.handlers)}>
       <div className="movie-card-poster" {...(refined ? preview.handlers : {})}>
         {refined && (!movie.posterUrl || failedPoster === movie.posterUrl) ? (
           <div className="movie-poster-fallback" aria-label="Poster unavailable">FILME</div>

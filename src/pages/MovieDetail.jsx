@@ -71,15 +71,11 @@ export default function MovieDetail() {
   const pageHeadingRef = useRef(null);
 
   useEffect(() => {
-    if (!user && location.state?.promptAccount) setAuthPromptOpen(true);
-  }, [location.key, user]);
-
-  useEffect(() => {
     selectionInitialized.current = false;
     autoSelectShowing.current = !searchParams.get('showtime');
     const pending = readPendingBooking();
     pendingRestore.current = pending?.movieId === id && pending.showtimeId === searchParams.get('showtime') && pending.date === searchParams.get('date') && pending.time === searchParams.get('time') ? pending : null;
-    setSelectionNotice(''); setSelectedDate(searchParams.get('date') || today()); setSelectedTime(searchParams.get('time') || ''); setSelectedShowtimeId(searchParams.get('showtime') || ''); setSelectedSeats([]); setBookingSuccess(null); setConfirmationOpen(false);
+    setSelectionNotice(''); setSelectedDate(searchParams.get('date') || today()); setSelectedTime(searchParams.get('time') || ''); setSelectedShowtimeId(searchParams.get('showtime') || ''); setSelectedSeats([]); setBookingSuccess(null); setConfirmationOpen(false); setAuthPromptOpen(false);
   }, [id, searchParams]);
   const rangeStart = today(), rangeEnd = shiftDay(rangeStart, 6);
   const demoSlots = previewBooking ? Array.from({ length: 7 }, (_, index) => shiftDay(rangeStart, index)).flatMap(date => listShowtimes(id, date).map(slot => ({ ...slot,
@@ -307,29 +303,20 @@ export default function MovieDetail() {
   };
 
   const reviewBooking = () => {
-    if (showtimeUnavailable || booking || bookingSuccess) return;
+    if (showtimeUnavailable || booking || bookingSuccess || selectedSeats.length === 0 || selectedSeats.length > MAX_SEATS_PER_BOOKING) return;
     if (!user) {
       savePendingBooking({ movieId: id, showtimeId: selectedSlot.id, date: selectedDate, time: selectedSlot.time, seats: selectedSeats });
       setAuthPromptOpen(true);
       return;
     }
-    if (user.role !== 'user' || selectedSeats.length === 0 || selectedSeats.length > MAX_SEATS_PER_BOOKING) return;
+    if (user.role !== 'user') return;
     setBookingError('');
     setConfirmationOpen(true);
-  };
-
-  const rememberBooking = () => {
-    const showingId = selectedShowtimeId || searchParams.get('showtime');
-    const selection = { movieId: id, showtimeId: showingId,
-      date: selectedShowtimeId ? selectedDate : searchParams.get('date'),
-      time: selectedShowtimeId ? selectedTime : searchParams.get('time'), seats: selectedSeats };
-    if (!showingId || !savePendingBooking(selection)) savePendingBooking({ movieId: id, showtimeId: null, date: null, time: null, seats: [] });
   };
 
   const closeAuthPrompt = () => {
     setAuthPromptOpen(false);
     clearPendingBooking();
-    navigate(`${location.pathname}${location.search}${location.hash}`, { replace: true, state: { ...location.state, promptAccount: false } });
   };
 
   const backToBrowsing = () => {
@@ -598,6 +585,7 @@ export default function MovieDetail() {
             Selected: {selectedSeats.length ? [...selectedSeats].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).join(', ') : 'None'}
             <br />{selectedSeats.length} of {MAX_SEATS_PER_BOOKING} seats selected. {selectedSeats.length >= MAX_SEATS_PER_BOOKING ? 'Limit reached. Deselect a seat to choose another.' : 'Maximum 10 seats per booking.'}
           </p>
+          {!user && <p className="guest-seat-notice" role="note">Your selected seats are tentative and are not reserved. Sign in to continue, then review and confirm your booking.</p>}
           <div className="seat-selection-actions">
             <button type="button" className="btn btn-secondary btn-small" disabled={!selectedSeats.length || booking || !!bookingSuccess || confirmationOpen} onClick={() => { clearPendingBooking(); setSelectedSeats([]); setBookingError(''); }}>Unselect all</button>
           </div>
@@ -641,7 +629,7 @@ export default function MovieDetail() {
                   type="button"
                   className="btn btn-primary"
                   onClick={bookingSuccess ? () => { bookingLocked.current = false; setBookingSuccess(null); setSelectedSeats([]); setBookingError(''); } : reviewBooking}
-                  disabled={booking || (!!user && selectedSeats.length === 0) || showtimeUnavailable}
+                  disabled={booking || selectedSeats.length === 0 || showtimeUnavailable}
                   aria-busy={booking}
                 >
                   {bookingSuccess ? 'Book another showing' : !user ? 'Sign in to reserve seats' : 'Continue to Confirmation'}
@@ -662,7 +650,7 @@ export default function MovieDetail() {
             <strong>₱{(selectedSeats.length * ticketPrice).toLocaleString('en-PH')}</strong>
           </div>
           <div className="booking-mobile-actions">
-            <button type="button" className="btn btn-primary" onClick={reviewBooking} disabled={(!!user && selectedSeats.length === 0) || showtimeUnavailable || booking}>
+            <button type="button" className="btn btn-primary" onClick={reviewBooking} disabled={selectedSeats.length === 0 || showtimeUnavailable || booking}>
               {!user ? 'Sign in to reserve seats' : 'Continue to Confirmation'}
             </button>
           </div>
@@ -670,7 +658,7 @@ export default function MovieDetail() {
       )}
 
       {/* Cast */}
-      {authPromptOpen && !user && <BookingAuthPrompt movieTitle={movie.title} showing={selectedSlot ? { date: selectedDate, time: selectedSlot.time, cinema: auditorium?.name || selectedSlot.auditorium?.name || 'Cinema', seats: selectedSeats } : null} onAuthenticate={rememberBooking} onClose={closeAuthPrompt} backLabel={fromHome ? 'Back to home' : 'Back to movies'} onBack={backToBrowsing} />}
+      {authPromptOpen && !user && <BookingAuthPrompt movieTitle={movie.title} showing={selectedSlot ? { date: selectedDate, time: selectedSlot.time, cinema: auditorium?.name || selectedSlot.auditorium?.name || 'Cinema', seats: selectedSeats } : null} onClose={closeAuthPrompt} backLabel={fromHome ? 'Back to home' : 'Back to movies'} onBack={backToBrowsing} />}
       {movie.cast && movie.cast.length > 0 && (
         <div style={{ marginTop: '2.5rem' }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>Cast</h2>
