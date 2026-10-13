@@ -23,6 +23,10 @@ const toDraft = (movie) => ({
 // What the admin should know about a movie's showings at a glance.
 function showingsSummary(movie) {
   const count = movie.upcomingShowings ?? 0;
+  if (movie.status === 'archived' && movie.autoArchivedAt) {
+    const when = new Date(movie.autoArchivedAt).toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', day: 'numeric', month: 'short', year: 'numeric' });
+    return { text: 'Archived automatically', hint: `On ${when}, after no showings for a while. Publish it to bring it back.`, tone: 'none' };
+  }
   if (movie.status !== 'published') return { text: '—', tone: 'none' };
   if (count > 0) {
     const next = movie.nextShowing ? new Date(movie.nextShowing).toLocaleString('en-PH', { timeZone: 'Asia/Manila', weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : '';

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api';
+import AdminArchiveRule from '../components/admin/AdminArchiveRule';
 import AdminBookings from '../components/admin/AdminBookings';
 import AdminMovieManager from '../components/admin/AdminMovieManager';
 import AdminOverview from '../components/admin/AdminOverview';
@@ -99,7 +100,7 @@ export default function Admin() {
             {tab === 'bookings' && <AdminBookings />}
             {tab === 'rooms' && <AdminRooms />}
             {tab === 'users' && <AdminUsers users={users} reload={reload} />}
-            {tab === 'settings' && <AdminRules standalone />}
+            {tab === 'settings' && <><AdminRules standalone /><AdminArchiveRule onChanged={reload} /></>}
           </div>
         )}
       </div>

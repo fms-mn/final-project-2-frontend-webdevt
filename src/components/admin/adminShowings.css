@@ -104,3 +104,13 @@
 .admin-drawer label.admin-check { display: flex; flex-direction: row; align-items: center; gap: 8px; font-weight: 500; font-size: 13px; color: var(--a-ink); }
 .admin-drawer .weekday-row { display: flex; flex-wrap: wrap; gap: 6px 14px; }
 .seat-preview-grid { max-width: min(100%, calc(var(--seats) * 30px)); }
+
+/* Settings: the archive rule */
+.archive-rule-form { display: grid; gap: 12px; max-width: 420px; margin-top: 12px; }
+.archive-rule-days { display: grid; gap: 6px; font-size: 13px; font-weight: 700; color: var(--a-label); }
+.archive-rule-days input { min-height: 42px; padding: 0 12px; border: 1.5px solid var(--a-ink); border-radius: 9px; background: var(--a-input); color: var(--a-ink); font: inherit; }
+.archive-rule-days input:disabled { background: var(--a-disabled); color: var(--a-muted); border-color: var(--a-line); }
+.archive-preview { margin-top: 18px; padding: 14px 16px; border: 1px dashed var(--a-line); border-radius: 12px; background: var(--a-ground); }
+.archive-preview p { margin: 0 0 8px; font-size: 14px; }
+.archive-preview ul { display: grid; gap: 4px; margin: 0 0 12px; padding-left: 18px; font-size: 14px; }
+.archive-preview li span { color: var(--a-muted); font-size: 12px; margin-left: 6px; }
