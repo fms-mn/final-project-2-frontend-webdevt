@@ -50,3 +50,15 @@ test('corrupt or removed session records cannot revive the in-memory return', ()
   session.removeItem('filme:pending-booking:v1');
   assert.equal(readPendingBooking(session, now), null);
 });
+
+test('a movie clicked before choosing a showing returns to its public details without inventing a screening', () => {
+  const session = storage();
+  const movieOnly = { movieId: 'movie-1', showtimeId: null, date: null, time: null, seats: [] };
+  savePendingBooking(movieOnly, session, now);
+  assert.equal(postAuthDestination({ role: 'user' }, null, session), '/movie/movie-1');
+  assert.equal(readPendingBooking(session, now).showtimeId, null);
+  for (const changes of [{ seats: ['A1'] }, { date: '2026-10-15' }, { time: '18:30' }, { showtimeId: 'screening-1' }]) {
+    assert.equal(validatePendingBooking({ ...movieOnly, ...changes, version: 1, savedAt: now }, now), null);
+  }
+  clearPendingBooking(session);
+});

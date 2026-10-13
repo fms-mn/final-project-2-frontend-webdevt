@@ -7,9 +7,3 @@
 .cinematic-home .board-date-selector {margin-bottom:24px}
 .cinematic-home .showtime-earlier {margin-top:28px}
 @media(max-width:850px) {.tonight-page.cinematic-home {padding:22px 18px 44px}.cinematic-home .board-section {margin-top:36px}.cinematic-home .board-heading {align-items:flex-start;gap:12px}.cinematic-home .board-heading p {text-align:left;max-width:none}.cinematic-home .board-heading h2 {font-size:30px}}
-.booking-auth-prompt {position:fixed;box-sizing:border-box;margin:auto;padding:28px;width:min(560px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;border:1px solid var(--border-color);border-radius:20px;box-shadow:var(--shadow-lg);text-align:left;color:var(--text-primary);background:var(--bg-secondary)}
-.booking-auth-prompt::backdrop {background:#10132d99}
-.booking-auth-prompt h2 {font-size:24px;margin-bottom:16px}
-.booking-auth-prompt p {line-height:1.5;margin-bottom:16px}
-.booking-auth-actions {display:flex;gap:12px;flex-wrap:wrap}
-.booking-auth-actions .btn {flex:1 1 140px}

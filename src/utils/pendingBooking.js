@@ -7,14 +7,15 @@ let memory = null;
 
 export function validatePendingBooking(value, now = Date.now()) {
   if (!value || value.version !== 1 || typeof value.movieId !== 'string' || !idPattern.test(value.movieId) ||
-      typeof value.showtimeId !== 'string' || !idPattern.test(value.showtimeId) ||
-      typeof value.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value.date) ||
-      !Number.isFinite(Date.parse(value.date)) || new Date(value.date).toISOString().slice(0, 10) !== value.date ||
-      typeof value.time !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(value.time) ||
       !Number.isFinite(value.savedAt) || value.savedAt > now || now - value.savedAt > MAX_AGE ||
       !Array.isArray(value.seats) || value.seats.length > MAX_SEATS_PER_BOOKING ||
       value.seats.some(seat => typeof seat !== 'string' || !/^[A-Z][1-9]\d?$/.test(seat)) ||
       new Set(value.seats).size !== value.seats.length) return null;
+  const movieOnly = value.showtimeId === null && value.date === null && value.time === null && value.seats.length === 0;
+  if (!movieOnly && (typeof value.showtimeId !== 'string' || !idPattern.test(value.showtimeId) ||
+      typeof value.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value.date) ||
+      !Number.isFinite(Date.parse(value.date)) || new Date(value.date).toISOString().slice(0, 10) !== value.date ||
+      typeof value.time !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(value.time))) return null;
   return { version: 1, movieId: value.movieId, showtimeId: value.showtimeId, date: value.date,
     time: value.time, seats: [...value.seats], savedAt: value.savedAt };
 }
@@ -48,6 +49,7 @@ export function savePendingBooking(selection, storage, now = Date.now()) {
 }
 
 export function bookingDestination(pending) {
+  if (pending.showtimeId === null) return `/movie/${pending.movieId}`;
   return `/movie/${pending.movieId}?${new URLSearchParams({ date: pending.date, time: pending.time, showtime: pending.showtimeId })}`;
 }
 

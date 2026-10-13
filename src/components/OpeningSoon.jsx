@@ -12,14 +12,14 @@ function OpeningCard({ movie, currentDay }) {
   const calendarUrl = day ? googleCalendarLink(movie, day, window.location.origin) : null;
 
   return <article className="opening-card">
-    <Link className="opening-poster" to={`/movie/${movie._id}`} aria-label={`Preview ${movie.title}`}>
+    <Link className="opening-poster" to={`/movie/${movie._id}`} state={{ promptAccount: true, browsingPage: 'home' }} aria-label={`Preview ${movie.title}`}>
       {movie.posterUrl && !posterFailed && <img src={movie.posterUrl} alt="" onError={() => setPosterFailed(true)} />}
       {(!movie.posterUrl || posterFailed) && <span>POSTER</span>}
     </Link>
     <div className="opening-card-body">
       <div className="opening-date-line"><span className="opening-date-pill">{date ? date.toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', month: 'short', day: 'numeric' }).toUpperCase() : 'TBA'}</span><span className="opening-countdown">{daysLeft === null ? 'DATE TO BE ANNOUNCED' : daysLeft === 0 ? 'OPENS TODAY' : `IN ${daysLeft} ${daysLeft === 1 ? 'DAY' : 'DAYS'}`}</span></div>
-      <Link className="opening-title" to={`/movie/${movie._id}`}>{movie.title}</Link>
-      <Link className="opening-more-details" to={'/movie/' + movie._id + '?details=1'} aria-label={`More details about ${movie.title}`}>More details</Link>
+      <Link className="opening-title" to={`/movie/${movie._id}`} state={{ promptAccount: true, browsingPage: 'home' }}>{movie.title}</Link>
+      <Link className="opening-more-details" to={'/movie/' + movie._id + '?details=1'} state={{ promptAccount: true, browsingPage: 'home' }} aria-label={`More details about ${movie.title}`}>More details</Link>
       <p className="opening-details">{[...movie.genre, movie.rating, movie.duration && `${movie.duration} min`].filter(Boolean).join(' · ')}</p>
     </div>
     <div className="opening-calendar-action">{calendarUrl

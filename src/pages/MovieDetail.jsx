@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useMovie } from '../hooks/useMovies';
@@ -27,6 +27,8 @@ const formatDate = manilaDay;
 export default function MovieDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromHome = location.state?.browsingPage === 'home';
   const [searchParams] = useSearchParams();
   useLayoutEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -69,11 +71,15 @@ export default function MovieDetail() {
   const pageHeadingRef = useRef(null);
 
   useEffect(() => {
+    if (!user && location.state?.promptAccount) setAuthPromptOpen(true);
+  }, [location.key, user]);
+
+  useEffect(() => {
     selectionInitialized.current = false;
     autoSelectShowing.current = !searchParams.get('showtime');
     const pending = readPendingBooking();
     pendingRestore.current = pending?.movieId === id && pending.showtimeId === searchParams.get('showtime') && pending.date === searchParams.get('date') && pending.time === searchParams.get('time') ? pending : null;
-    setSelectionNotice(''); setSelectedDate(searchParams.get('date') || today()); setSelectedTime(searchParams.get('time') || ''); setSelectedShowtimeId(searchParams.get('showtime') || ''); setSelectedSeats([]); setBookingSuccess(null); setConfirmationOpen(false); setAuthPromptOpen(false);
+    setSelectionNotice(''); setSelectedDate(searchParams.get('date') || today()); setSelectedTime(searchParams.get('time') || ''); setSelectedShowtimeId(searchParams.get('showtime') || ''); setSelectedSeats([]); setBookingSuccess(null); setConfirmationOpen(false);
   }, [id, searchParams]);
   const rangeStart = today(), rangeEnd = shiftDay(rangeStart, 6);
   const demoSlots = previewBooking ? Array.from({ length: 7 }, (_, index) => shiftDay(rangeStart, index)).flatMap(date => listShowtimes(id, date).map(slot => ({ ...slot,
@@ -310,6 +316,26 @@ export default function MovieDetail() {
     if (user.role !== 'user' || selectedSeats.length === 0 || selectedSeats.length > MAX_SEATS_PER_BOOKING) return;
     setBookingError('');
     setConfirmationOpen(true);
+  };
+
+  const rememberBooking = () => {
+    const showingId = selectedShowtimeId || searchParams.get('showtime');
+    const selection = { movieId: id, showtimeId: showingId,
+      date: selectedShowtimeId ? selectedDate : searchParams.get('date'),
+      time: selectedShowtimeId ? selectedTime : searchParams.get('time'), seats: selectedSeats };
+    if (!showingId || !savePendingBooking(selection)) savePendingBooking({ movieId: id, showtimeId: null, date: null, time: null, seats: [] });
+  };
+
+  const closeAuthPrompt = () => {
+    setAuthPromptOpen(false);
+    clearPendingBooking();
+    navigate(`${location.pathname}${location.search}${location.hash}`, { replace: true, state: { ...location.state, promptAccount: false } });
+  };
+
+  const backToBrowsing = () => {
+    clearPendingBooking();
+    setAuthPromptOpen(false);
+    navigate(fromHome ? '/' : '/movies', { replace: true });
   };
 
   const handleBooking = async () => {
@@ -644,7 +670,7 @@ export default function MovieDetail() {
       )}
 
       {/* Cast */}
-      {authPromptOpen && <BookingAuthPrompt movieTitle={movie.title} onClose={() => { setAuthPromptOpen(false); clearPendingBooking(); }} />}
+      {authPromptOpen && !user && <BookingAuthPrompt movieTitle={movie.title} showing={selectedSlot ? { date: selectedDate, time: selectedSlot.time, cinema: auditorium?.name || selectedSlot.auditorium?.name || 'Cinema', seats: selectedSeats } : null} onAuthenticate={rememberBooking} onClose={closeAuthPrompt} backLabel={fromHome ? 'Back to home' : 'Back to movies'} onBack={backToBrowsing} />}
       {movie.cast && movie.cast.length > 0 && (
         <div style={{ marginTop: '2.5rem' }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>Cast</h2>
