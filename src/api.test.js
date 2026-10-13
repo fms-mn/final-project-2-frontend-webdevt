@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { api, ApiError, forgetSession, UNAUTHORIZED_EVENT } from './api.js';
+import { api, apiAll, ApiError, forgetSession, UNAUTHORIZED_EVENT } from './api.js';
 
 const originalFetch = globalThis.fetch;
 let calls;
@@ -109,4 +109,16 @@ test('a request cancelled while its answer is arriving is reported as cancelled,
 test('an empty answer is still just null', async () => {
   respond(200, undefined);
   assert.equal(await api('/something'), null);
+});
+
+test('apiAll keeps asking for pages until one comes back short', async () => {
+  const rows = Array.from({ length: 450 }, (_, i) => ({ _id: `s${i}` }));
+  globalThis.fetch = async (url) => {
+    calls.push({ url });
+    const page = Number(new URL(url, 'http://x').searchParams.get('page'));
+    return { ok: true, status: 200, json: async () => rows.slice((page - 1) * 200, page * 200) };
+  };
+  const all = await apiAll('/admin/showtimes?date=2026-10-20');
+  assert.equal(all.length, 450);
+  assert.deepEqual(calls.map((c) => c.url), [1, 2, 3].map((p) => `/api/admin/showtimes?date=2026-10-20&limit=200&page=${p}`));
 });

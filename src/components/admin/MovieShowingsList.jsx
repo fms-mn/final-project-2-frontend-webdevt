@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api } from '../../api';
+import { apiAll } from '../../api';
 import { describeError, pesos } from '../../utils/adminTools';
 import { manilaClock, shortDate } from '../../utils/manila';
 
@@ -15,7 +15,7 @@ export default function MovieShowingsList({ movie, onOpen, onSchedule, refreshKe
   useEffect(() => {
     const controller = new AbortController();
     setError('');
-    api(`/admin/showtimes?movie=${movie._id}&limit=100`, { signal: controller.signal })
+    apiAll(`/admin/showtimes?movie=${movie._id}`, { signal: controller.signal })
       .then(setRows)
       .catch((err) => { if (err.name !== 'AbortError') setError(describeError(err)); });
     return () => controller.abort();

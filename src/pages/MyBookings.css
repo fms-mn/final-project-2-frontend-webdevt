@@ -12,3 +12,9 @@
 
 .ticket-payment { margin: 12px 0 0; color: #525d83; font: 600 12px 'JetBrains Mono Variable', monospace; letter-spacing: .04em; }
 .ticket-payment.is-refunded { color: #b4233e; }
+
+/* "The cinema moved / cancelled this showing" */
+.ticket-note { margin: 12px 0 0; padding: 8px 10px; border-radius: 8px; background: #fff3dc; color: #7a4a05; font-size: 13px; line-height: 1.45; }
+.ticket-note.is-cancelled { background: #fdecef; color: #b4233e; }
+:root[data-theme='dark'] .ticket-note { background: #3a2f12; color: #ffd98a; }
+:root[data-theme='dark'] .ticket-note.is-cancelled { background: #3a2038; color: #ff8294; }

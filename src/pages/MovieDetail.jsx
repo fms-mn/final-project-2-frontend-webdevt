@@ -64,7 +64,8 @@ export default function MovieDetail() {
   const pageHeadingRef = useRef(null);
 
   useEffect(() => { selectionInitialized.current = false; setSelectionNotice(''); setSelectedDate(searchParams.get('date') || today()); setSelectedTime(searchParams.get('time') || ''); setSelectedShowtimeId(searchParams.get('showtime') || ''); setSelectedSeats([]); setBookingSuccess(null); setConfirmationOpen(false); }, [id, searchParams]);
-  const rangeStart = today(), rangeEnd = shiftDay(rangeStart, 6);
+  // Customers see every day that has showings, up to two months ahead (not only this week).
+  const rangeStart = today(), rangeEnd = shiftDay(rangeStart, previewBooking ? 6 : 60);
   const demoSlots = previewBooking ? Array.from({ length: 7 }, (_, index) => shiftDay(rangeStart, index)).flatMap(date => listShowtimes(id, date).map(slot => ({ ...slot,
     startTime: `${date}T${slot.time}:00+08:00`, remainingSeats: demoRemainingSeats(id, date, slot.time),
     bookable: isDemoSlotSafe(id, date, slot.time) && Date.parse(`${date}T${slot.time}:00+08:00`) > Date.now() + DEMO_RULES.salesCutoffMinutes * 60000,
@@ -92,7 +93,9 @@ export default function MovieDetail() {
   const showtimeUnavailable = !scheduleReady || !selectedSlot || !isScheduleSlotBookable(selectedSlot) || !verifiedShowing || !canEnterBooking(verifiedShowing, user?.role);
 
   const ticketPrice = previewBooking ? movie?.price || 0 : (liveSeats?.showtime?.ticketPrice ?? selectedSlot?.ticketPrice ?? 0) / 100;
-  const isBookable = movie?.status === 'now_showing' && user?.role !== 'admin';
+  // A coming-soon movie that already has showings sells advance tickets.
+  const isPresale = movie?.status === 'coming_soon' && (movie?.upcomingShowings ?? 0) > 0;
+  const isBookable = (movie?.status === 'now_showing' || isPresale) && user?.role !== 'admin';
   const isComingSoon = movie?.status === 'coming_soon';
   const isNotShowing = movie?.status === 'not_showing';
   const isSlotUnavailable = slot => !isScheduleSlotBookable(slot);
@@ -342,7 +345,7 @@ export default function MovieDetail() {
   }
 
   return (
-    <div className={`movie-detail booking-experience fade-in ${isComingSoon ? 'coming-soon-detail' : ''} ${isBookable ? 'booking-active' : ''} ${confirmationOpen ? 'modal-open' : ''}`} style={{ '--booking-mobile-bar-height': `${mobileBarHeight}px` }}>
+    <div className={`movie-detail booking-experience fade-in ${isComingSoon && !isBookable ? 'coming-soon-detail' : ''} ${isBookable ? 'booking-active' : ''} ${confirmationOpen ? 'modal-open' : ''}`} style={{ '--booking-mobile-bar-height': `${mobileBarHeight}px` }}>
       {user?.role === 'admin' && <p className="demo-catalog-notice">Admin preview — customer booking is disabled.</p>}
       {isBookable && (
         <nav className="booking-progress" aria-label="Booking progress">
@@ -364,9 +367,9 @@ export default function MovieDetail() {
             <img src={movie.posterUrl} alt={movie.title} />
           </div>
           <div className="movie-detail-text">
-            {isComingSoon && <span className="booking-eyebrow">Coming Soon</span>}
+            {isComingSoon && !isBookable && <span className="booking-eyebrow">{isPresale ? 'Coming soon · Advance tickets on sale' : 'Coming Soon'}</span>}
             {isNotShowing && <span className="booking-eyebrow">No showings right now</span>}
-            {isBookable && <span className="booking-eyebrow">Choose your seats</span>}
+            {isBookable && <span className="booking-eyebrow">{isPresale ? 'Coming soon · Advance tickets' : 'Choose your seats'}</span>}
             <h1 ref={pageHeadingRef} tabIndex={-1}>{movie.title}</h1>
             {isBookable && <p className="booking-mobile-context">{selectedDate ? dayHeading(selectedDate) : 'No upcoming showtimes'} · {selectedSlot ? auditorium?.name || selectedSlot.auditorium?.name || 'Cinema' : 'Select a showing'}</p>}
             <div className="movie-detail-tags">
@@ -396,7 +399,7 @@ export default function MovieDetail() {
                   <span className="stat-value">{movie.director}</span>
                 </div>
               )}
-              {!isComingSoon && !isNotShowing && <div className="stat">
+              {(isBookable || (!isComingSoon && !isNotShowing)) && <div className="stat">
                 <span className="stat-label">Price</span>
                 <span className="stat-value stat-price">{selectedSlot ? '\u20b1' + ticketPrice : 'Choose a showing'}</span>
               </div>}

@@ -26,6 +26,21 @@ export function forgetSession() {
   csrfToken = null;
 }
 
+// Fetches every page of a list (the server sends at most 200 rows at a time), so an admin list
+// never silently stops at the first page.
+export async function apiAll(path, { signal } = {}) {
+  const LIMIT = 200;
+  const all = [];
+  for (let page = 1; page <= 50; page += 1) {
+    const batch = await api(`${path}${path.includes('?') ? '&' : '?'}limit=${LIMIT}&page=${page}`, { signal });
+    if (!Array.isArray(batch)) return batch;
+    if (batch.length && all.some((row) => row._id === batch[0]._id)) break; // a source that ignores paging
+    all.push(...batch);
+    if (batch.length < LIMIT) break;
+  }
+  return all;
+}
+
 export async function api(path, { method = 'GET', body, signal } = {}) {
   if (import.meta.env?.DEV && isDemoAdminSession()) {
     if (signal?.aborted) throw new DOMException('The operation was aborted.', 'AbortError');

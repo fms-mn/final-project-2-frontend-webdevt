@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { api } from '../../api';
+import { api, apiAll } from '../../api';
 import ActionPending from '../ActionPending';
 import { describeError, pesos } from '../../utils/adminTools';
 import { dayHeading, fromInputValue, manilaClock, minutesOfDay, shiftDay, shortDate, toInputValue, today } from '../../utils/manila';
@@ -58,7 +58,7 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
     const controller = new AbortController();
     Promise.all([
       api('/auditoriums', { signal: controller.signal }),
-      ...visibleDays.map((day) => api(`/admin/showtimes?date=${day}&limit=200`, { signal: controller.signal })),
+      ...visibleDays.map((day) => apiAll(`/admin/showtimes?date=${day}`, { signal: controller.signal })),
     ])
       .then(([roomList, ...lists]) => {
         setRooms(roomList);
@@ -80,7 +80,7 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
     const missing = [...new Set(formDaysKey.split('|').filter(Boolean))].filter((day) => !byDay[day] && !otherDays[day]);
     if (missing.length === 0) return undefined;
     let current = true;
-    Promise.all(missing.map((day) => api(`/admin/showtimes?date=${day}&limit=200`).then((rows) => [day, rows]).catch(() => [day, []])))
+    Promise.all(missing.map((day) => apiAll(`/admin/showtimes?date=${day}`).then((rows) => [day, rows]).catch(() => [day, []])))
       .then((pairs) => { if (current) setOtherDays((existing) => ({ ...existing, ...Object.fromEntries(pairs) })); });
     return () => { current = false; };
   }, [formDaysKey, byDay]); // eslint-disable-line react-hooks/exhaustive-deps

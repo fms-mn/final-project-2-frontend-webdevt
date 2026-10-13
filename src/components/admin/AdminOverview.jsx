@@ -1,6 +1,6 @@
 ﻿import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { api } from '../../api';
+import { api, apiAll } from '../../api';
 import { describeError, pesos, trend } from '../../utils/adminTools';
 import { manilaClock, shiftDay, today } from '../../utils/manila';
 import LineChart from './LineChart';
@@ -45,7 +45,7 @@ export default function AdminOverview({ movies, users, periodControlsTarget, onV
 
   useEffect(() => {
     const controller = new AbortController();
-    api(`/admin/showtimes?date=${today()}&limit=200`, { signal: controller.signal })
+    apiAll(`/admin/showtimes?date=${today()}`, { signal: controller.signal })
       .then((rows) => {
         if (!controller.signal.aborted) setBoard(rows.filter((row) => row.status === 'scheduled').sort((a, b) => new Date(a.startTime) - new Date(b.startTime)));
       })

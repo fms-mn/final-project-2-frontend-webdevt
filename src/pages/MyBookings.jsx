@@ -27,8 +27,10 @@ function Ticket({ booking, onCancel, compact }) {
     <div className="wallet-ticket-body">{(booking.isDemo || booking.userId === 'demo-user') && <p className="movie-fixture-note">Simulated booking · no cinema admission</p>}<h3>{booking.movie?.title || 'Movie no longer in catalog'}</h3>
       {compact ? <p>{info.room} · seats {booking.seats.join(', ')}</p> : <div className="wallet-ticket-facts"><span>Date <b>{info.date}</b></span><span>Time <b>{info.time}</b></span><span>Seats <b>{booking.seats.join(', ')}</b></span></div>}
       <div className="wallet-ticket-bottom"><div><small>Code</small><span className="ticket-code">{info.code}</span></div><strong>₱{info.price.toLocaleString('en-PH')}</strong>{onCancel && <button type="button" className="btn btn-danger btn-small" onClick={() => onCancel(booking)}>Cancel ticket</button>}</div>
+      {booking.status === 'confirmed' && booking.showtime?.rescheduledAt && booking.showtime?.originalStartTime && <p className="ticket-note" role="note">{new Date(booking.showtime.originalStartTime).getTime() === new Date(booking.showtime.startTime).getTime() ? `The cinema moved this showing to ${info.room}; the time and your seats are the same.` : `The cinema moved this showing. It was ${shortDate(booking.showtime.originalStartTime)} at ${displayTime(booking.showtime.originalStartTime)}; your seats are the same.`}</p>}
+      {booking.status === 'cancelled' && booking.showtime?.status === 'cancelled' && <p className="ticket-note is-cancelled" role="note">The cinema cancelled this showing{booking.paymentStatus === 'refunded' ? ', and your payment was refunded in full' : ''}.</p>}
       {paymentLine(booking) && <p className={`ticket-payment${booking.paymentStatus === 'refunded' ? ' is-refunded' : ''}`}>{paymentLine(booking)}</p>}
-      {compact && <span className={`ticket-stamp ${booking.status === 'cancelled' ? 'cancelled' : ''}`}>{booking.status === 'cancelled' ? 'Cancelled' : booking.userId === 'demo-user' ? 'Demo ended' : 'Watched'}</span>}
+      {compact && <span className={`ticket-stamp ${booking.status === 'cancelled' ? 'cancelled' : ''}`}>{booking.status === 'cancelled' ? (booking.showtime?.status === 'cancelled' ? 'Cancelled by cinema' : 'Cancelled') : booking.userId === 'demo-user' ? 'Demo ended' : 'Watched'}</span>}
     </div>
   </article>;
 }
