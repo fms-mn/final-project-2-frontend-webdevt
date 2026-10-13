@@ -16,8 +16,8 @@ import { bookingWhen, loadCustomerBookings } from '../utils/ticketHistory';
 function detail(booking) {
   const when = bookingWhen(booking);
   return {
-    when, date: shortDate(when),
-    time: displayTime(when),
+    when, date: Number.isFinite(when.getTime()) ? shortDate(when) : 'Showtime unavailable',
+    time: Number.isFinite(when.getTime()) ? displayTime(when) : 'Time unavailable',
     room: booking.auditorium?.name || listAuditoriums().find(room => room.id === booking.auditoriumId)?.name || 'Cinema',
     code: booking.bookingCode || getDemoBookingReference(booking),
     price: booking.totalAmount != null ? booking.totalAmount / 100 : booking.totalPrice,
@@ -122,13 +122,13 @@ export default function MyBookings() {
     }
     finally { cancelLocked.current = false; setCancelling(false); }
   };
-  return <div className="bookings-page fade-in"><div className="wallet-heading"><div><span className="eyebrow">Your wallet</span><h1>My tickets</h1></div>{!loading && !error && upcoming.length > 0 && <Link to="/movies" className="btn btn-primary">Browse movies</Link>}</div>
+  return <div className="bookings-page wallet-timeline-page fade-in"><div className="wallet-heading"><div><span className="eyebrow">Your wallet</span><h1>My tickets</h1></div>{!loading && !error && upcoming.length > 0 && <Link to="/movies" className="btn btn-primary">Browse movies</Link>}</div>
     {isDemo && <p className="demo-note">Simulated bookings saved in this browser. These are not admission tickets.</p>}
     {feedback && <CancellationSuccess key={feedback.id} reference={feedback.reference} refund={feedback.refund} onDismiss={dismissSuccess} />}
     {loading && <div className="loading"><div className="spinner"/></div>}
     {error && <div className="error-message" role="alert">{error}<button className="btn btn-secondary btn-small" onClick={() => setRevision(v => v+1)}>Try again</button></div>}
-    {!loading && !error && <><section className="wallet-section"><h2 className="eyebrow">Coming up · {upcoming.length} {upcoming.length === 1 ? 'ticket' : 'tickets'}</h2>{upcoming.length ? <div className="wallet-upcoming">{upcoming.map(b => <Ticket key={b._id} booking={b} onCancel={isDemo ? canCancelDemoBooking(b) ? openCancellation : undefined : openCancellation}/>)}</div> : <div className="bookings-empty"><h3>No upcoming tickets</h3><p>Choose a film and reserve your next seats.</p><Link className="btn btn-primary" to="/movies">Browse movies</Link></div>}</section>
-    <TicketHistory key={user.id} bookings={isDemo ? history.map(booking => ({ ...booking, cancellation: demoCancellationInfo(booking) })) : history} getDetail={detail} onRetryRefund={isDemo ? undefined : retryHistoryRefund} refundRefresh={refundRefresh}/></>}
+    {!loading && !error && <div className={'wallet-content-grid' + (upcoming.length ? ' has-upcoming' : '')}><section className="wallet-section wallet-upcoming-section"><h2 className="eyebrow">Upcoming{upcoming.length > 0 && <> · {upcoming.length} {upcoming.length === 1 ? 'booking' : 'bookings'}</>}</h2>{upcoming.length ? <div className="wallet-upcoming">{upcoming.map(b => <Ticket key={b._id} booking={b} onCancel={isDemo ? canCancelDemoBooking(b) ? openCancellation : undefined : openCancellation}/>)}</div> : <div className="bookings-empty"><h3>No upcoming tickets</h3><p>Choose a film and reserve your next seats.</p><Link className="btn btn-primary" to="/movies">Browse movies</Link></div>}<p className="wallet-footnote">Cancelled tickets stay here so you can always see what happened. For refunded bookings, the price shown is the original booking amount.</p></section>
+    <TicketHistory key={user.id} bookings={isDemo ? history.map(booking => ({ ...booking, cancellation: demoCancellationInfo(booking) })) : history} getDetail={detail} onRetryRefund={isDemo ? undefined : retryHistoryRefund} refundRefresh={refundRefresh}/></div>}
     {toCancel && <CancelBookingModal booking={{ ...toCancel, showDate: toCancel.showDate || manilaDay(detail(toCancel).when), showTime: toCancel.showTime || detail(toCancel).when.toLocaleTimeString('en-GB', { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', hour12: false }) }} pending={cancelling} error={cancelError} refundInfo={refundPreview.info} refundLoading={refundPreview.loading} refundError={refundPreview.error} onRetryRefund={() => setRefundAttempt(value => value + 1)} onKeep={close} onCancel={confirm}/>}
   </div>;
 }

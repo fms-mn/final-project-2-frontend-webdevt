@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { loadCustomerBookings, selectHistory } from './ticketHistory.js';
+import { groupHistory, loadCustomerBookings, selectHistory } from './ticketHistory.js';
 const now = Date.parse('2026-10-13T12:00:00+08:00');
 const records = [
   { _id: 'past', status: 'confirmed', movie: { title: 'Midnight Signal' }, bookingCode: 'FLM-PAST', showtime: { startTime: '2026-10-11T20:00:00+08:00' } },
@@ -35,4 +35,18 @@ test('invalid or repeated API pages fail visibly instead of using a partial list
   await assert.rejects(loadCustomerBookings(async () => ({})), /unavailable/);
   const page = Array.from({ length: 200 }, (_, i) => ({ _id: `row-${i}` }));
   await assert.rejects(loadCustomerBookings(async () => page), /could not be verified/);
+});
+
+test('date groups retain sort order and merge when Load more splits the same Manila day', () => {
+  const sameDay = Array.from({ length: 7 }, (_, i) => ({ ...records[0], _id: `same-${i}`, showtime: { startTime: `2026-10-11T${String(10 + i).padStart(2, '0')}:00:00+08:00` } }));
+  const selected = selectHistory([...sameDay, records[1]], { now });
+  const initial = groupHistory(selected, 5);
+  assert.deepEqual(initial.map(group => group.day), ['2026-10-14', '2026-10-11']);
+  assert.equal(initial[1].total, 7);
+  assert.equal(initial[1].bookings.length, 4);
+  const more = groupHistory(selected, 10);
+  assert.equal(more.length, 2);
+  assert.equal(more[1].bookings.length, 7);
+  assert.deepEqual(more.flatMap(group => group.bookings.map(row => row._id)), selected.map(row => row._id));
+  assert.equal(groupHistory([{ ...records[1], showtime: null }], 5)[0].day, 'unknown');
 });

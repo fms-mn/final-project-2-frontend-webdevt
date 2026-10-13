@@ -1,4 +1,5 @@
 import { getDemoBookingReference } from '../data/demoBookings.js';
+import { manilaDay } from './manila.js';
 
 export const bookingWhen = booking => new Date(booking.showtime?.startTime || `${booking.showDate}T${booking.showTime}:00+08:00`);
 
@@ -25,4 +26,17 @@ export async function loadCustomerBookings(request, signal) {
     if (result.length < 200) return [...records.values()];
     if (records.size === before) throw new Error('Booking pages could not be verified. Please try again.');
   }
+}
+
+export function groupHistory(bookings, visibleCount) {
+  const dayOf = booking => Number.isFinite(bookingWhen(booking).getTime()) ? manilaDay(bookingWhen(booking)) : 'unknown';
+  const totals = new Map();
+  for (const booking of bookings) { const day = dayOf(booking); totals.set(day, (totals.get(day) || 0) + 1); }
+  const groups = new Map();
+  for (const booking of bookings.slice(0, visibleCount)) {
+    const day = dayOf(booking);
+    if (!groups.has(day)) groups.set(day, { day, total: totals.get(day), bookings: [] });
+    groups.get(day).bookings.push(booking);
+  }
+  return [...groups.values()];
 }
