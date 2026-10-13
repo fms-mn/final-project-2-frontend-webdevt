@@ -6,7 +6,7 @@ import BackToHome from '../components/BackToHome';
 import './AuthForms.css';
 
 export default function Login() {
-  const { login, loginAsDemo } = useAuth();
+  const { login } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -36,15 +36,6 @@ export default function Login() {
       setError(err.message || 'Login failed');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleDemoLogin = (role) => {
-    setError('');
-    try {
-      goAfterLogin(loginAsDemo(role));
-    } catch (err) {
-      setError(err.message || 'Demo sign-in failed');
     }
   };
 
@@ -89,18 +80,6 @@ export default function Login() {
               <ActionPending pending={loading}>{loading ? 'Signing in...' : 'Sign In'}</ActionPending>
             </button>
           </form>
-
-          {import.meta.env.DEV && (
-            <div className="demo-login">
-              <p>Explore FILME with sample films and simulated bookings.</p>
-              <button type="button" className="btn btn-secondary" onClick={() => handleDemoLogin('user')} disabled={loading}>
-                Continue as Demo User
-              </button>
-              <button type="button" className="btn btn-secondary" onClick={() => handleDemoLogin('admin')} disabled={loading}>
-                View Demo Admin
-              </button>
-            </div>
-          )}
 
           <div className="auth-footer">
             Don&apos;t have an account? <Link to="/register">Sign up</Link>

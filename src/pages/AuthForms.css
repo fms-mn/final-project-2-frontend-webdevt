@@ -19,9 +19,6 @@
 .auth-form-page .auth-footer {margin-top:24px;color:var(--text-secondary);font-size:15px;line-height:1.6}
 .auth-form-page .auth-footer a {color:var(--text-primary);font-weight:700;text-decoration:underline;text-underline-offset:3px}
 .auth-form-page .error-message {margin:0 0 22px}
-.auth-form-page .demo-login {display:flex;flex-direction:column;gap:12px;margin-top:24px;padding-top:24px}
-.auth-form-page .demo-login p {margin:0;color:var(--text-secondary);font-size:14px;line-height:1.5}
-.auth-form-page .demo-login .btn {margin:0;min-height:50px;font-size:15px}
 .auth-form-page a:focus-visible,.auth-form-page button:focus-visible {outline:3px solid var(--chair-focus);outline-offset:3px}
 :root[data-theme='dark'] .auth-form-page .form-group input {background:var(--bg-secondary);border-color:var(--border-color);color:var(--text-primary)}
 :root[data-theme='dark'] .auth-form-page .form-group input:focus {border-color:var(--chair-focus)}
