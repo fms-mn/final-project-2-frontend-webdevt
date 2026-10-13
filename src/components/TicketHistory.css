@@ -21,7 +21,8 @@
 .history-record::before {content:'';position:absolute;left:-17px;top:28px;width:10px;height:10px;border-radius:50%;background:var(--wallet-accent);z-index:1}
 .history-time {position:absolute;right:calc(100% + 27px);top:23px;white-space:nowrap;font:500 12px/1.5 'JetBrains Mono Variable',monospace;color:var(--wallet-ink)}
 .is-date-unknown .history-time {white-space:normal;max-width:66px;right:calc(100% + 20px);font-size:11px}
-.history-card {position:relative;padding:20px 22px;border-radius:16px;background:var(--wallet-card);color:var(--wallet-ink);min-width:0}
+.history-card {position:relative;padding:20px 22px;border-radius:16px;background:var(--wallet-card);color:var(--wallet-ink);min-width:0;cursor:pointer}
+.history-details {cursor:auto}
 .history-row {display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;padding-right:32px;align-items:stretch}
 .history-main {min-width:0}
 .history-side {display:flex;flex-direction:column;justify-content:space-between;gap:6px;min-width:0;max-width:145px}
