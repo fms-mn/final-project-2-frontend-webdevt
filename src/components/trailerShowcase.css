@@ -55,3 +55,4 @@
 @media(max-width:1100px) {.cinema-hero {grid-template-columns:1fr;gap:16px}.cinema-panel {padding:20px;border-radius:20px}.cinema-identity {grid-template-columns:112px minmax(0,1fr)}.cinema-title {font-size:28px}.cinema-media {border-radius:20px}}
 @media(max-width:480px) {.cinema-panel {padding:18px}.cinema-identity {grid-template-columns:96px minmax(0,1fr);gap:14px}.cinema-title {font-size:24px}.cinema-meta span {padding:5px 8px}.cinema-synopsis {font-size:13px}.cinema-indicators {margin-bottom:16px}}
 @media(prefers-reduced-motion:reduce) {.cinema-hero,.cinema-hero * {animation:none!important;transition:none!important}}
+.cinema-book-tickets {margin-top:16px;align-self:flex-start}

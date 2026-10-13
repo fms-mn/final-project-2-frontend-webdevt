@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   cardBrandOf, cardErrors, describePayment, formatCardNumber, formatCountdown, formatExpiry, mobileError,
-  passesLuhn, paymentLine, secondsLeft,
+  passesLuhn, paymentLine, secondsLeft, paymentModeOf, isTestBooking,
 } from './payment.js';
 
 test('card numbers are grouped as they are typed and brands are recognised', () => {
@@ -63,23 +63,23 @@ test('the hold countdown never goes below zero and reads as minutes and seconds'
 });
 
 test('a payment reads the way a receipt would', () => {
-  const card = { method: 'card', cardBrand: 'Visa', cardLast4: '4242', status: 'paid', reference: 'PAY-AAAA1111' };
+  const card = { mode: 'simulated', method: 'card', cardBrand: 'Visa', cardLast4: '4242', status: 'paid', reference: 'PAY-AAAA1111' };
   assert.equal(describePayment(card), 'Visa •••• 4242');
   assert.equal(describePayment({ method: 'gcash', walletLast4: '4567' }), 'GCash •••• 4567');
   assert.equal(describePayment({ method: 'maya', walletLast4: '0001' }), 'Maya •••• 0001');
   assert.equal(describePayment(null), '');
-  assert.equal(paymentLine({ payment: card, paymentStatus: 'paid' }), 'Paid · Visa •••• 4242');
-  assert.equal(paymentLine({ payment: { ...card, status: 'refunded', refundReference: 'RF-ZZ99' }, paymentStatus: 'refunded' }), 'Refunded · RF-ZZ99');
+  assert.equal(paymentLine({ payment: card, paymentStatus: 'paid' }), 'Test payment successful · No real money was charged · Visa •••• 4242');
+  assert.equal(paymentLine({ payment: { ...card, status: 'refunded', refundReference: 'RF-ZZ99' }, paymentStatus: 'refunded' }), 'Test refund · RF-ZZ99');
   assert.equal(paymentLine({ payment: null, paymentStatus: 'paid' }), '', 'an older booking has no payment record');
   assert.equal(paymentLine({ payment: { ...card, status: 'failed' }, paymentStatus: 'unpaid' }), '');
 });
 
 test('the admin sees at a glance whether a booking is paid, refunded or still waiting', async () => {
   const { paymentSummary } = await import('./payment.js');
-  const card = { method: 'card', cardBrand: 'Visa', cardLast4: '4242' };
-  assert.deepEqual(paymentSummary({ paymentStatus: 'paid', payment: card }), { label: 'Paid', text: 'Visa •••• 4242', tone: 'paid' });
-  assert.equal(paymentSummary({ paymentStatus: 'paid', payment: null }).text, 'Before online payments', 'an older booking');
-  assert.deepEqual(paymentSummary({ paymentStatus: 'refunded', payment: card }), { label: 'Refunded', text: 'Visa •••• 4242', tone: 'refunded' });
+  const card = { mode: 'simulated', method: 'card', cardBrand: 'Visa', cardLast4: '4242' };
+  assert.deepEqual(paymentSummary({ paymentStatus: 'paid', payment: card }), { label: 'Test paid', text: 'Visa •••• 4242', tone: 'paid' });
+  assert.equal(paymentSummary({ paymentStatus: 'paid', payment: null }).label, 'Unverified', 'an older booking without mode metadata');
+  assert.deepEqual(paymentSummary({ paymentStatus: 'refunded', payment: card }), { label: 'Test refund', text: 'Visa •••• 4242', tone: 'refunded' });
   assert.equal(paymentSummary({ paymentStatus: 'unpaid', status: 'pending' }).label, 'Awaiting');
   assert.equal(paymentSummary({ paymentStatus: 'unpaid', status: 'expired' }).label, 'Not paid');
   assert.equal(paymentSummary({ paymentStatus: null, status: 'cancelled' }).label, '—');
@@ -91,4 +91,14 @@ test('a refunded ticket reports what came back, an unpaid or demo one reports no
   assert.equal(refundOf({ payment: { status: 'paid', amount: 80000 } }), null);
   assert.equal(refundOf({ payment: null }), null);
   assert.equal(refundOf(undefined), null);
+});
+
+test('simulation mode comes from provider metadata, independently of the account', () => {
+  assert.equal(paymentModeOf({ paymentMode: 'simulated' }), 'simulated');
+  assert.equal(isTestBooking({ paymentMode: 'simulated' }), true);
+  assert.equal(paymentModeOf({ payment: { mode: 'simulated' } }), 'simulated');
+  assert.equal(paymentModeOf({ isDemo: true }), null, 'an account flag cannot verify a payment provider');
+  assert.equal(paymentModeOf({}), null);
+  assert.equal(isTestBooking({ paymentMode: 'live' }), false);
+  assert.match(paymentLine({ payment: { method: 'card', status: 'paid' } }), /Payment mode unverified/);
 });

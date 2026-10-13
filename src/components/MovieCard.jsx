@@ -15,6 +15,7 @@ import MovieTrailerPreview from './MovieTrailerPreview';
 export default function MovieCard({ movie, showShowtimes = false, previewOnHover = false, refined = false }) {
   const isShowing = movie.status === 'now_showing';
   const notShowing = movie.status === 'not_showing'; // released, but nothing to book right now
+  const presale = movie.status === 'coming_soon' && (movie.upcomingShowings ?? 0) > 0; // advance tickets
   const media = previewOnHover ? previewMediaFor(trailerVideoId(movie), demoHeroMediaFor(movie._id)) : null;
   const preview = useHoverPreview({ enabled: previewOnHover });
   const cardRef = useRef(null);
@@ -23,7 +24,7 @@ export default function MovieCard({ movie, showShowtimes = false, previewOnHover
   const releaseLabel = Number.isNaN(release.getTime()) ? '' : release.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 
   return (
-    <Link ref={cardRef} to={`/movie/${movie._id}`} className={`movie-card${refined ? ' movie-card-refined' : ''}${preview.visible ? ' is-previewing' : ''}`} aria-label={refined ? `${movie.title}: ${isShowing ? 'Choose a showing' : notShowing ? 'No showings right now' : 'View details'}` : undefined} {...(refined ? {} : preview.handlers)}>
+    <Link ref={cardRef} to={`/movie/${movie._id}`} state={{ browsingPage: 'movies' }} className={`movie-card${refined ? ' movie-card-refined' : ''}${preview.visible ? ' is-previewing' : ''}`} aria-label={refined ? `${movie.title}: ${isShowing ? 'Choose a showing' : notShowing ? 'No showings right now' : 'View details'}` : undefined} {...(refined ? {} : preview.handlers)}>
       <div className="movie-card-poster" {...(refined ? preview.handlers : {})}>
         {refined && (!movie.posterUrl || failedPoster === movie.posterUrl) ? (
           <div className="movie-poster-fallback" aria-label="Poster unavailable">FILME</div>
@@ -64,7 +65,7 @@ export default function MovieCard({ movie, showShowtimes = false, previewOnHover
           </div>
         ) : refined ? (
           <div className="movie-coming-action">
-            {notShowing ? <small>No showings right now</small> : releaseLabel && <small>In cinemas {releaseLabel}</small>}
+            {notShowing ? <small>No showings right now</small> : releaseLabel && <small>In cinemas {releaseLabel}{presale ? ' · Tickets on sale' : ''}</small>}
             <span className="movie-card-price">View details <FiArrowRight aria-hidden="true" /></span>
           </div>
         ) : notShowing ? (
@@ -73,7 +74,7 @@ export default function MovieCard({ movie, showShowtimes = false, previewOnHover
           <div className="movie-card-release">
             In cinemas {new Date(movie.releaseDate).toLocaleDateString('en-PH', {
               month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC',
-            })}
+            })}{presale ? ' · Tickets on sale' : ''}
           </div>
         )}
         {showShowtimes && isShowing && (

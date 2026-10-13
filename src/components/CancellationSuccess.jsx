@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { FiX } from 'react-icons/fi';
+import { FiInfo, FiX } from 'react-icons/fi';
 import './CancellationSuccess.css';
 
 const SEQUENCE_MS = 8000;
 
-// `refund` ({ amount in pesos, reference }) is given when the ticket had been paid for.
 export default function CancellationSuccess({ reference, refund, onDismiss }) {
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -40,7 +39,7 @@ export default function CancellationSuccess({ reference, refund, onDismiss }) {
   const items = [
     ['Booking cancelled', reference],
     ['Seats released', 'Available to book again.'],
-    ['Moved to History', 'View your cancelled booking.'],
+    [refund?.title || 'Refund information unavailable', refund ? `${refund.message}${refund.reference ? ` Reference: ${refund.reference}.` : ''} View this cancelled booking in History.` : 'Check refund information in History.'],
   ];
 
   return createPortal(
@@ -49,16 +48,15 @@ export default function CancellationSuccess({ reference, refund, onDismiss }) {
         onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
         onFocusCapture={() => setFocused(true)} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }}>
         <span className="cancellation-success-announcement" role="status" aria-live="polite" aria-atomic="true">
-          Booking {reference} cancelled. Seats released and available to book again. Your cancelled booking is in History.
-          {refund && ` Your payment of ₱${refund.amount.toLocaleString('en-PH')} was refunded, reference ${refund.reference}.`}
+          Booking {reference} cancelled. Seats released and available to book again. Your cancelled booking is in History. {refund?.title}. {refund?.message} {refund?.reference && `Refund reference: ${refund.reference}.`}
         </span>
         <div className="cancellation-success-items" aria-hidden="true">
           {items.map(([heading, text], index) => (
             <div className={`cancellation-success-item item-${index + 1}`} key={heading}>
-              <svg aria-hidden="true" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              {index === 2 && refund?.title !== 'Simulated refund recorded' ? <FiInfo aria-hidden="true" /> : <svg aria-hidden="true" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                 <circle className="cancellation-success-ring" cx="14" cy="14" r="12" />
                 <path className="cancellation-success-tick" d="M8.5 14.5l4 4 7-8" />
-              </svg>
+              </svg>}
               <div><strong>{heading}</strong><p className={index === 0 ? 'cancellation-success-reference' : undefined}>{text}</p></div>
             </div>
           ))}

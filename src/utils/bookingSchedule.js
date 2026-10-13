@@ -13,9 +13,10 @@ export function bookingSchedule(slots, movieId, from, through, now = Date.now())
 
 export const isScheduleSlotBookable = slot => slot.bookable !== false && slot.remainingSeats > 0;
 
-export function chooseScheduleSelection(schedule, { date, showtimeId, time, preserveDate = false }) {
-  const direct = schedule.slots.find(slot => (showtimeId ? slot.id === showtimeId : slot.date === date && slot.time === time) && isScheduleSlotBookable(slot));
+export function chooseScheduleSelection(schedule, { date, showtimeId, time, preserveDate = false, autoSelect = true }) {
+  const direct = schedule.slots.find(slot => (showtimeId ? slot.id === showtimeId && (!date || slot.date === date) && (!time || slot.time === time) : slot.date === date && slot.time === time) && isScheduleSlotBookable(slot));
   if (direct) return { date: direct.date, slot: direct };
+  if (showtimeId || !autoSelect) return { date: date || '', slot: null };
   const firstAvailable = schedule.slots.find(isScheduleSlotBookable);
   const nextDate = preserveDate && schedule.dates.includes(date) ? date : firstAvailable?.date || schedule.dates[0] || '';
   return { date: nextDate, slot: schedule.slots.find(slot => slot.date === nextDate && isScheduleSlotBookable(slot)) || null };

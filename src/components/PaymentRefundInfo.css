@@ -1,0 +1,5 @@
+.payment-refund-info {margin:18px 0;padding:16px;border:1px solid var(--cancel-border,var(--border-color));border-radius:14px;background:var(--cancel-surface,var(--surface-tint));color:inherit;text-align:left;overflow-wrap:anywhere;font-size:14px;line-height:1.5}
+section.payment-refund-info > h3 {margin:0 0 10px;font-size:17px;line-height:1.3;color:inherit}
+.payment-refund-info p {margin:6px 0;color:inherit}
+.payment-refund-info code {font-size:12px;overflow-wrap:anywhere}
+.payment-refund-info .btn {margin-top:10px;min-height:44px;white-space:normal}

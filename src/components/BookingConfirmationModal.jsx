@@ -3,9 +3,9 @@ import { createPortal } from 'react-dom';
 import { getDemoBookingReference } from '../data/demoBookings';
 import { displayTime, shortDate } from '../utils/manila';
 import { listAuditoriums } from '../data/demoSchedule';
-import { describePayment } from '../utils/payment';
+import { describePayment, isTestBooking, paymentModeOf } from '../utils/payment';
 import HoldTimer from './HoldTimer';
-import PaymentPanel from './PaymentPanel';
+import PaymentPanel, { PaymentSimulationNotice } from './PaymentPanel';
 
 // `payment` (live bookings only) switches the dialog to its payment step: { hold, walletPayment, pending, error,
 // onPay, onAuthorize, onRelease, onExpire }. The seats are held until `hold.holdExpiresAt`.
@@ -76,7 +76,8 @@ export default function BookingConfirmationModal({ draft, booking, pending, erro
   const when = booking?.showtime?.startTime ? new Date(booking.showtime.startTime) : new Date(`${booking?.showDate || draft.showDate}T${booking?.showTime || draft.showTime}:00+08:00`);
   const showDate = shortDate(when);
   const showTime = displayTime(when);
-  const simulated = draft.isDemo || booking?.isDemo;
+  const simulated = paymentModeOf(draft) === 'simulated' || isTestBooking(booking) || paymentModeOf(payment?.hold) === 'simulated';
+  const paymentVerified = paymentModeOf(payment?.hold) === 'simulated';
   const paying = Boolean(payment && !booking);
   const seats = booking?.seats || draft.seats;
   const code = booking && (booking.bookingCode || getDemoBookingReference(booking));
@@ -104,13 +105,13 @@ export default function BookingConfirmationModal({ draft, booking, pending, erro
             {celebrationKey === bookingKey && <span className="confirmation-confetti">{Array.from({ length: 8 }, (_, index) => <i key={index} />)}</span>}
           </span> : <span className="booking-eyebrow">Final step</span>}
           <button type="button" className="confirmation-close" aria-label={booking ? 'Close ticket' : 'Close confirmation'} onClick={onClose} disabled={pending}>×</button>
-          <h2 id="booking-modal-title" ref={headingRef} tabIndex={-1}>{simulated ? booking ? 'Demo booking saved' : 'Confirm simulated booking' : booking ? 'Booking confirmed' : paying ? 'Pay for your tickets' : 'Confirm your booking'}</h2>
-          <p id="booking-modal-reference" className="booking-modal-reference">{simulated ? 'This booking is simulated. No payment is taken and this code is not valid for cinema admission.' : booking ? (booking.payment ? 'Payment received. Your booking is confirmed and saved in My tickets. Show the code below at the cinema.' : 'Your booking is confirmed and saved in My tickets. Show the code below at the cinema.') : paying ? 'Your seats are reserved for you while you pay.' : 'Review your seats and total before confirming.'}</p>
+          <h2 id="booking-modal-title" ref={headingRef} tabIndex={-1}>{booking ? simulated ? booking.payment ? 'Test payment successful' : 'Test booking saved' : 'Booking saved' : paying ? paymentVerified ? 'Simulate your payment' : 'Payment unavailable' : simulated ? 'Confirm test booking' : 'Confirm your booking'}</h2>
+          <p id="booking-modal-reference" className="booking-modal-reference">{simulated ? booking ? 'No real money was charged. This test booking is saved in My tickets and is not valid for cinema admission.' : 'This is a test booking. No real money will be charged, and the ticket is not valid for cinema admission.' : booking ? 'Payment mode could not be verified. This booking is not valid for cinema admission.' : paying ? 'Payment mode could not be verified. Payment is unavailable.' : 'Review your seats and total before confirming.'}</p>
         </header>
         <div className="confirmation-modal-content">
         <div className={`confirmation-ticket ${booking ? 'is-confirmed' : 'is-review'} ${booking && celebrationKey === bookingKey ? 'is-celebrating' : ''}`}>
           <div className="confirmation-main">
-            <div className="confirmation-brand"><img src="/filme-mark.svg" alt="" /> FILME <span>{simulated ? 'DEMO · ' : 'ADMIT '}{seats.length}</span></div>
+            <div className="confirmation-brand"><img src="/filme-mark.svg" alt="" /> FILME <span>{simulated ? 'TEST · ' : 'SEATS · '}{seats.length}</span></div>
             <h3>{booking?.movie?.title || draft.movieTitle}</h3>
             <dl><div><dt>Date</dt><dd>{showDate}</dd></div><div><dt>Time</dt><dd>{showTime}</dd></div><div><dt>Cinema</dt><dd>{auditoriumName}</dd></div><div><dt>Seats</dt><dd>{seats.join(' · ')}</dd></div></dl>
           </div>
@@ -121,7 +122,7 @@ export default function BookingConfirmationModal({ draft, booking, pending, erro
             <span className="confirmation-copy-feedback" role="status" aria-live="polite">{copyFeedback}</span>
             <div className="ticket-bars" aria-hidden="true"/>
             <div className="confirmation-price"><span>{seats.length} × ₱{unitPrice.toLocaleString('en-PH')}</span><b>₱{price.toLocaleString('en-PH')}</b></div>
-            {booking.payment && <span className="confirmation-paid">Paid · {describePayment(booking.payment)}<br />{booking.payment.reference}</span>}
+            {booking.payment && <span className="confirmation-paid">{simulated ? 'Test payment' : 'Payment mode unverified'} · {describePayment(booking.payment)}<br />{booking.payment.reference}</span>}
           </div> : <div className="confirmation-stub confirmation-review-stub">
             <small>Price breakdown</small>
             <span className="confirmation-review-unit">{seats.length} {seats.length === 1 ? 'ticket' : 'tickets'} × ₱{unitPrice.toLocaleString('en-PH')}</span>
@@ -131,16 +132,17 @@ export default function BookingConfirmationModal({ draft, booking, pending, erro
         {paying && <>
           <HoldTimer expiresAt={payment.hold.holdExpiresAt} onExpire={payment.onExpire} />
           <PaymentPanel
-            formId="payment-form" total={price} pending={payment.pending} error={payment.error}
+            formId="payment-form" mode={paymentModeOf(payment.hold)} total={price} pending={payment.pending} error={payment.error}
             walletPayment={payment.walletPayment} onPay={payment.onPay} onAuthorize={payment.onAuthorize}
           />
         </>}
+        {!paying && !booking && paymentModeOf(draft) === 'simulated' && <><PaymentSimulationNotice /><p className="pay-wallet-help">This local demo saves a test booking without a payment step. No payment details are needed.</p></>}
         </div>
         <footer className="booking-modal-actions confirmation-modal-actions">
           {!booking && !paying && error && <p className="confirmation-error" role="alert">{error}</p>}
           {paying ? <>
             <button type="button" className="btn btn-secondary" onClick={payment.onRelease} disabled={payment.pending}>Back to seats</button>
-            {!payment.walletPayment && <button type="submit" form="payment-form" className="btn btn-primary confirmation-submit" disabled={payment.pending} aria-busy={payment.pending}>{payment.pending ? 'Processing...' : `Pay ₱${price.toLocaleString('en-PH')}`}</button>}
+            {!payment.walletPayment && <button type="submit" form="payment-form" className="btn btn-primary confirmation-submit" disabled={payment.pending || !paymentVerified} aria-busy={payment.pending}>{payment.pending ? 'Simulating...' : `Simulate Payment ₱${price.toLocaleString('en-PH')}`}</button>}
           </> : booking ? <>
             <button type="button" className="btn btn-primary" onClick={onViewBookings}>Go to My tickets</button>
             <button type="button" className="btn btn-secondary" onClick={onClose}>Close</button>
