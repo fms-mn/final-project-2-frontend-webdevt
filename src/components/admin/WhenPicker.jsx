@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { dayHeading, today } from '../../utils/manila';
-import { COMMON_TIMES, TIME_OPTIONS, clock12, endsText, quickDays } from '../../utils/timeSlots';
+import { COMMON_TIMES, TIME_OPTIONS, clock12, endsText, hasPassed, quickDays } from '../../utils/timeSlots';
 
 // Pick the day and the start time of a showing without typing a date and a time into one box:
 // tap Today / Tomorrow / a day, tap a common start time (or choose any 15-minute time), and the
@@ -47,7 +47,8 @@ export default function WhenPicker({ value, onChange, disabled = false, minutes,
           <b>{dayHeading(day)}</b> at <b>{clock12(time)}</b>{minutes ? <> · {endsText(time, minutes)}</> : null}
         </p>
       )}
-      {problem && <p className="when-problem" role="alert">{problem}</p>}
+      {hasPassed(value) && <p className="when-problem" role="alert">That time has already passed. Pick a later time or another day.</p>}
+      {problem && !hasPassed(value) && <p className="when-problem" role="alert">{problem}</p>}
     </div>
   );
 }

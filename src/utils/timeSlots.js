@@ -50,3 +50,13 @@ export function quickDays(today, count = 7) {
     return { day, label };
   });
 }
+
+// Where a new showing starts by default on `day`: the first of the usual start times that is still
+// at least half an hour away, or the next day at 4:00 PM when today has run out of them.
+export function defaultStart(day, nowMs = Date.now()) {
+  const pick = ['16:00', '19:00', '21:30', '13:00', '10:00'].find((clock) => new Date(`${day}T${clock}:00+08:00`).getTime() > nowMs + 30 * 60 * 1000);
+  return pick ? `${day}T${pick}` : `${shiftDay(day, 1)}T16:00`;
+}
+
+// Has "YYYY-MM-DDTHH:MM" (cinema time) already passed?
+export const hasPassed = (value, nowMs = Date.now()) => Boolean(value) && new Date(`${value}:00+08:00`).getTime() <= nowMs;

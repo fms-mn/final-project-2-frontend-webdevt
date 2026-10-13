@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { COMMON_TIMES, TIME_OPTIONS, clock12, endOf, endsText, quickDays } from './timeSlots.js';
+import { COMMON_TIMES, TIME_OPTIONS, clock12, defaultStart, endOf, endsText, hasPassed, quickDays } from './timeSlots.js';
 import { findClash } from './clashes.js';
 
 test('clock times read the way people say them', () => {
@@ -54,4 +54,20 @@ test('clashes: overlapping, too close, and fine', () => {
 test('cancelled showings never clash', () => {
   const existing = [row('1', '2026-10-14T10:00:00+08:00', '2026-10-14T12:00:00+08:00', { status: 'cancelled' })];
   assert.equal(findClash(existing, { auditorium: 'A', startMs: at('10:30'), endMs: at('12:30'), gapMinutes: 15 }), null);
+});
+
+const manila = (text) => new Date(`${text}:00+08:00`).getTime();
+
+test('a new showing starts at the next sensible time, never in the past', () => {
+  assert.equal(defaultStart('2026-10-13', manila('2026-10-13T09:00')), '2026-10-13T16:00', 'morning: 4:00 PM today');
+  assert.equal(defaultStart('2026-10-13', manila('2026-10-13T15:45')), '2026-10-13T19:00', '4:00 PM is under half an hour away');
+  assert.equal(defaultStart('2026-10-13', manila('2026-10-13T19:10')), '2026-10-13T21:30');
+  assert.equal(defaultStart('2026-10-13', manila('2026-10-13T22:00')), '2026-10-14T16:00', 'today has run out: tomorrow');
+  assert.equal(defaultStart('2026-10-20', manila('2026-10-13T22:00')), '2026-10-20T16:00', 'another day is untouched');
+});
+
+test('a time that has passed is noticed', () => {
+  assert.equal(hasPassed('2026-10-13T10:00', manila('2026-10-13T10:30')), true);
+  assert.equal(hasPassed('2026-10-13T10:00', manila('2026-10-13T09:59')), false);
+  assert.equal(hasPassed('', manila('2026-10-13T09:59')), false);
 });

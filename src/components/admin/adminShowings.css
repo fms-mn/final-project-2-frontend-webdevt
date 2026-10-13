@@ -154,3 +154,7 @@
 .bulk-skipped summary { cursor: pointer; font-weight: 700; }
 .bulk-skipped ul { margin: 8px 0 0; padding-left: 18px; }
 @media (max-width: 480px) { .bulk-dates { grid-template-columns: 1fr; } }
+
+/* "Showings are scheduled, but the movie is still a draft": offer to publish it */
+.publish-prompt { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.publish-prompt-actions { display: flex; gap: 8px; }

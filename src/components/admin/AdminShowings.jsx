@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../../api';
 import ActionPending from '../ActionPending';
 import { describeError, pesos } from '../../utils/adminTools';
 import { dayHeading, fromInputValue, manilaClock, minutesOfDay, shiftDay, shortDate, toInputValue, today } from '../../utils/manila';
 import { findClash } from '../../utils/clashes';
+import { defaultStart } from '../../utils/timeSlots';
 import { movieColor, timeAtFraction, weekDays, weekLabel } from '../../utils/schedule';
 import AdminBulk from './AdminBulk';
 import Drawer from './Drawer';
@@ -28,7 +29,7 @@ function place(showing, from, to) {
   return { left: `${left}%`, width: `${width}%` };
 }
 
-export default function AdminShowings({ movies, scheduleFor, focusShowing }) {
+export default function AdminShowings({ movies, scheduleFor, focusShowing, reloadMovies }) {
   const { busy, busyAction, error, notice, setError, setNotice, clear, run } = useAdminAction();
   const [view, setView] = useState('day'); // 'day' or 'week'
   const [date, setDate] = useState(today());
@@ -43,8 +44,16 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing }) {
   const [move, setMove] = useState({ startTime: '', auditorium: '' });
   const [blockedDraft, setBlockedDraft] = useState([]);
   const [bulk, setBulk] = useState({ open: false, mode: 'many' });
+  const [publishPrompt, setPublishPrompt] = useState(null); // a draft movie that just got showings: { id, title }
   const [gapMinutes, setGapMinutes] = useState(15); // the cinema's gap between shows
   const [otherDays, setOtherDays] = useState({}); // showings of days picked in a form that are not on screen
+
+  // Every change to the schedule changes the showing counts the Movies screen shows, so refresh them.
+  const firstRevision = useRef(true);
+  useEffect(() => {
+    if (firstRevision.current) { firstRevision.current = false; return; }
+    reloadMovies?.();
+  }, [revision]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const visibleDays = useMemo(() => (view === 'week' ? weekDays(date) : [date]), [view, date]);
 
@@ -96,7 +105,8 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing }) {
   const everything = useMemo(() => Object.values(byDay).flat(), [byDay]);
   const showings = byDay[date] || [];
   const selected = everything.find((row) => row._id === selectedId);
-  const publishedMovies = useMemo(() => movies.filter((movie) => movie.status === 'published'), [movies]);
+  // Drafts can be scheduled too: customers see the showings once the movie is published. Archived movies cannot.
+  const publishedMovies = useMemo(() => movies.filter((movie) => movie.status !== 'archived'), [movies]);
   const activeRooms = useMemo(() => rooms.filter((room) => room.isActive), [rooms]);
   const canAdd = publishedMovies.length > 0 && activeRooms.length > 0;
 
@@ -140,13 +150,13 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing }) {
   };
 
   // Starts a new showing, optionally on a given day, at a given time, in a given room.
-  const startAdd = ({ day = date, time = '16:00', room } = {}) => {
+  const startAdd = ({ day = date, time, room } = {}) => {
     setAdding(true);
     setSelectedId('');
     setConfirmCancel(false);
     clear();
     setHiddenNew(false);
-    setDraft({ movie: publishedMovies[0]?._id || '', auditorium: room || activeRooms[0]?._id || '', startTime: `${day}T${time}`, ticketPrice: '400' });
+    setDraft({ movie: publishedMovies[0]?._id || '', auditorium: room || activeRooms[0]?._id || '', startTime: time ? `${day}T${time}` : defaultStart(day), ticketPrice: '400' });
   };
 
   const goToDay = (day) => {
@@ -171,6 +181,7 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing }) {
       const day = draft.startTime.slice(0, 10);
       setAdding(false); setSelectedId(''); setDraft(null);
       if (adding && !visibleDays.includes(day)) setDate(day);
+      if (adding) askToPublish(draft.movie);
       setRevision((value) => value + 1);
     }
   };
@@ -182,6 +193,16 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing }) {
   };
 
   const afterChange = () => setRevision((value) => value + 1);
+
+  // Showings for a movie that is still a draft are hidden from customers: offer to publish it.
+  const askToPublish = (movieId) => {
+    const movie = movies.find((item) => item._id === movieId);
+    setPublishPrompt(movie && movie.status === 'draft' ? { id: movie._id, title: movie.title } : null);
+  };
+  const publishMovie = async () => {
+    const done = await run(() => api(`/admin/movies/${publishPrompt.id}`, { method: 'PATCH', body: { status: 'published' } }), `"${publishPrompt.title}" is published. Its showings are now on sale.`, 'publish');
+    if (done) { setPublishPrompt(null); reloadMovies?.(); }
+  };
 
   const moveShowing = async (event) => {
     event.preventDefault();
@@ -248,6 +269,15 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing }) {
   return (
     <>
       <Feedback error={panelOpen ? '' : error} notice={notice} />
+      {publishPrompt && (
+        <div className="admin-notice publish-prompt" role="status">
+          <span>Showings are scheduled for <b>{publishPrompt.title}</b>, but it is still a draft, so customers can&apos;t see them yet.</span>
+          <span className="publish-prompt-actions">
+            <button type="button" className="btn btn-primary btn-small" disabled={busy} aria-busy={busyAction === 'publish'} onClick={publishMovie}>{busyAction === 'publish' ? 'Publishing...' : `Publish ${publishPrompt.title} now`}</button>
+            <button type="button" className="btn btn-secondary btn-small" onClick={() => setPublishPrompt(null)}>Later</button>
+          </span>
+        </div>
+      )}
 
       <div className="admin-panel show-toolbar">
         <div className="show-toolbar-nav">
@@ -267,7 +297,7 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing }) {
           <button type="button" className="btn btn-primary btn-small" onClick={() => startAdd()} disabled={!canAdd}>+ Add showing</button>
         </div>
       </div>
-      {!canAdd && <p className="admin-warning">To add a showing you need at least one published movie and one active room. Publish a movie in Movies, or add a room in Rooms.</p>}
+      {!canAdd && <p className="admin-warning">To add a showing you need at least one movie (a draft is fine) and one active room. Add a movie in Movies, or a room in Rooms.</p>}
 
       {view === 'week' ? (
         <section className="week-board" aria-label="Week schedule">
@@ -379,7 +409,7 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing }) {
             <label>Movie
               <select value={draft.movie} onChange={edit('movie')} disabled={locked} required>
                 {!publishedMovies.some((movie) => movie._id === draft.movie) && draft.movie && <option value={draft.movie}>{selected?.movie?.title}</option>}
-                {publishedMovies.map((movie) => <option key={movie._id} value={movie._id}>{movie.title} ({movie.duration} min)</option>)}
+                {publishedMovies.map((movie) => <option key={movie._id} value={movie._id}>{movie.title} ({movie.duration} min){movie.status === 'draft' ? ' · draft' : ''}</option>)}
               </select>
             </label>
             <label>Room
@@ -466,7 +496,7 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing }) {
         defaultDay={date}
         onModeChange={(mode) => setBulk((current) => ({ ...current, mode }))}
         onClose={() => setBulk((current) => ({ ...current, open: false }))}
-        onDone={(message) => { setBulk((current) => ({ ...current, open: false })); setNotice(message); afterChange(); }}
+        onDone={(message, movieId) => { setBulk((current) => ({ ...current, open: false })); setNotice(message); if (movieId) askToPublish(movieId); afterChange(); }}
       />
     </>
   );

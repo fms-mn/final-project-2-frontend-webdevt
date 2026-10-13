@@ -23,7 +23,8 @@ const dayLabel = (day) => new Date(`${day}T12:00:00+08:00`).toLocaleDateString('
 export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mode, onModeChange, onClose, defaultDay }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const published = movies.filter((movie) => movie.status === 'published');
+  // Drafts can be scheduled too (customers see the showings once the movie is published); archived ones cannot.
+  const published = movies.filter((movie) => movie.status !== 'archived');
   const active = rooms.filter((room) => room.isActive);
 
   const [movie, setMovie] = useState('');
@@ -57,7 +58,7 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
   // What would be sent, or why nothing can be sent yet.
   const request = useMemo(() => {
     if (mode === 'many') {
-      if (!chosenMovie || !chosenRoom) return { problem: 'Add a published movie and an active room first.' };
+      if (!chosenMovie || !chosenRoom) return { problem: 'Add a movie (it can be a draft) and an active room first.' };
       if (times.length === 0) return { problem: 'Pick at least one start time.' };
       if (weekdays.length === 0) return { problem: 'Pick at least one day of the week.' };
       const cents = Math.round(Number(price) * 100);
@@ -111,7 +112,7 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
     setBusy(true);
     try {
       const done = await api(request.path, { method: 'POST', body: { ...request.body, skipConflicts: skipped > 0, dryRun: false } });
-      onDone(`${done.createdCount} showing${done.createdCount === 1 ? '' : 's'} scheduled${done.skippedCount ? `, ${done.skippedCount} skipped` : ''}`);
+      onDone(`${done.createdCount} showing${done.createdCount === 1 ? '' : 's'} scheduled${done.skippedCount ? `, ${done.skippedCount} skipped` : ''}`, mode === 'many' ? chosenMovie?._id : null);
     } catch (err) {
       setError(reasons(err));
     } finally {
@@ -157,7 +158,7 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
             <h3><span>1</span> Movie and room</h3>
             <label>Movie
               <select value={chosenMovie?._id || ''} onChange={(event) => setMovie(event.target.value)}>
-                {published.map((item) => <option key={item._id} value={item._id}>{item.title} ({item.duration} min)</option>)}
+                {published.map((item) => <option key={item._id} value={item._id}>{item.title} ({item.duration} min){item.status === 'draft' ? ' · draft' : ''}</option>)}
               </select>
             </label>
             <label>Room
@@ -230,6 +231,7 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
                 <b>{count}</b> showing{count === 1 ? '' : 's'} will be scheduled
                 {mode === 'many' && chosenMovie && chosenRoom && count > 0 ? <> for <b>{chosenMovie.title}</b> in {chosenRoom.name}, {weekdaySummary}, at {pesos(Math.round(Number(price) * 100))} a seat</> : null}.
               </p>
+              {count === 0 && skipped > 0 && <p className="bulk-problem">Every one of these times clashes with something already scheduled (or has passed). Pick other times or days{mode === 'many' ? ', or another room' : ''}.</p>}
               {skipped > 0 && (
                 <details className="bulk-skipped">
                   <summary>{skipped} time{skipped === 1 ? '' : 's'} will be skipped (a clash or a time that has passed)</summary>

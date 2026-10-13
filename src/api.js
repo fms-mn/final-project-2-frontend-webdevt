@@ -54,8 +54,10 @@ export async function api(path, { method = 'GET', body, signal } = {}) {
   let data = null;
   try {
     data = await response.json();
-  } catch {
-    // empty or non-JSON body
+  } catch (error) {
+    // A request cancelled while its answer is still arriving is a cancel, not an empty answer.
+    if (error.name === 'AbortError') throw error;
+    // otherwise: an empty or non-JSON body
   }
 
   if (!response.ok) {

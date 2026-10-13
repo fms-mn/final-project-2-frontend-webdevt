@@ -31,7 +31,7 @@ export default function MovieShowingsList({ movie, onOpen, onSchedule, refreshKe
     <section className="movie-section" aria-labelledby="movie-sec-showings">
       <div className="movie-section-head">
         <h3 id="movie-sec-showings">Showings</h3>
-        {movie.status === 'published' && <button type="button" className="movie-schedule-link" onClick={() => onSchedule(movie._id)}>Schedule more →</button>}
+        {movie.status !== 'archived' && <button type="button" className="movie-schedule-link" onClick={() => onSchedule(movie._id)}>{upcoming.length ? 'Schedule more →' : 'Schedule showings →'}</button>}
       </div>
       {error && <p className="movie-field-error" role="alert">{error}</p>}
       {!rows && !error && <p className="movie-field-help">Loading showings…</p>}
@@ -39,7 +39,9 @@ export default function MovieShowingsList({ movie, onOpen, onSchedule, refreshKe
         <p className="movie-field-help">
           {movie.status === 'published'
             ? 'No upcoming showings, so customers see "No showings". Schedule some to put it on sale.'
-            : 'No upcoming showings. Publish the movie first, then schedule some.'}
+            : movie.status === 'draft'
+              ? 'No upcoming showings. Schedule some, then publish the movie so customers can see them.'
+              : 'This movie is archived. Set it back to Draft to schedule showings.'}
         </p>
       )}
       {visible.length > 0 && (
@@ -59,6 +61,7 @@ export default function MovieShowingsList({ movie, onOpen, onSchedule, refreshKe
           })}
         </ul>
       )}
+      {movie.status === 'draft' && upcoming.length > 0 && <p className="movie-field-help">These showings are hidden from customers until the movie is published.</p>}
       {upcoming.length > SHOWN && !all && <button type="button" className="movie-schedule-link" onClick={() => setAll(true)}>Show all {upcoming.length} upcoming showings</button>}
       {earlier > 0 && <p className="movie-field-help">{earlier} earlier or cancelled {earlier === 1 ? 'showing is' : 'showings are'} not listed.</p>}
     </section>

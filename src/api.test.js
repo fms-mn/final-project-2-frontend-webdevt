@@ -96,3 +96,17 @@ test('a 401 on a normal request announces that the session ended; login errors d
   await assert.rejects(api('/auth/login', { method: 'POST', body: {} }));
   assert.deepEqual(seen, [UNAUTHORIZED_EVENT], 'a failed login is not "the session ended"');
 });
+
+test('a request cancelled while its answer is arriving is reported as cancelled, not as an empty answer', async () => {
+  globalThis.fetch = async () => ({
+    ok: true,
+    status: 200,
+    json: async () => { throw new DOMException('The operation was aborted.', 'AbortError'); },
+  });
+  await assert.rejects(() => api('/auditoriums'), (error) => error.name === 'AbortError');
+});
+
+test('an empty answer is still just null', async () => {
+  respond(200, undefined);
+  assert.equal(await api('/something'), null);
+});
