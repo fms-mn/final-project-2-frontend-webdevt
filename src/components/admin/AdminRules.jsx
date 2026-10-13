@@ -36,7 +36,7 @@ export default function AdminRules({ standalone = false }) {
       {standalone ? <h2>Scheduling rules</h2> : <summary><h2>Scheduling rules</h2></summary>}
       <Feedback error={error} notice={notice} />
       {rules && (
-        <form className="admin-form" onSubmit={save}>
+        <form className="admin-form admin-rules-form" onSubmit={save}>
           <label>Gap between shows (minutes)<input type="number" min="0" max="240" step="1" required value={rules.turnaroundMinutes} onChange={edit('turnaroundMinutes')} /></label>
           <label>Online booking closes before the start (minutes)<input type="number" min="0" max="1440" step="1" required value={rules.salesCutoffMinutes} onChange={edit('salesCutoffMinutes')} /></label>
           <p className="profile-help">

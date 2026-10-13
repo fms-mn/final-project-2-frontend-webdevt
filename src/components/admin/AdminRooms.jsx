@@ -77,10 +77,14 @@ export default function AdminRooms() {
       <div className="admin-list">
         {rooms.length === 0 && <div className="admin-panel show-empty">No rooms yet. Add one to start scheduling showings.</div>}
         {rooms.map((room) => (
-          <div className="admin-row" key={room._id}>
+          <div className="admin-row room-row" key={room._id}>
             <div>
               <strong>{room.name}</strong>
-              <small>{room.rows} rows · {room.seatsPerRow} seats per row · {room.rows * room.seatsPerRow} seats{room.blockedSeats?.length ? ` (${room.blockedSeats.length} blocked)` : ''} · {room.isActive ? 'active' : 'inactive'}</small>
+              <small title={`${room.rows} rows, ${room.seatsPerRow} seats per row`}>{room.rows}×{room.seatsPerRow} · {room.rows * room.seatsPerRow} seats</small>
+              <span className="room-badges">
+                <span className={`admin-status${room.isActive ? '' : ' expired'}`}>{room.isActive ? 'Active' : 'Inactive'}</span>
+                {room.blockedSeats?.length > 0 && <span className="admin-status pending">{room.blockedSeats.length} blocked</span>}
+              </span>
             </div>
             <div className="admin-actions">
               <button type="button" className="btn btn-secondary btn-small" onClick={() => { setDraft({ _id: room._id, name: room.name, rows: room.rows, seatsPerRow: room.seatsPerRow, isActive: room.isActive }); setBlocked(room.blockedSeats || []); clear(); }}>Edit</button>

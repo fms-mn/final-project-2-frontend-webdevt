@@ -34,12 +34,7 @@ export default function MovieCard({ movie, showShowtimes = false, previewOnHover
         <span className={`movie-card-badge ${isShowing ? 'badge-showing' : notShowing ? 'badge-none' : 'badge-coming'}`}>
           {refined && <i aria-hidden="true" />}{isShowing ? 'Now Showing' : notShowing ? 'No Showings' : 'Coming Soon'}
         </span>
-        {refined && (
-          <>
-            <span className="movie-poster-rating">{movie.rating}</span>
-            <span className="movie-poster-title" aria-hidden="true"><span>{movie.title}</span></span>
-          </>
-        )}
+        {refined && <span className="movie-poster-rating">{movie.rating}</span>}
         {!refined && <div className="movie-card-overlay">
           <span className="btn btn-primary btn-small">
             {isShowing ? 'Book Now' : 'View Details'}
