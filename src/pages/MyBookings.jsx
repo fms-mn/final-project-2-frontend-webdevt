@@ -7,7 +7,7 @@ import { displayTime, manilaDay, shortDate, today } from '../utils/manila';
 import { listAuditoriums } from '../data/demoSchedule';
 import CancelBookingModal from '../components/CancelBookingModal';
 import CancellationSuccess from '../components/CancellationSuccess';
-import { paymentLine } from '../utils/payment';
+import { isTestBooking, paymentLine } from '../utils/payment';
 import './MyBookings.css';
 
 function detail(booking) {
@@ -24,7 +24,7 @@ function Ticket({ booking, onCancel, compact }) {
   const info = detail(booking);
   return <article className={`wallet-ticket ${compact ? 'wallet-ticket-history' : ''}`}>
     <div className="wallet-ticket-ribbon"><span>{compact ? `${info.date} · ${info.time}` : manilaDay(info.when) === today() ? 'Next up · today' : info.date}</span><span>{info.room}</span></div>
-    <div className="wallet-ticket-body">{(booking.isDemo || booking.userId === 'demo-user') && <p className="movie-fixture-note">Simulated booking · no cinema admission</p>}<h3>{booking.movie?.title || 'Movie no longer in catalog'}</h3>
+    <div className="wallet-ticket-body"><p className="movie-fixture-note">{isTestBooking(booking) ? 'Test booking · No real money was charged. Not valid for cinema admission.' : 'Payment mode unverified · Not valid for cinema admission.'}</p><h3>{booking.movie?.title || 'Movie no longer in catalog'}</h3>
       {compact ? <p>{info.room} · seats {booking.seats.join(', ')}</p> : <div className="wallet-ticket-facts"><span>Date <b>{info.date}</b></span><span>Time <b>{info.time}</b></span><span>Seats <b>{booking.seats.join(', ')}</b></span></div>}
       <div className="wallet-ticket-bottom"><div><small>Code</small><span className="ticket-code">{info.code}</span></div><strong>₱{info.price.toLocaleString('en-PH')}</strong>{onCancel && <button type="button" className="btn btn-danger btn-small" onClick={() => onCancel(booking)}>Cancel ticket</button>}</div>
       {paymentLine(booking) && <p className={`ticket-payment${booking.paymentStatus === 'refunded' ? ' is-refunded' : ''}`}>{paymentLine(booking)}</p>}

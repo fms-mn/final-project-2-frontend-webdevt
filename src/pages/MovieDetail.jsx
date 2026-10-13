@@ -4,7 +4,7 @@ import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useMovie } from '../hooks/useMovies';
 import { DEMO_RULES, isDemoSlotSafe, listAuditoriums, listShowtimes } from '../data/demoSchedule';
-import { createDemoBooking, demoRemainingSeats, getReservedDemoSeats } from '../data/demoBookings';
+import { createDemoBooking, DEMO_BOOKING_MODE, demoRemainingSeats, getReservedDemoSeats } from '../data/demoBookings';
 import { dayHeading, displayClock, manilaDay, shiftDay, today } from '../utils/manila';
 import { showingAvailability } from '../utils/bookingHero';
 import MovieDetails from '../components/MovieDetails';
@@ -12,6 +12,7 @@ import BookingConfirmationModal from '../components/BookingConfirmationModal';
 import BookingAuthPrompt from '../components/BookingAuthPrompt';
 import { clearPendingBooking, readPendingBooking, restoreTentativeSeats, savePendingBooking } from '../utils/pendingBooking';
 import { MAX_SEATS_PER_BOOKING, toggleSeatSelection } from '../utils/seatSelection';
+import { paymentModeOf } from '../utils/payment';
 import { bookingSchedule, chooseScheduleSelection, isScheduleSlotBookable, loadMovieSchedule } from '../utils/bookingSchedule';
 export { toggleSeatSelection } from '../utils/seatSelection';
 
@@ -285,6 +286,7 @@ export default function MovieDetail() {
 
   const handlePay = async (input) => {
     if (!hold || paying) return;
+    if (paymentModeOf(hold) !== 'simulated') { setPayError('Payment unavailable: the payment mode could not be verified.'); return; }
     setPaying(true); setPayError('');
     try {
       const result = await api(`/bookings/${hold._id}/pay`, { method: 'POST', body: input });
@@ -295,6 +297,7 @@ export default function MovieDetail() {
 
   const handleAuthorize = async (approve) => {
     if (!walletPayment || paying) return;
+    if (paymentModeOf(hold) !== 'simulated' || walletPayment.mode !== 'simulated') { setPayError('Payment unavailable: the payment mode could not be verified.'); return; }
     setPaying(true); setPayError('');
     try {
       const result = await api(`/payments/${walletPayment._id}/authorize`, { method: 'POST', body: { approve } });
@@ -673,7 +676,7 @@ export default function MovieDetail() {
       )}
       {confirmationOpen && (
         <BookingConfirmationModal
-          draft={{ isDemo: previewBooking, movieTitle: movie.title, showDate: selectedDate, showTime: selectedSlot?.time || selectedTime, auditoriumName: auditorium?.name || 'Cinema', seats: selectedSeats, unitPrice: ticketPrice, totalPrice: selectedSeats.length * ticketPrice }}
+          draft={{ isDemo: previewBooking, paymentMode: previewBooking ? DEMO_BOOKING_MODE : null, movieTitle: movie.title, showDate: selectedDate, showTime: selectedSlot?.time || selectedTime, auditoriumName: auditorium?.name || 'Cinema', seats: selectedSeats, unitPrice: ticketPrice, totalPrice: selectedSeats.length * ticketPrice }}
           booking={bookingSuccess}
           pending={booking}
           error={bookingError}

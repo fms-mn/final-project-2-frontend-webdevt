@@ -70,6 +70,8 @@ export function formatCountdown(seconds) {
 // ---- how a payment reads -------------------------------------------------------------------
 const METHOD_NAMES = { card: 'Card', gcash: 'GCash', maya: 'Maya' };
 export const methodName = (method) => METHOD_NAMES[method] || 'Payment';
+export const paymentModeOf = booking => booking?.payment?.mode ?? booking?.paymentMode ?? null;
+export const isTestBooking = booking => paymentModeOf(booking) === 'simulated' || booking?.isDemo === true || booking?.userId === 'demo-user';
 
 // "Visa •••• 4242", "GCash •••• 4567"
 export function describePayment(payment) {
@@ -83,17 +85,18 @@ export function paymentLine(booking) {
   if (!booking?.payment) return '';
   const { payment } = booking;
   if (booking.paymentStatus === 'refunded' || payment.status === 'refunded') {
-    return `Refunded${payment.refundReference ? ` · ${payment.refundReference}` : ''}`;
+    return `${isTestBooking(booking) ? 'Test refund' : 'Refunded'}${payment.refundReference ? ` · ${payment.refundReference}` : ''}`;
   }
-  return payment.status === 'paid' ? `Paid · ${describePayment(payment)}` : '';
+  return payment.status === 'paid' ? `${isTestBooking(booking) ? 'Test payment successful · No real money was charged' : 'Payment mode unverified'} · ${describePayment(payment)}` : '';
 }
 
 // The Payment column of the admin's bookings table.
 export function paymentSummary(booking) {
   const method = describePayment(booking?.payment);
+  const test = isTestBooking(booking);
   switch (booking?.paymentStatus) {
-    case 'paid': return { label: 'Paid', text: method || 'Before online payments', tone: 'paid' };
-    case 'refunded': return { label: 'Refunded', text: method, tone: 'refunded' };
+    case 'paid': return { label: test ? 'Test paid' : 'Unverified', text: method || 'No payment record', tone: 'paid' };
+    case 'refunded': return { label: test ? 'Test refund' : 'Unverified', text: method, tone: 'refunded' };
     case 'unpaid':
       return booking.status === 'pending'
         ? { label: 'Awaiting', text: '', tone: 'waiting' }

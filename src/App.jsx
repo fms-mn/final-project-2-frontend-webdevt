@@ -47,7 +47,7 @@ function AppContent() {
         </Routes>
       </main>
       <BackToTop />
-      <footer className="footer"><div className="footer-content"><div className="footer-brand"><img src="/filme-mark.svg" alt="" /><strong>FILME</strong></div><p>{user?.isDemo ? 'Demo bookings are simulated and cannot be used for cinema admission.' : 'Pick a film, choose your seats, show your code at the door.'}</p></div></footer>
+      <footer className="footer"><div className="footer-content"><div className="footer-brand"><img src="/filme-mark.svg" alt="" /><strong>FILME</strong></div><p>Browse movies and manage your bookings. Test bookings are not valid for cinema admission.</p></div></footer>
     </div>
   );
 }
