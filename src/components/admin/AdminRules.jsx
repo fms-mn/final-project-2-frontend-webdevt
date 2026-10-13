@@ -6,7 +6,7 @@ import Feedback from './Feedback';
 import useAdminAction from './useAdminAction';
 
 // The two cinema-wide scheduling rules: the gap between shows and when online booking closes.
-export default function AdminRules() {
+export default function AdminRules({ standalone = false }) {
   const { busy, busyAction, error, notice, setError, run } = useAdminAction();
   const [rules, setRules] = useState(null);
 
@@ -30,9 +30,10 @@ export default function AdminRules() {
   };
   const edit = (field) => (event) => setRules({ ...rules, [field]: event.target.value });
 
+  const Wrapper = standalone ? 'section' : 'details';
   return (
-    <details className="admin-panel admin-details">
-      <summary><h2>Scheduling rules</h2></summary>
+    <Wrapper className={`admin-panel${standalone ? '' : ' admin-details'}`} aria-label="Scheduling rules">
+      {standalone ? <h2>Scheduling rules</h2> : <summary><h2>Scheduling rules</h2></summary>}
       <Feedback error={error} notice={notice} />
       {rules && (
         <form className="admin-form" onSubmit={save}>
@@ -47,6 +48,6 @@ export default function AdminRules() {
           </div>
         </form>
       )}
-    </details>
+    </Wrapper>
   );
 }

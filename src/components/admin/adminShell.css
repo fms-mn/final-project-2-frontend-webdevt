@@ -1,0 +1,92 @@
+/* The admin frame: a sidebar on a computer, a bar along the bottom on a phone. Every section
+   uses the same width and spacing, so nothing jumps when the admin moves between them. */
+.app:has(.admin-shell) { background: #eef0f9; }
+:root[data-theme='dark'] .app:has(.admin-shell) { background: #10152a; }
+
+.admin-shell {
+  --shell-side: 232px;
+  display: grid;
+  grid-template-columns: var(--shell-side) minmax(0, 1fr);
+  align-items: start;
+  width: 100%;
+  max-width: 1560px;
+  margin: 0 auto;
+  padding: 24px clamp(16px, 2.4vw, 40px) 56px 0;
+}
+
+.admin-sidebar {
+  position: sticky;
+  top: 88px;
+  display: grid;
+  gap: 22px;
+  align-content: start;
+  margin: 0 0 0 clamp(16px, 2.4vw, 40px);
+  padding: 8px 4px;
+}
+.admin-nav-group { display: grid; gap: 4px; }
+.admin-nav-heading { padding: 0 12px 4px; color: var(--a-muted); font: 700 11px/1.2 'JetBrains Mono Variable', monospace; letter-spacing: .12em; text-transform: uppercase; }
+.admin-nav-item {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 0 12px;
+  border: 0; border-radius: 12px; background: transparent; color: var(--a-soft);
+  font: 600 15px/1.2 'Instrument Sans Variable', sans-serif; text-align: left; cursor: pointer;
+}
+.admin-nav-item:hover { background: var(--a-paper); color: var(--a-ink); }
+.admin-nav-item.active { background: var(--a-paper); color: var(--a-ink); box-shadow: inset 3px 0 0 var(--a-coral), 0 1px 3px #12163a14; }
+.admin-nav-item.active svg { color: var(--a-coral); }
+.admin-nav-item:focus-visible { outline: 3px solid var(--a-coral); outline-offset: 2px; }
+.admin-nav-item svg { flex: none; }
+
+/* The page beside the sidebar. These rules beat the older per-section widths on purpose. */
+.admin-shell .admin-page.admin-workspace,
+.admin-shell .admin-page.admin-overview-page {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.admin-topbar {
+  display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px;
+  margin: 0 0 22px; min-height: 0; height: auto;
+}
+.admin-shell .admin-topbar h1 { margin: 0 0 4px; color: var(--a-ink); font: 800 clamp(28px, 2.6vw, 34px)/1.1 'Instrument Sans Variable', sans-serif; letter-spacing: -.03em; }
+.admin-topbar p { margin: 0; color: var(--a-muted); font-size: 14px; line-height: 1.4; }
+.admin-topbar .admin-demo-badge { padding: 5px 10px; border: 1px solid var(--a-line); border-radius: 999px; background: var(--a-paper); color: var(--a-muted); font-size: 11px; font-weight: 700; }
+.admin-topbar .overview-period-slot { min-width: 0; }
+.admin-topbar .overview-period-controls { display: grid; justify-items: end; gap: 12px; }
+.admin-shell .admin-overview-page .period-picker .filter-btn { min-height: 40px; padding: 8px 16px; font-size: 14px; }
+
+/* Shortcuts on the Overview */
+.overview-quick { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 4px; }
+.overview-quick button {
+  min-height: 42px; padding: 0 16px; border: 1px solid var(--overview-border, var(--a-line)); border-radius: 12px;
+  background: var(--overview-paper, var(--a-paper)); color: var(--overview-ink, var(--a-ink));
+  font: 700 14px 'Instrument Sans Variable', sans-serif; cursor: pointer;
+}
+.overview-quick button:hover { border-color: var(--a-coral); color: var(--a-coral); }
+.overview-quick .overview-quick-primary { border-color: var(--a-coral-fill); background: var(--a-coral-fill); color: #fff; }
+.overview-quick .overview-quick-primary:hover { background: var(--filme-coral-hover, var(--a-coral-fill)); color: #fff; }
+.overview-quick button:focus-visible { outline: 3px solid var(--a-coral); outline-offset: 2px; }
+
+@media (max-width: 1000px) {
+  .admin-shell { --shell-side: 76px; }
+  .admin-sidebar { margin-left: 12px; }
+  .admin-nav-heading { display: none; }
+  .admin-nav-item { flex-direction: column; justify-content: center; gap: 4px; padding: 8px 2px; min-height: 56px; font-size: 11px; text-align: center; }
+  .admin-nav-item.active { box-shadow: inset 0 -3px 0 var(--a-coral), 0 1px 3px #12163a14; }
+}
+
+/* Phone: the menu moves to a bar along the bottom, always one tap away. */
+@media (max-width: 700px) {
+  .admin-shell { display: block; padding: 18px 16px 96px; }
+  .admin-sidebar {
+    position: fixed; z-index: 900; inset: auto 0 0 0; margin: 0; padding: 6px 6px max(6px, env(safe-area-inset-bottom));
+    grid-auto-flow: column; grid-auto-columns: 1fr; gap: 0;
+    border-top: 1px solid var(--a-line); background: var(--a-paper); box-shadow: 0 -6px 20px #12163a1a;
+  }
+  .admin-nav-group { display: contents; }
+  .admin-nav-item { min-height: 52px; padding: 6px 0; border-radius: 10px; font-size: 10.5px; }
+  .admin-nav-item.active { background: var(--a-coral-tint); box-shadow: none; }
+  .admin-topbar { margin-bottom: 16px; }
+  .admin-shell .admin-topbar h1 { font-size: 26px; }
+  .admin-topbar .overview-period-controls { justify-items: start; }
+}

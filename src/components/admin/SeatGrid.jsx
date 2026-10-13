@@ -25,3 +25,19 @@ export default function SeatGrid({ rows, seatsPerRow, selected, onChange, locked
     </div>
   );
 }
+
+// A read-only picture of a room's layout, for the "Add room" form: it redraws as the admin types.
+export function SeatPreview({ rows, seatsPerRow }) {
+  const r = Math.min(26, Math.max(0, Math.floor(rows) || 0));
+  const c = Math.min(50, Math.max(0, Math.floor(seatsPerRow) || 0));
+  if (!r || !c) return null;
+  return (
+    <figure className="seat-preview" aria-label={`Seat map preview: ${r} rows of ${c} seats, ${r * c} seats in total`}>
+      <div className="seat-preview-screen" aria-hidden="true">Screen</div>
+      <div className="seat-preview-grid" aria-hidden="true" style={{ '--seats': c }}>
+        {Array.from({ length: r * c }, (_, index) => <span key={index} />)}
+      </div>
+      <figcaption>{r} rows × {c} seats = <b>{r * c} seats</b></figcaption>
+    </figure>
+  );
+}

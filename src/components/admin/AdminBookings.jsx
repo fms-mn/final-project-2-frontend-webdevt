@@ -8,6 +8,7 @@ import Feedback from './Feedback';
 import useAdminAction from './useAdminAction';
 
 const PAGE = 100;
+const STATUS_CHIPS = [['all', 'All'], ['confirmed', 'Confirmed'], ['pending', 'Awaiting payment'], ['cancelled', 'Cancelled'], ['expired', 'Expired']];
 
 export default function AdminBookings() {
   const { busy, busyAction, error, notice, setError, run } = useAdminAction();
@@ -81,11 +82,6 @@ export default function AdminBookings() {
       <Feedback error={error} notice={notice} />
       <div className="admin-panel admin-filters">
         <label>Search<input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Code, customer, movie or seat" /></label>
-        <label>Status
-          <select value={status} onChange={changeFilter(setStatus)}>
-            <option value="all">All statuses</option><option value="confirmed">Confirmed</option><option value="pending">Awaiting payment</option><option value="cancelled">Cancelled</option><option value="expired">Expired</option>
-          </select>
-        </label>
         <label>Movie
           <select value={movie} onChange={(event) => setMovie(event.target.value)}>
             <option value="all">All movies</option>
@@ -96,12 +92,18 @@ export default function AdminBookings() {
         <button type="button" className="btn btn-secondary btn-small" onClick={exportCsv} disabled={shown.length === 0}>Export CSV</button>
       </div>
 
+      <div className="status-chips" role="group" aria-label="Filter by status">
+        {STATUS_CHIPS.map(([value, label]) => (
+          <button key={value} type="button" className={`filter-btn ${status === value ? 'active' : ''}`} aria-pressed={status === value} onClick={() => changeFilter(setStatus)({ target: { value } })}>{label}</button>
+        ))}
+      </div>
+
       <section className="admin-panel" aria-label="Bookings">
         <div className="admin-panel-head"><h2>Bookings</h2><span className="admin-count">{shown.length} shown{more ? ' so far' : ''}</span></div>
         {loading && rows.length === 0 && <div className="loading"><div className="spinner" /></div>}
-        {!loading && shown.length === 0 && <p>No bookings match.</p>}
+        {!loading && shown.length === 0 && <p className="show-empty">{rows.length === 0 && status === 'all' && !date ? 'No bookings yet. They appear here as soon as a customer books a seat.' : 'No bookings match these filters. Try another status, or clear the search and date.'}</p>}
         {shown.length > 0 && (
-          <div className="admin-table-wrap">
+          <div className="admin-table-wrap bookings-table">
             <table className="admin-table">
               <thead><tr><th scope="col">Code</th><th scope="col">Customer</th><th scope="col">Movie</th><th scope="col">Showing</th><th scope="col">Seats</th><th scope="col">Total</th><th scope="col">Status</th><th scope="col">Payment</th><th scope="col"><span className="visually-hidden">Actions</span></th></tr></thead>
               <tbody>
@@ -136,6 +138,39 @@ export default function AdminBookings() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+        {shown.length > 0 && (
+          <div className="booking-cards">
+            {shown.map((row) => {
+              const info = paymentSummary(row);
+              return (
+                <article className="booking-card" key={row._id}>
+                  <div className="booking-card-top">
+                    <button type="button" className="link-button mono" aria-expanded={open === row._id} onClick={() => setOpen(open === row._id ? '' : row._id)}>{row.bookingCode}</button>
+                    <span className={`admin-status ${row.status}`}>{row.status === 'pending' ? 'awaiting payment' : row.status}</span>
+                  </div>
+                  <strong>{row.movie?.title || 'Movie'}</strong>
+                  <span className="booking-card-line">{row.showtime?.startTime ? `${shortDate(row.showtime.startTime)} · ${manilaClock(row.showtime.startTime)}` : '—'} · {row.auditorium?.name}</span>
+                  <span className="booking-card-line">Seats {row.seats.join(', ')} · {pesos(row.totalAmount)}</span>
+                  <span className="booking-card-line">{row.user?.name || 'Customer'} · {row.user?.email}</span>
+                  <span className={`admin-payment admin-payment-${info.tone}`}>{info.label}{info.text && <small className="cell-sub">{info.text}</small>}</span>
+                  {open === row._id && (
+                    <div className="booking-detail">
+                      <span>Booked {new Date(row.bookedAt).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}</span>
+                      <span>{row.seats.length} × {pesos(row.unitPrice)}</span>
+                      {row.payment && <span>Payment {row.payment.reference}{row.payment.refundReference ? ` · refund ${row.payment.refundReference}` : ''}</span>}
+                      {row.cancelledAt && <span>Cancelled {new Date(row.cancelledAt).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}</span>}
+                    </div>
+                  )}
+                  {canCancel(row) && (
+                    <button type="button" className="btn btn-danger btn-small" disabled={busy} aria-busy={busyAction === `cancel:${row._id}`} onClick={() => cancel(row)}>
+                      <ActionPending pending={busyAction === `cancel:${row._id}`}>{busyAction === `cancel:${row._id}` ? 'Cancelling...' : confirm === row._id ? 'Confirm cancel' : 'Cancel booking'}</ActionPending>
+                    </button>
+                  )}
+                </article>
+              );
+            })}
           </div>
         )}
         {more && <div className="admin-actions"><button type="button" className="btn btn-secondary btn-small" disabled={loading} onClick={() => setPage((value) => value + 1)}>Load more</button></div>}
