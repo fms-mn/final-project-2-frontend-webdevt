@@ -166,6 +166,11 @@
 .admin-form .admin-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .admin-form .admin-check { flex-direction: row; align-items: center; gap: 8px; }
 .admin-form .admin-check input { width: auto; min-height: 0; }
+/* Side-by-side fields whose labels wrap to different heights still line their inputs up. */
+/* Room cards keep Edit and Delete side by side; status details sit in pills under the name. */
+.room-row .admin-actions { flex-wrap: nowrap; flex-shrink: 0; }
+.room-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.admin-rules-form label { justify-content: space-between; }
 .admin-form input:disabled, .admin-form select:disabled { background: var(--a-disabled); color: var(--a-muted); cursor: not-allowed; }
 .admin-warning { margin: 0; padding: 10px 12px; border: 1.5px solid var(--a-warn-line); border-radius: 9px; background: var(--a-warn-bg); color: var(--a-warn-text); font-size: 13px; line-height: 1.4; }
 
