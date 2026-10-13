@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '../../api';
 import ActionPending from '../ActionPending';
 import { parseTimes } from '../../utils/adminTools';
@@ -11,7 +11,7 @@ const MAX_DAYS = 31;
 
 // Schedule one movie at several times over a range of days, or copy one day's showings to other days.
 // Every request is first run as a preview (nothing saved), so the admin sees what would happen.
-export default function AdminBulk({ movies, rooms, onDone }) {
+export default function AdminBulk({ movies, rooms, onDone, scheduleFor }) {
   const { busy, busyAction, error, notice, setError, run, clear } = useAdminAction();
   const published = movies.filter((movie) => movie.status === 'published');
   const active = rooms.filter((room) => room.isActive);
@@ -23,6 +23,19 @@ export default function AdminBulk({ movies, rooms, onDone }) {
   const [hidden, setHidden] = useState(false);
   const [skip, setSkip] = useState(false);
   const [preview, setPreview] = useState(null);
+  const panel = useRef(null);
+
+  // Arriving from "Schedule showings" after adding a movie: open this panel with that movie chosen.
+  useEffect(() => {
+    if (!scheduleFor) return;
+    setMode('many');
+    setMany((current) => ({ ...current, movie: scheduleFor.movieId }));
+    setPreview(null);
+    if (panel.current) {
+      panel.current.open = true;
+      panel.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [scheduleFor]);
 
   const build = (dryRun) => {
     if (mode === 'many') {
@@ -62,7 +75,7 @@ export default function AdminBulk({ movies, rooms, onDone }) {
   const editCopy = (field) => (event) => { setPreview(null); setCopy({ ...copy, [field]: event.target.value }); };
 
   return (
-    <details className="admin-panel admin-details">
+    <details className="admin-panel admin-details" ref={panel} id="schedule-many">
       <summary><h2>Schedule many showings</h2></summary>
       <div className="period-picker" role="group" aria-label="What to do">
         <button type="button" className={`filter-btn ${mode === 'many' ? 'active' : ''}`} aria-pressed={mode === 'many'} onClick={() => { setMode('many'); setPreview(null); clear(); }}>One movie, many times</button>

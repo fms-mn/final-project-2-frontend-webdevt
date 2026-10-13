@@ -16,7 +16,7 @@ function Change({ now, before }) {
   return <small className={`stat-note ${change < 0 ? 'down' : 'up'}`}><span aria-hidden="true">{change < 0 ? '▼' : '▲'} </span>{Math.abs(change)}% vs the period before</small>;
 }
 
-export default function AdminOverview({ movies, users, periodControlsTarget, onViewShowings }) {
+export default function AdminOverview({ movies, users, periodControlsTarget, onViewShowings, onQuickAction }) {
   const [period, setPeriod] = useState('7days');
   const [from, setFrom] = useState(shiftDay(today(), -6));
   const [to, setTo] = useState(today());
@@ -77,6 +77,11 @@ export default function AdminOverview({ movies, users, periodControlsTarget, onV
 
   return <div className="admin-overview">
     {periodControlsTarget ? createPortal(periodControls, periodControlsTarget) : periodControls}
+    {onQuickAction && <div className="overview-quick" aria-label="Quick actions">
+      <button type="button" className="overview-quick-primary" onClick={() => onQuickAction('add-movie')}><span aria-hidden="true">＋</span> Add a movie</button>
+      <button type="button" onClick={() => onQuickAction('showings')}>Schedule showings</button>
+      <button type="button" onClick={() => onQuickAction('bookings')}>View bookings</button>
+    </div>}
     {badRange && <div className="error-message" role="alert">Pick a start date that is not after the end date.</div>}
     {!badRange && error && <div className="error-message" role="alert">{error}</div>}
     {!badRange && statsLoading && <div className="overview-state" role="status">Loading sales for this period…</div>}

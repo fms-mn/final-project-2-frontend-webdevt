@@ -4,7 +4,6 @@ import ActionPending from '../ActionPending';
 import { describeError, pesos } from '../../utils/adminTools';
 import { dayHeading, fromInputValue, manilaClock, minutesOfDay, shiftDay, shortDate, toInputValue, today } from '../../utils/manila';
 import AdminBulk from './AdminBulk';
-import AdminRules from './AdminRules';
 import Feedback from './Feedback';
 import SeatGrid from './SeatGrid';
 import useAdminAction from './useAdminAction';
@@ -21,7 +20,7 @@ function place(showing, from, to) {
   return { left: `${left}%`, width: `${width}%` };
 }
 
-export default function AdminShowings({ movies }) {
+export default function AdminShowings({ movies, scheduleFor }) {
   const { busy, busyAction, error, notice, setError, setNotice, clear, run } = useAdminAction();
   const [date, setDate] = useState(today());
   const [rooms, setRooms] = useState([]);
@@ -318,8 +317,7 @@ export default function AdminShowings({ movies }) {
         )}
       </section>
 
-      <AdminBulk movies={movies} rooms={rooms} onDone={(message) => { setNotice(message); afterChange(); }} />
-      <AdminRules />
+      <AdminBulk movies={movies} rooms={rooms} scheduleFor={scheduleFor} onDone={(message) => { setNotice(message); afterChange(); }} />
     </>
   );
 }
