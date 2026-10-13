@@ -4,7 +4,6 @@ import ActionPending from '../ActionPending';
 import { describeError, pesos } from '../../utils/adminTools';
 import { dayHeading, fromInputValue, manilaClock, minutesOfDay, shiftDay, shortDate, toInputValue, today } from '../../utils/manila';
 import { findClash } from '../../utils/clashes';
-import { defaultStart } from '../../utils/timeSlots';
 import { movieColor, timeAtFraction, weekDays, weekLabel } from '../../utils/schedule';
 import AdminBulk from './AdminBulk';
 import Drawer from './Drawer';
@@ -36,14 +35,12 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
   const [rooms, setRooms] = useState([]);
   const [byDay, setByDay] = useState({}); // { 'YYYY-MM-DD': showings } for the days on screen
   const [selectedId, setSelectedId] = useState('');
-  const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [revision, setRevision] = useState(0);
-  const [hiddenNew, setHiddenNew] = useState(false);
   const [move, setMove] = useState({ startTime: '', auditorium: '' });
   const [blockedDraft, setBlockedDraft] = useState([]);
-  const [bulk, setBulk] = useState({ open: false, mode: 'many' });
+  const [bulk, setBulk] = useState({ open: false, mode: 'many', preset: null });
   const [publishPrompt, setPublishPrompt] = useState(null); // a draft movie that just got showings: { id, title }
   const [gapMinutes, setGapMinutes] = useState(15); // the cinema's gap between shows
   const [otherDays, setOtherDays] = useState({}); // showings of days picked in a form that are not on screen
@@ -90,7 +87,7 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
 
   // Coming from "Schedule showings" after adding a movie: open the scheduler with it chosen.
   useEffect(() => {
-    if (scheduleFor) setBulk({ open: true, mode: 'many' });
+    if (scheduleFor) setBulk({ open: true, mode: 'many', preset: { span: 'many' } });
   }, [scheduleFor]);
 
   // Arriving from a movie's panel: go to that showing's day, then open it.
@@ -132,10 +129,9 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
   const startedOrCancelled = selected && (selected.status !== 'scheduled' || new Date(selected.startTime) <= new Date());
   const locked = Boolean(selected && (startedOrCancelled || seatsSold(selected) > 0));
 
-  const closePanel = () => { setAdding(false); setSelectedId(''); setDraft(null); setConfirmCancel(false); clear(); };
+  const closePanel = () => { setSelectedId(''); setDraft(null); setConfirmCancel(false); clear(); };
 
   const choose = (showing) => {
-    setAdding(false);
     setSelectedId(showing._id);
     setConfirmCancel(false);
     clear();
@@ -149,14 +145,11 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
     setBlockedDraft(showing.blockedSeats || []);
   };
 
-  // Starts a new showing, optionally on a given day, at a given time, in a given room.
+  // "+ Add showing": the scheduler, set to one day (the one on screen, or the one clicked), where any
+  // number of start times can be ticked. A clicked time and room are already chosen.
   const startAdd = ({ day = date, time, room } = {}) => {
-    setAdding(true);
-    setSelectedId('');
-    setConfirmCancel(false);
     clear();
-    setHiddenNew(false);
-    setDraft({ movie: publishedMovies[0]?._id || '', auditorium: room || activeRooms[0]?._id || '', startTime: time ? `${day}T${time}` : defaultStart(day), ticketPrice: '400' });
+    setBulk({ open: true, mode: 'many', preset: { span: 'one', day, time, room, stamp: Date.now() } });
   };
 
   const goToDay = (day) => {
@@ -171,19 +164,9 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
     event.preventDefault();
     const startTime = fromInputValue(draft.startTime);
     if (!startTime) { setError('Choose a start date and time.'); return; }
-    const body = { movie: draft.movie, auditorium: draft.auditorium, startTime, ticketPrice: Math.round(Number(draft.ticketPrice) * 100), ...(adding && hiddenNew ? { published: false } : {}) };
-    const done = await run(
-      () => (adding ? api('/showtimes', { method: 'POST', body }) : api(`/showtimes/${selectedId}`, { method: 'PATCH', body })),
-      adding ? 'Showing added' : 'Showing updated', 'save',
-    );
-    if (done) {
-      // Show the day the new showing is on, so the admin sees it appear.
-      const day = draft.startTime.slice(0, 10);
-      setAdding(false); setSelectedId(''); setDraft(null);
-      if (adding && !visibleDays.includes(day)) setDate(day);
-      if (adding) askToPublish(draft.movie);
-      setRevision((value) => value + 1);
-    }
+    const body = { movie: draft.movie, auditorium: draft.auditorium, startTime, ticketPrice: Math.round(Number(draft.ticketPrice) * 100) };
+    const done = await run(() => api(`/showtimes/${selectedId}`, { method: 'PATCH', body }), 'Showing updated', 'save');
+    if (done) { setSelectedId(''); setDraft(null); setRevision((value) => value + 1); }
   };
 
   const cancelShowing = async () => {
@@ -264,7 +247,7 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
   const draftMinutes = draftMovie?.duration || (selected ? (new Date(selected.endTime) - new Date(selected.startTime)) / 60000 : 0);
 
   const panelOpen = Boolean(draft);
-  const panelTitle = adding ? 'Add showing' : selected?.movie?.title || 'Showing';
+  const panelTitle = selected?.movie?.title || 'Showing';
 
   return (
     <>
@@ -292,8 +275,8 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
           <h2 className="show-toolbar-title">{view === 'week' ? weekLabel(date) : dayHeading(date)}</h2>
         </div>
         <div className="show-toolbar-actions">
-          <button type="button" className="btn btn-secondary btn-small" onClick={() => setBulk({ open: true, mode: 'copy' })} disabled={!canAdd}>Copy a day</button>
-          <button type="button" className="btn btn-secondary btn-small" onClick={() => setBulk({ open: true, mode: 'many' })} disabled={!canAdd}>Schedule many</button>
+          <button type="button" className="btn btn-secondary btn-small" onClick={() => setBulk({ open: true, mode: 'copy', preset: null })} disabled={!canAdd}>Copy a day</button>
+          <button type="button" className="btn btn-secondary btn-small" onClick={() => setBulk({ open: true, mode: 'many', preset: { span: 'many', stamp: Date.now() } })} disabled={!canAdd}>Many days</button>
           <button type="button" className="btn btn-primary btn-small" onClick={() => startAdd()} disabled={!canAdd}>+ Add showing</button>
         </div>
       </div>
@@ -434,9 +417,6 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
                       : `${selected.remainingSeats} of ${selected.totalSeats} seats free · ${pesos(selected.ticketPrice)} each.`}
               </p>
             )}
-            {adding && (
-              <label className="admin-check"><input type="checkbox" checked={hiddenNew} onChange={(event) => setHiddenNew(event.target.checked)} /> Keep hidden from customers until I publish it</label>
-            )}
             <div className="admin-actions">
               {selected && selected.status === 'scheduled' && !startedOrCancelled && (
                 <button type="button" className="btn btn-danger btn-small" disabled={busy} aria-busy={busyAction === 'cancel'} onClick={cancelShowing}>
@@ -444,12 +424,12 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
                 </button>
               )}
               <button type="submit" className="btn btn-primary btn-small" disabled={busy || locked} aria-busy={busyAction === 'save'}>
-                <ActionPending pending={busyAction === 'save'}>{busyAction === 'save' ? 'Saving...' : adding ? 'Add showing' : 'Save changes'}</ActionPending>
+                <ActionPending pending={busyAction === 'save'}>{busyAction === 'save' ? 'Saving...' : 'Save changes'}</ActionPending>
               </button>
             </div>
           </form>
 
-          {canManage && !adding && (
+          {canManage && (
             <div className="editor-extras">
               <form onSubmit={moveShowing} aria-label="Move this showing">
                 <h3>Move this showing</h3>
@@ -493,10 +473,11 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
         scheduleFor={scheduleFor}
         open={bulk.open}
         mode={bulk.mode}
+        preset={bulk.preset}
         defaultDay={date}
         onModeChange={(mode) => setBulk((current) => ({ ...current, mode }))}
         onClose={() => setBulk((current) => ({ ...current, open: false }))}
-        onDone={(message, movieId) => { setBulk((current) => ({ ...current, open: false })); setNotice(message); if (movieId) askToPublish(movieId); afterChange(); }}
+        onDone={(message, movieId, day) => { setBulk((current) => ({ ...current, open: false })); setNotice(message); if (movieId) askToPublish(movieId); if (day) { setView('day'); setDate(day); } afterChange(); }}
       />
     </>
   );
