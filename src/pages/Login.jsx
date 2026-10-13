@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ActionPending from '../components/ActionPending';
+import BackToHome from '../components/BackToHome';
+import './AuthForms.css';
 
 export default function Login() {
   const { login, loginAsDemo } = useAuth();
@@ -9,6 +11,7 @@ export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -16,7 +19,7 @@ export default function Login() {
     const destination = location.state?.from;
     navigate(destination && (signedInUser.role === 'admin' ? destination.pathname.startsWith('/admin') : !destination.pathname.startsWith('/admin'))
       ? `${destination.pathname}${destination.search}${destination.hash}`
-      : signedInUser.role === 'admin' ? '/admin' : '/', {
+      : signedInUser.role === 'admin' ? '/admin' : '/home', {
       replace: true,
     });
   };
@@ -46,13 +49,14 @@ export default function Login() {
   };
 
   return (
-    <div className="auth-page fade-in">
+    <div className="auth-page auth-form-page">
       <div className="auth-container">
+        <BackToHome />
         <div className="auth-card">
           <h1>Welcome back</h1>
           <p className="subtitle">Sign in to your FILME account</p>
 
-          {error && <div className="error-message">{error}</div>}
+          {error && <div className="error-message" role="alert">{error}</div>}
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">
@@ -60,6 +64,7 @@ export default function Login() {
               <input
                 id="email"
                 type="email"
+                autoComplete="username"
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -68,14 +73,17 @@ export default function Login() {
             </div>
             <div className="form-group">
               <label htmlFor="password">Password</label>
+              <div className="auth-form-password">
               <input
                 id="password"
-                type="password"
-                placeholder="••••••••"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              <button type="button" className="auth-form-password-toggle" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-controls="password" onClick={() => setShowPassword(visible => !visible)}>{showPassword ? 'Hide' : 'Show'}</button>
+              </div>
             </div>
             <button type="submit" className="btn btn-primary" disabled={loading} aria-busy={loading}>
               <ActionPending pending={loading}>{loading ? 'Signing in...' : 'Sign In'}</ActionPending>
