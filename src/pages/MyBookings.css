@@ -40,6 +40,18 @@
 .wallet-timeline-page .wallet-ticket-bottom {flex-wrap:wrap;align-items:center}
 .wallet-timeline-page .wallet-ticket-body h3,.wallet-timeline-page .wallet-ticket-ribbon span {overflow-wrap:anywhere;min-width:0}
 .wallet-timeline-page .wallet-ticket-bottom .ticket-code {white-space:normal;overflow-wrap:anywhere}
+.wallet-timeline-page .wallet-upcoming .wallet-ticket {width:100%;height:auto;min-height:0}
+.wallet-timeline-page .wallet-upcoming .wallet-ticket::before,.wallet-timeline-page .wallet-upcoming .wallet-ticket::after {background:var(--wallet-bg)}
+.wallet-timeline-page .wallet-upcoming .wallet-ticket-ribbon {padding:9px 18px;font-size:11px;gap:12px}
+.wallet-timeline-page .wallet-upcoming .wallet-ticket-body {padding:14px 18px 18px}
+.wallet-timeline-page .wallet-upcoming .movie-fixture-note {margin:0 0 12px;padding:8px;font-size:13px;line-height:1.45}
+.wallet-timeline-page .wallet-upcoming .wallet-ticket-body h3 {font-size:30px;line-height:1.1;margin-bottom:12px}
+.wallet-timeline-page .wallet-upcoming .wallet-ticket-facts {font-size:14px;gap:10px 16px}
+.wallet-timeline-page .wallet-upcoming .wallet-ticket-bottom {gap:10px;margin-top:14px;padding-top:12px}
+.wallet-timeline-page .wallet-upcoming .ticket-code {font-size:13px}
+.wallet-timeline-page .wallet-upcoming .wallet-ticket-bottom > strong {font-size:26px}
+.wallet-timeline-page .wallet-upcoming .ticket-payment {margin-top:10px;font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+.wallet-timeline-page .wallet-upcoming .wallet-ticket-bottom .btn {min-height:44px}
 .wallet-timeline-page .demo-note {margin:0 0 24px}
 @media(min-width:840px) {
   .bookings-page.wallet-timeline-page {padding-top:20px}
