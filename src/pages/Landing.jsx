@@ -1,5 +1,6 @@
 ﻿import { Link } from 'react-router-dom';
 import Home from './Home';
+import { useAuth } from '../context/AuthContext';
 import PromoMarquee from '../components/PromoMarquee';
 import LandingFeatures from '../components/LandingFeatures';
 import './Landing.css';
@@ -15,10 +16,10 @@ function SampleTicket() {
 }
 
 export default function Landing() {
+  const { user } = useAuth();
   return <div className="landing-page">
-    <section className="landing-hero landing-container" aria-labelledby="landing-title"><div className="landing-hero-copy"><h1 id="landing-title"><span>Your next</span><span><mark>cinema</mark></span><span>night starts</span><span>here.</span></h1><p>Discover what's showing, choose your seats, and manage your tickets, all in one place.</p><div className="landing-hero-actions"><Link className="landing-button" to="/movies">Browse movies <span aria-hidden="true">→</span></Link><a className="landing-schedule-link" href="#todays-board">Explore showtimes below ↓</a></div></div><SampleTicket /></section>
+    {!user && <section className="landing-hero landing-container" aria-labelledby="landing-title"><div className="landing-hero-copy"><h1 id="landing-title"><span>Your next</span><span><mark>cinema</mark></span><span>night starts</span><span>here.</span></h1><p>Discover what's showing, choose your seats, and manage your tickets, all in one place.</p><div className="landing-hero-actions"><Link className="landing-button" to="/movies">Browse movies <span aria-hidden="true">→</span></Link><a className="landing-schedule-link" href="#todays-board">Explore showtimes below ↓</a></div></div><SampleTicket /></section>}
     <Home />
-    <PromoMarquee />
-    <LandingFeatures />
+    {!user && <><PromoMarquee /><LandingFeatures /></>}
   </div>;
 }
