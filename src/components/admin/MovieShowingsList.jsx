@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react';
 import { apiAll } from '../../api';
 import { describeError, pesos } from '../../utils/adminTools';
-import { manilaClock, shortDate } from '../../utils/manila';
+import { displayTime, shortDate } from '../../utils/manila';
 
 const SHOWN = 6;
+const CHIPS = [['upcoming', 'Upcoming'], ['past', 'Already shown'], ['cancelled', 'Cancelled']];
 
-// The showings of one movie, inside its panel, so an admin can see what is scheduled and jump
-// straight to the one that needs fixing.
+// The showings of one movie, inside its panel: what is coming (to fix or add to), what already
+// happened and how it sold, and what was cancelled.
 export default function MovieShowingsList({ movie, onOpen, onSchedule, refreshKey = 0 }) {
   const [rows, setRows] = useState(null);
   const [error, setError] = useState('');
   const [all, setAll] = useState(false);
+  const [view, setView] = useState('upcoming');
 
   useEffect(() => {
     const controller = new AbortController();
@@ -22,10 +24,14 @@ export default function MovieShowingsList({ movie, onOpen, onSchedule, refreshKe
   }, [movie._id, refreshKey]);
 
   const now = Date.now();
-  const upcoming = (rows || []).filter((row) => row.status === 'scheduled' && new Date(row.startTime).getTime() > now)
-    .sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
-  const earlier = (rows || []).length - upcoming.length;
-  const visible = all ? upcoming : upcoming.slice(0, SHOWN);
+  const byStart = (a, b) => new Date(a.startTime) - new Date(b.startTime);
+  const scheduled = (rows || []).filter((row) => row.status === 'scheduled');
+  const upcoming = scheduled.filter((row) => new Date(row.startTime).getTime() > now).sort(byStart);
+  const past = scheduled.filter((row) => new Date(row.startTime).getTime() <= now).sort((a, b) => byStart(b, a));
+  const cancelled = (rows || []).filter((row) => row.status === 'cancelled').sort((a, b) => byStart(b, a));
+  const lists = { upcoming, past, cancelled };
+  const current = lists[view];
+  const visible = view === 'upcoming' && !all ? current.slice(0, SHOWN) : current;
 
   return (
     <section className="movie-section" aria-labelledby="movie-sec-showings">
@@ -35,35 +41,52 @@ export default function MovieShowingsList({ movie, onOpen, onSchedule, refreshKe
       </div>
       {error && <p className="movie-field-error" role="alert">{error}</p>}
       {!rows && !error && <p className="movie-field-help">Loading showings…</p>}
-      {rows && upcoming.length === 0 && (
-        <p className="movie-field-help">
-          {movie.status === 'published'
-            ? 'No upcoming showings, so customers see "No showings". Schedule some to put it on sale.'
-            : movie.status === 'draft'
-              ? 'No upcoming showings. Schedule some, then publish the movie so customers can see them.'
-              : 'This movie is archived. Set it back to Draft to schedule showings.'}
-        </p>
+      {rows && (
+        <div className="movie-chips" role="group" aria-label="Which showings">
+          {CHIPS.map(([value, label]) => (
+            <button key={value} type="button" className={view === value ? 'is-on' : ''} aria-pressed={view === value} onClick={() => setView(value)}>{label} <span>{lists[value].length}</span></button>
+          ))}
+        </div>
+      )}
+      {rows && view === 'upcoming' && upcoming.length === 0 && (
+        <div className="movie-empty-state">
+          <b>No upcoming showings</b>
+          <span>
+            {movie.status === 'published'
+              ? 'Customers see "No showings". Schedule some to put it on sale.'
+              : movie.status === 'draft'
+                ? 'Schedule some, then publish the movie so customers can see them.'
+                : 'This movie is archived. Set it back to Draft to schedule showings.'}
+          </span>
+        </div>
+      )}
+      {rows && view !== 'upcoming' && current.length === 0 && (
+        <div className="movie-empty-state"><b>{view === 'past' ? 'Nothing has been shown yet' : 'No cancelled showings'}</b></div>
       )}
       {visible.length > 0 && (
         <ul className="movie-showing-list">
           {visible.map((row) => {
             const sold = row.totalSeats - row.remainingSeats;
+            const details = (
+              <>
+                <span className="movie-showing-when"><b>{shortDate(row.startTime)}</b> {displayTime(row.startTime)}</span>
+                <span className="movie-showing-meta">{row.auditorium?.name} · {pesos(row.ticketPrice)} · {sold} of {row.totalSeats} sold</span>
+                {view === 'upcoming' && !row.published && <span className="admin-status hidden-tag">hidden</span>}
+                {view === 'upcoming' && <span className="movie-showing-open" aria-hidden="true">Fix →</span>}
+              </>
+            );
             return (
               <li key={row._id}>
-                <button type="button" onClick={() => onOpen(row)} aria-label={`Open the ${shortDate(row.startTime)} ${manilaClock(row.startTime)} showing`}>
-                  <span className="movie-showing-when"><b>{shortDate(row.startTime)}</b> {manilaClock(row.startTime)}</span>
-                  <span className="movie-showing-meta">{row.auditorium?.name} · {pesos(row.ticketPrice)} · {sold} of {row.totalSeats} sold</span>
-                  {!row.published && <span className="admin-status hidden-tag">hidden</span>}
-                  <span className="movie-showing-open" aria-hidden="true">Fix →</span>
-                </button>
+                {view === 'upcoming'
+                  ? <button type="button" onClick={() => onOpen(row)} aria-label={`Open the ${shortDate(row.startTime)} ${displayTime(row.startTime)} showing`}>{details}</button>
+                  : <div className="movie-showing-static">{details}</div>}
               </li>
             );
           })}
         </ul>
       )}
-      {movie.status === 'draft' && upcoming.length > 0 && <p className="movie-field-help">These showings are hidden from customers until the movie is published.</p>}
-      {upcoming.length > SHOWN && !all && <button type="button" className="movie-schedule-link" onClick={() => setAll(true)}>Show all {upcoming.length} upcoming showings</button>}
-      {earlier > 0 && <p className="movie-field-help">{earlier} earlier or cancelled {earlier === 1 ? 'showing is' : 'showings are'} not listed.</p>}
+      {movie.status === 'draft' && view === 'upcoming' && upcoming.length > 0 && <p className="movie-field-help">These showings are hidden from customers until the movie is published.</p>}
+      {view === 'upcoming' && upcoming.length > SHOWN && !all && <button type="button" className="movie-schedule-link" onClick={() => setAll(true)}>Show all {upcoming.length} upcoming showings</button>}
     </section>
   );
 }
