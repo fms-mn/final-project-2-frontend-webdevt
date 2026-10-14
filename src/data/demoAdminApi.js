@@ -176,7 +176,7 @@ export function demoAdminRequest(path, { method = 'GET', body } = {}) {
   }
   const removeId = pathname.match(/^\/movies\/(.+)$/)?.[1];
   if (removeId && method === 'DELETE') {
-    if (hasUpcomingShowtime(removeId)) movieError('This movie has showtimes, so it cannot be deleted. Archive it instead.');
+    if (hasUpcomingShowtime(removeId)) movieError('This movie still has coming showings. Take it off sale first (that cancels them), then delete it.');
     const catalog = readMovies();
     if (!catalog.some((movie) => movie._id === removeId)) movieError('Movie not found.');
     writeMovies(catalog.filter((movie) => movie._id !== removeId));
