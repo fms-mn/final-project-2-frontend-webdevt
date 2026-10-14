@@ -17,7 +17,7 @@ function HistoryRow({ booking, getDetail, expanded, onToggle, onRetryRefund, ref
   const info = getDetail(booking);
   const cancelled = booking.status === 'cancelled';
   const byCinema = cancelled && booking.showtime?.status === 'cancelled';
-  const status = byCinema ? 'Cancelled by cinema' : cancelled ? 'Cancelled' : booking.status === 'confirmed' ? 'Past' : booking.status === 'expired' ? 'Expired' : 'Pending';
+  const status = byCinema ? 'Cancelled by cinema' : cancelled ? 'Cancelled' : booking.status === 'confirmed' ? 'Completed' : booking.status === 'expired' ? 'Expired' : 'Pending';
   const refund = refundSummary(booking.cancellation, cancelled);
   const refundApplicable = cancelled || ['refunded', 'pending', 'failed'].includes(booking.cancellation?.refund?.status);
   const paymentStatus = booking.payment?.status || booking.paymentStatus || booking.cancellation?.paymentStatus;
@@ -64,7 +64,7 @@ export default function TicketHistory({ bookings, getDetail, onRetryRefund, refu
     <h2 id="history-heading" className="eyebrow">History · {bookings.length} {bookings.length === 1 ? 'booking' : 'bookings'}</h2>
     {bookings.length ? <>
       <div className="history-controls">
-        <div className="history-filters" role="group" aria-label="Filter History">{[['all', 'All'], ['cancelled', 'Cancelled'], ['past', 'Past']].map(([value, label]) => <button type="button" key={value} aria-pressed={filter === value} onClick={() => update(setFilter, value)}>{label}</button>)}</div>
+        <div className="history-filters" role="group" aria-label="Filter History">{[['all', 'All'], ['cancelled', 'Cancelled'], ['past', 'Completed']].map(([value, label]) => <button type="button" key={value} aria-pressed={filter === value} onClick={() => update(setFilter, value)}>{label}</button>)}</div>
         <label className="history-search"><span className="history-sr-only">Search History</span><FiSearch aria-hidden="true" /><input type="search" value={query} placeholder="Title or booking reference" onChange={event => update(setQuery, event.target.value)} /></label>
         <label className="history-sort"><span className="history-sr-only">Sort by showtime</span><select value={order} onChange={event => update(setOrder, event.target.value)}><option value="newest">Newest first</option><option value="oldest">Oldest first</option></select></label>
         <p className="history-count" role="status"><span className="history-count-label">History · </span>Showing {Math.min(visibleCount, selected.length)} of {selected.length}</p>
@@ -73,6 +73,6 @@ export default function TicketHistory({ bookings, getDetail, onRetryRefund, refu
         <h3 className="history-group-heading">{dateLabel(group.day)} · {group.total} {group.total === 1 ? 'booking' : 'bookings'}{group.bookings.length < group.total && <small> (showing {group.bookings.length} of {group.total})</small>}</h3>
         <ul className="history-list">{group.bookings.map(booking => <HistoryRow key={booking._id} booking={booking} getDetail={getDetail} expanded={expandedIds.has(booking._id)} onToggle={() => toggle(booking._id)} onRetryRefund={onRetryRefund ? () => onRetryRefund(booking) : undefined} refundLoading={refundRefresh.id === booking._id && refundRefresh.loading} refundError={refundRefresh.id === booking._id ? refundRefresh.error : ''} />)}</ul>
       </section>)}{visibleCount < selected.length && <button type="button" className="btn btn-secondary history-load-more" onClick={() => setVisibleCount(count => count + 5)}>Load more</button>}</div> : <div className="bookings-empty"><h3>No matching history</h3><p>Try another movie title, booking reference, or filter.</p><button type="button" className="btn btn-secondary" onClick={() => { setQuery(''); setFilter('all'); setVisibleCount(5); }}>Clear search and filters</button></div>}
-    </> : <div className="bookings-empty"><h3>No ticket history yet</h3><p>Past and cancelled tickets will appear here.</p></div>}
+    </> : <div className="bookings-empty"><h3>No ticket history yet</h3><p>Completed and cancelled bookings will appear here.</p></div>}
   </section>;
 }

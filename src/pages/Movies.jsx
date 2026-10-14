@@ -24,8 +24,8 @@ export default function Movies() {
   );
 
   return (
-    <div className="movies-page movies-refined fade-in">
-      <header className="movies-heading">
+    <div className="movies-page movies-refined customer-page fade-in">
+      <header className="movies-heading customer-page-heading">
         <div>
           <span className="eyebrow">The lineup</span>
           <h1>All movies</h1>

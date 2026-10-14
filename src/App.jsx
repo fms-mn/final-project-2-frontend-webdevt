@@ -16,6 +16,7 @@ import '@fontsource-variable/bricolage-grotesque/wght.css';
 import '@fontsource-variable/instrument-sans/wght.css';
 import '@fontsource-variable/jetbrains-mono/wght.css';
 import './filme.css';
+import './components/customerPageHeading.css';
 
 function HomepageRedirect() {
   const location = useLocation();
