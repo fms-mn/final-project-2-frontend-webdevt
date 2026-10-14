@@ -1,3 +1,4 @@
+import BrandMark from './components/BrandMark';
 import { BrowserRouter as Router, Navigate, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
@@ -48,7 +49,7 @@ function AppContent() {
         </Routes>
       </main>
       <BackToTop />
-      <footer className="footer"><div className="footer-content"><div className="footer-brand"><img src="/filme-mark.svg" alt="" /><strong>FILME</strong></div><p>Browse movies and manage your bookings. Test bookings are not valid for cinema admission.</p></div></footer>
+      <footer className="footer"><div className="footer-content"><div className="footer-brand"><BrandMark /><strong>filme</strong></div><p>Browse movies and manage your bookings. Test bookings are not valid for cinema admission.</p></div></footer>
     </div>
   );
 }

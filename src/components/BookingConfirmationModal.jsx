@@ -1,3 +1,4 @@
+import BrandMark from './BrandMark';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { getDemoBookingReference } from '../data/demoBookings';
@@ -111,7 +112,7 @@ export default function BookingConfirmationModal({ draft, booking, pending, erro
         <div className="confirmation-modal-content">
         <div className={`confirmation-ticket ${booking ? 'is-confirmed' : 'is-review'} ${booking && celebrationKey === bookingKey ? 'is-celebrating' : ''}`}>
           <div className="confirmation-main">
-            <div className="confirmation-brand"><img src="/filme-mark.svg" alt="" /> FILME <span>{simulated ? 'TEST · ' : 'SEATS · '}{seats.length}</span></div>
+            <div className="confirmation-brand"><BrandMark /> filme <span>{simulated ? 'TEST · ' : 'SEATS · '}{seats.length}</span></div>
             <h3>{booking?.movie?.title || draft.movieTitle}</h3>
             <dl><div><dt>Date</dt><dd>{showDate}</dd></div><div><dt>Time</dt><dd>{showTime}</dd></div><div><dt>Cinema</dt><dd>{auditoriumName}</dd></div><div><dt>Seats</dt><dd>{seats.join(' · ')}</dd></div></dl>
           </div>

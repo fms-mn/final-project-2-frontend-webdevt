@@ -2,8 +2,8 @@
 .navbar.filme-navbar.scrolled { background: var(--nav-refined-surface); }
 .filme-navbar .nav-links { justify-self: center; }
 .filme-navbar .nav-mobile-sign-up { display: none; }
-.filme-navbar .nav-brand { justify-self: start; gap: 12px; color: var(--nav-refined-ink); -webkit-text-fill-color: currentColor; background: none; font: 700 28px/1 'JetBrains Mono Variable', monospace; letter-spacing: .16em; white-space: nowrap; }
-.filme-navbar .nav-brand img { width: 38px; height: 38px; }
+.filme-navbar .nav-brand { justify-self: start; gap: 12px; color: var(--nav-refined-ink); -webkit-text-fill-color: currentColor; background: none; font: 800 34px/1 'Bricolage Grotesque Variable', sans-serif; letter-spacing: -.045em; text-transform: none; white-space: nowrap; }
+.filme-navbar .nav-brand .brand-mark { width: 48px; height: 37px; }
 .filme-navbar .nav-links { position: static; transform: none; height: auto; display: flex; gap: 10px; }
 .filme-navbar .nav-link { padding: 10px 17px; border: 0; border-radius: 28px; min-height: 44px; font: 600 16px/1.4 'Instrument Sans Variable', sans-serif; white-space: nowrap; color: var(--nav-refined-muted); background: transparent; }
 .filme-navbar .nav-link:hover { background: var(--nav-refined-active); color: var(--nav-refined-accent); }
@@ -28,8 +28,8 @@
   .filme-navbar .nav-user > .nav-sign-up { display: none; }
   .filme-navbar .nav-mobile-sign-up { display: flex; }
   .navbar.filme-navbar { display: flex; gap: 12px; }
-  .filme-navbar .nav-brand { font-size: 24px; gap: 9px; }
-  .filme-navbar .nav-brand img { width: 32px; height: 32px; }
+  .filme-navbar .nav-brand { font-size: 28px; gap: 8px; }
+  .filme-navbar .nav-brand .brand-mark { width: 41px; height: 32px; }
   .filme-navbar .nav-user { margin-left: auto; }
   .filme-navbar .nav-user > .nav-logout { display: none; }
   .filme-navbar .nav-user > .nav-account-pill { display: flex; padding: 0; min-height: 34px; }
@@ -42,5 +42,5 @@
   .filme-navbar .nav-mobile-account .nav-logout { align-self: flex-start; padding: 8px 16px; margin: 0; }
   :root[data-theme='dark'] .filme-navbar .nav-links { background: var(--nav-refined-surface); border-color: var(--nav-refined-border); }
 }
-@media (max-width: 560px) { .navbar.filme-navbar { height: 68px; padding: 0 18px; gap: 10px; } .filme-navbar .nav-brand { font-size: 22px; } }
+@media (max-width: 560px) { .navbar.filme-navbar { height: 68px; padding: 0 18px; gap: 10px; } .filme-navbar .nav-brand { font-size: 26px; } }
 @media (max-width: 560px) { .filme-navbar .nav-user {gap:8px} .filme-navbar .nav-user > .nav-sign-in {padding:8px;font-size:14px} }
