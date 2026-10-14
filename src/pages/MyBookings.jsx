@@ -124,7 +124,7 @@ export default function MyBookings() {
     }
     finally { cancelLocked.current = false; setCancelling(false); }
   };
-  return <div className="bookings-page wallet-timeline-page fade-in"><div className="wallet-heading"><div><span className="eyebrow">Your wallet</span><h1>My tickets</h1></div>{!loading && !error && upcoming.length > 0 && <Link to="/movies" className="btn btn-primary">Browse movies</Link>}</div>
+  return <div className="bookings-page wallet-timeline-page customer-page fade-in"><header className="wallet-heading customer-page-heading"><div><span className="eyebrow">Your bookings</span><h1>My tickets</h1><p>View upcoming screenings and manage your booking history.</p></div>{!loading && !error && upcoming.length > 0 && <Link to="/movies" className="btn btn-primary">Browse movies</Link>}</header>
     {isDemo && <p className="demo-note">Simulated bookings saved in this browser. These are not admission tickets.</p>}
     {feedback && <CancellationSuccess key={feedback.id} reference={feedback.reference} refund={feedback.refund} onDismiss={dismissSuccess} />}
     {loading && <div className="loading"><div className="spinner"/></div>}

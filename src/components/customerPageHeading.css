@@ -1,0 +1,50 @@
+.customer-page.movies-refined,
+.customer-page.wallet-timeline-page {
+  width: 100%;
+  max-width: 1440px;
+  padding-top: 60px;
+  padding-inline: clamp(20px, 4vw, 64px);
+}
+
+.customer-page .customer-page-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 36px;
+}
+
+.customer-page .customer-page-heading > div { min-width: 0; }
+.customer-page .customer-page-heading .eyebrow {
+  display: block;
+  font: 600 13px/1.5 'JetBrains Mono Variable', monospace;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.customer-page .customer-page-heading h1 {
+  margin: 16px 0 8px;
+  font: 800 clamp(48px, 6.4vw, 88px)/1 'Bricolage Grotesque Variable', sans-serif;
+  letter-spacing: -.055em;
+  color: var(--text-primary);
+}
+.customer-page .customer-page-heading p {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.customer-page .customer-page-heading .btn { margin-bottom: 4px; white-space: nowrap; }
+
+@media (max-width: 800px) {
+  .customer-page.movies-refined,
+  .customer-page.wallet-timeline-page { padding-top: 40px; padding-inline: 24px; }
+  .customer-page .customer-page-heading { flex-wrap: wrap; gap: 16px; margin-bottom: 26px; }
+  .customer-page .customer-page-heading p { font-size: 16px; }
+}
+@media (max-width: 480px) {
+  .customer-page.movies-refined,
+  .customer-page.wallet-timeline-page { padding-top: 30px; padding-inline: 18px; }
+  .customer-page .customer-page-heading { gap: 12px; }
+  .customer-page .customer-page-heading .btn { margin-bottom: 0; }
+}
