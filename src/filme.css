@@ -56,8 +56,8 @@ a {color:inherit}
 .footer {background:transparent;border-top:1px solid #d4d9e9;color:#525d83;padding:20px 4vw}
 .footer-content {max-width:1440px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:20px}
 .footer-brand {display:flex;align-items:center;gap:7px}
-.footer-brand img {width:24px}
-.footer-brand strong {font-family:'JetBrains Mono Variable',monospace;color:#12163A;letter-spacing:.1em}
+.footer-brand .brand-mark {width:36px;height:28px}
+.footer-brand strong {font:800 22px 'Bricolage Grotesque Variable',sans-serif;color:#12163A;letter-spacing:-.045em}
 .footer-content p {font-size:13px}
 
 /* Tonight */
@@ -266,9 +266,9 @@ a {color:inherit}
 .booking-modal-reference {max-width:560px;margin:15px auto 38px;font:400 17px/1.5 'Instrument Sans Variable';color:#525d83}
 .confirmation-ticket {display:grid;grid-template-columns:70% 30%;min-height:320px;overflow:hidden;border-radius:17px;text-align:left;box-shadow:var(--shadow-lg)}
 .confirmation-main {padding:38px;background:#12163A;color:#fff}
-.confirmation-brand {display:flex;align-items:center;gap:5px;font:700 25px 'JetBrains Mono Variable';letter-spacing:.1em}
-.confirmation-brand img {width:27px}
-.confirmation-brand span {margin-left:auto;color:#FFC93C;font-size:11px}
+.confirmation-brand {display:flex;align-items:center;gap:6px;font:800 30px 'Bricolage Grotesque Variable',sans-serif;letter-spacing:-.045em}
+.confirmation-brand .brand-mark {width:40px;height:31px;fill:#ff5f7e}
+.confirmation-brand span {margin-left:auto;color:#FFC93C;font:700 11px 'JetBrains Mono Variable',monospace;letter-spacing:.06em}
 .confirmation-main h3 {font-size:clamp(44px,6vw,85px);line-height:1;margin:35px 0}
 .confirmation-main dl {display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 .confirmation-main dt,.confirmation-stub small {font:600 11px 'JetBrains Mono Variable';letter-spacing:.15em;text-transform:uppercase;color:#9ca5c4}
@@ -346,8 +346,8 @@ a {color:inherit}
   .confirmation-modal .booking-modal-reference {max-width:36ch;margin:8px auto 18px;font-size:14px;line-height:1.4;}
   .confirmation-ticket {min-height:0;grid-template-columns:minmax(0,1fr);overflow:hidden;border-radius:15px;}
   .confirmation-main {min-width:0;padding:20px 20px 22px;}
-  .confirmation-brand {font-size:18px;gap:4px;}
-  .confirmation-brand img {width:21px;}
+  .confirmation-brand {font-size:23px;gap:4px;}
+  .confirmation-brand .brand-mark {width:32px;height:25px;}
   .confirmation-brand span {font-size:10px;letter-spacing:0;}
   .confirmation-main h3 {font-size:clamp(29px,8vw,40px);line-height:1.05;margin:18px 0 22px;overflow-wrap:anywhere;}
   .confirmation-main dl {grid-template-columns:repeat(2,minmax(0,1fr));gap:15px 12px;margin:0;}
@@ -658,3 +658,7 @@ body,.navbar,.theme-toggle,.movie-card,.auth-card,.admin-panel,.admin-row,.booki
   .booking-active .showtime-selector {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible;gap:8px}
   .booking-active .showtime-btn {white-space:normal;min-width:0;padding:10px;line-height:1.35}
 }
+
+/* The FILME mark: crimson on light pages, a lighter coral on dark ones. */
+.brand-mark {display:block;flex:none;fill:#c82448}
+:root[data-theme='dark'] .brand-mark {fill:#ff5f7e}

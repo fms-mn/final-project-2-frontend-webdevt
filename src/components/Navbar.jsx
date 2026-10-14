@@ -1,3 +1,4 @@
+import BrandMark from './BrandMark';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useState, useEffect, useRef } from 'react';
@@ -66,7 +67,7 @@ export default function Navbar() {
   const accountContent = <><span className="nav-avatar" aria-hidden="true">{initials}</span><span className="nav-user-name">{user?.name}</span></>;
   return (
     <nav className={`navbar filme-navbar ${scrolled ? 'scrolled' : ''}`} aria-label="Main navigation">
-      <Link to={['/login', '/register'].includes(location.pathname) ? '/' : homePath} className="nav-brand" aria-label="FILME home"><img src="/filme-mark.svg" alt="" />FILME</Link>
+      <Link to={['/login', '/register'].includes(location.pathname) ? '/' : homePath} className="nav-brand" aria-label="FILME home"><BrandMark />filme</Link>
 
       <div id="primary-navigation" className={`nav-links ${menuOpen ? 'is-open' : ''}`}>
         {!user && <>
