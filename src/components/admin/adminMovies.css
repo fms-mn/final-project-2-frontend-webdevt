@@ -144,6 +144,11 @@
 
 /* Manage movie: its showings and the remove options live in the same panel */
 .movie-manager > .admin-notice,.movie-manager > .error-message { position:sticky; left:auto; bottom:auto; top:84px; z-index:6; max-width:none; margin-bottom:12px; }
+/* Solid backgrounds, so the message stays readable when it floats over the movie list. */
+.movie-manager > .error-message { background:#fdecef; border-color:#e8a5b1; color:#9c1c37; box-shadow:0 6px 18px #17234722; }
+.movie-manager > .admin-notice { background:#e9f7ee; box-shadow:0 6px 18px #17234722; }
+:root[data-theme='dark'] .movie-manager > .error-message { background:#3a2038; border-color:#8a4a62; color:#ffb3c1; }
+:root[data-theme='dark'] .movie-manager > .admin-notice { background:#17382a; }
 .movie-title-link { display:block; padding:0; border:0; background:none; color:inherit; font:inherit; text-align:left; cursor:pointer; }
 .movie-title-link:hover strong { color:var(--a-coral); text-decoration:underline; text-underline-offset:3px; }
 .movie-title-link:focus-visible { outline:3px solid var(--a-coral); outline-offset:2px; border-radius:4px; }

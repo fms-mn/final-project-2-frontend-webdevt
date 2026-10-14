@@ -51,10 +51,10 @@ export default function MovieRemove({ movie, onChanged }) {
 
       <div className="movie-danger-option">
         <b>Delete permanently</b>
-        <p>Erases the movie. This only works for a movie that never had a showing, so no customer loses their ticket history. Otherwise, take it off sale.</p>
+        <p>Erases the movie and any old showings nobody booked. It stays if customers have booked tickets for it, so nobody loses their ticket history. If it has coming showings, take it off sale first.</p>
         {blocked && (
           <p className="movie-field-error" role="alert">
-            It has showings history, so it cannot be deleted. {movie.status !== 'archived' ? 'Use "Take off sale" above instead.' : 'It is already archived, which keeps it out of customers\' sight.'}
+            {error || 'It cannot be deleted.'}{movie.status === 'archived' ? ' It is already archived, so customers cannot see it.' : ''}
           </p>
         )}
         {confirmDelete ? (
