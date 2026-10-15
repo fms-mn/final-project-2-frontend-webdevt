@@ -53,7 +53,7 @@ a {color:inherit}
 .btn-dark:hover {background:#252b5c;color:#fff}
 .btn-danger {background:transparent;border:1.5px solid #E94560;color:#E94560}
 .eyebrow,.home-section-eyebrow,.booking-eyebrow {font-family:'JetBrains Mono Variable',monospace;font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#59658e}
-.footer {background:transparent;border-top:1px solid #d4d9e9;color:#525d83;padding:20px 4vw}
+.footer {background:var(--nav-refined-surface);border-top:1px solid #d4d9e9;color:#525d83;padding:20px 4vw}
 .footer-content {max-width:1440px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:20px}
 .footer-brand {display:flex;align-items:center;gap:7px}
 .footer-brand .brand-mark {width:36px;height:28px}
