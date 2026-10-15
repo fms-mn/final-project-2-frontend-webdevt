@@ -1,12 +1,12 @@
 .landing-main {flex:1}
 .landing-secondary-action {font-weight:700;min-height:44px;display:inline-flex;align-items:center;text-decoration:underline;text-underline-offset:5px}
-.landing-page .tonight-page.cinematic-home {width:min(calc(100% - var(--landing-gutter) * 2),1440px);max-width:none;padding-inline:0}
+.landing-page .tonight-page.cinematic-home {width:min(calc(100% - var(--filme-gutter) * 2),var(--filme-container));max-width:none;padding-inline:0}
 .landing-page #todays-board {scroll-margin-top:90px}
-.landing-page {--landing-text:#20214f;--landing-muted:#585a87;--landing-surface:#fff;--landing-border:#20214f;--landing-shadow:#20214f;--landing-accent:#ff567a;--landing-action:#c52d50;--landing-action-hover:#ac2444;--landing-on-action:#fff;--landing-deep:#20214f;--landing-on-deep:#fff;--landing-deep-muted:#d4d2ec;--landing-focus:#8b2043;--landing-card-border:#20214f;--landing-gutter:clamp(24px,2.8vw,40px);background:var(--bg-primary);color:var(--landing-text);font-family:'Instrument Sans Variable',sans-serif;min-width:0}
+.landing-page {--landing-text:#20214f;--landing-muted:#585a87;--landing-surface:#fff;--landing-border:#20214f;--landing-shadow:#20214f;--landing-accent:#ff567a;--landing-action:#c52d50;--landing-action-hover:#ac2444;--landing-on-action:#fff;--landing-deep:#20214f;--landing-on-deep:#fff;--landing-deep-muted:#d4d2ec;--landing-focus:#8b2043;--landing-card-border:#20214f;background:var(--bg-primary);color:var(--landing-text);font-family:'Instrument Sans Variable',sans-serif;min-width:0}
 .landing-page * {box-sizing:border-box}
 .landing-page .cinematic-home .opening-section {background:transparent}
 :root[data-theme='dark'] .landing-page .landing-ribbon {border-block:1px solid #454d71}
-.landing-container {width:min(calc(100% - var(--landing-gutter) * 2),1440px);margin-inline:auto}
+.landing-container {width:min(calc(100% - var(--filme-gutter) * 2),var(--filme-container));margin-inline:auto}
 .landing-header {display:flex;align-items:center;justify-content:space-between;gap:24px;height:90px}
 .landing-brand {display:flex;align-items:center;gap:12px;font:700 24px 'JetBrains Mono Variable',monospace;letter-spacing:.04em}
 .landing-brand img {width:36px;height:36px;flex:none}
@@ -73,7 +73,6 @@
   .landing-ticket-bottom strong {font-size:28px}
 }
 @media (max-width:767px) {
-  .landing-page {--landing-gutter:18px}
   .landing-page .landing-hero {grid-template-columns:minmax(0,1fr);gap:0;padding-block:26px 28px}
   .landing-page .landing-hero h1 {max-width:18ch;font-size:clamp(36px,7.7vw,54px);line-height:1.06}
   .landing-page .landing-hero p {margin:18px 0 22px;font-size:17px;line-height:1.5}

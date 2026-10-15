@@ -6,8 +6,8 @@
   --overview-tint: #eef0f9;
   --overview-border: #e1e5f2;
   --overview-accent: #cf3151;
-  max-width: 1440px;
-  padding: 32px clamp(24px, 5.6vw, 80px) 96px;
+  max-width: var(--filme-frame);
+  padding: 32px var(--filme-gutter) 96px;
   color: var(--overview-ink);
 }
 .admin-overview-page .admin-heading { height: 96px; grid-template-columns: minmax(0, 1fr) auto; gap: 0 24px; margin-bottom: 16px; }
