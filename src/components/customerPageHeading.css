@@ -1,9 +1,6 @@
 .customer-page.movies-refined,
 .customer-page.wallet-timeline-page {
-  width: 100%;
-  max-width: 1440px;
   padding-top: 60px;
-  padding-inline: clamp(20px, 4vw, 64px);
 }
 
 .customer-page .customer-page-heading {
@@ -38,13 +35,13 @@
 
 @media (max-width: 800px) {
   .customer-page.movies-refined,
-  .customer-page.wallet-timeline-page { padding-top: 40px; padding-inline: 24px; }
+  .customer-page.wallet-timeline-page { padding-top: 40px; }
   .customer-page .customer-page-heading { flex-wrap: wrap; gap: 16px; margin-bottom: 26px; }
   .customer-page .customer-page-heading p { font-size: 16px; }
 }
 @media (max-width: 480px) {
   .customer-page.movies-refined,
-  .customer-page.wallet-timeline-page { padding-top: 30px; padding-inline: 18px; }
+  .customer-page.wallet-timeline-page { padding-top: 30px; }
   .customer-page .customer-page-heading { gap: 12px; }
   .customer-page .customer-page-heading .btn { margin-bottom: 0; }
 }

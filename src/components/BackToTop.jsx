@@ -1,15 +1,33 @@
 import { useEffect, useState } from 'react';
 import { FiArrowUp } from 'react-icons/fi';
 
-export default function BackToTop() {
+export default function BackToTop({ footerRef }) {
   const [visible, setVisible] = useState(false);
+  const [footerOverlap, setFooterOverlap] = useState(0);
 
   useEffect(() => {
-    const updateVisibility = () => setVisible(window.scrollY > 400);
-    updateVisibility();
-    window.addEventListener('scroll', updateVisibility, { passive: true });
-    return () => window.removeEventListener('scroll', updateVisibility);
-  }, []);
+    let frame;
+    const updatePosition = () => {
+      setVisible(window.scrollY > 400);
+      setFooterOverlap(Math.max(0, window.innerHeight - footerRef.current.getBoundingClientRect().top));
+    };
+    const scheduleUpdate = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(updatePosition);
+    };
+    const observer = new ResizeObserver(scheduleUpdate);
+    observer.observe(document.body);
+    observer.observe(footerRef.current);
+    updatePosition();
+    window.addEventListener('scroll', scheduleUpdate, { passive: true });
+    window.addEventListener('resize', scheduleUpdate);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener('scroll', scheduleUpdate);
+      window.removeEventListener('resize', scheduleUpdate);
+    };
+  }, [footerRef]);
 
   if (!visible) return null;
 
@@ -22,6 +40,7 @@ export default function BackToTop() {
     <button
       type="button"
       className="back-to-top"
+      style={{ '--footer-overlap': `${footerOverlap}px` }}
       onClick={scrollToTop}
       aria-label="Back to top"
       title="Back to top"

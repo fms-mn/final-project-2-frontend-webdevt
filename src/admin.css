@@ -18,9 +18,9 @@
 }
 .admin-page.admin-workspace {
   width: 100%;
-  max-width: 1360px;
+  max-width: var(--filme-frame);
   margin: 0 auto;
-  padding: 32px clamp(20px, 3vw, 48px) 48px;
+  padding: 32px var(--filme-gutter) 48px;
   color: var(--a-ink);
 }
 .admin-workspace .admin-heading {
@@ -181,7 +181,7 @@
   .admin-form .admin-pair { grid-template-columns: 1fr; }
 }
 @media (max-width: 700px) {
-  .admin-page.admin-workspace { padding: 24px 18px 36px; }
+  .admin-page.admin-workspace { padding: 24px var(--filme-gutter) 36px; }
   .admin-workspace .admin-heading { height: 94px; margin-bottom: 12px; }
   .admin-workspace .admin-heading h1 { font-size: clamp(30px, 8vw, 36px); }
   .admin-workspace .admin-heading p { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; font-size: 12px; line-height: 1.45; }

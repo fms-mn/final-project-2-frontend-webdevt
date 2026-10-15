@@ -1,10 +1,12 @@
 .profile-page {
   max-width: 864px;
   margin: 0 auto;
-  padding: 32px 32px 64px;
+  padding: 32px var(--filme-gutter) 64px;
 }
 
 .profile-page .profile-card {
+  max-width: 800px;
+  margin-inline: auto;
   --profile-inset: 44px;
   --profile-avatar-size: 104px;
   overflow: hidden;
@@ -100,7 +102,7 @@
 :root[data-theme='dark'] .profile-page .profile-field input[readonly] { background: var(--bg-secondary); }
 
 @media (max-width: 700px) {
-  .profile-page { padding: 28px 24px 48px; }
+  .profile-page { padding: 28px var(--filme-gutter) 48px; }
   .profile-page .profile-card { --profile-inset: 30px; --profile-avatar-size: 80px; border-radius: 22px; }
   .profile-page .profile-banner { height: 120px; }
   .profile-page .profile-identity { column-gap: 16px; }
@@ -111,7 +113,7 @@
 }
 
 @media (max-width: 480px) {
-  .profile-page { padding: 24px 16px 40px; }
+  .profile-page { padding: 24px var(--filme-gutter) 40px; }
   .profile-page .profile-card { --profile-inset: 22px; --profile-avatar-size: 72px; border-radius: 20px; }
   .profile-page .profile-banner { height: 104px; }
   .profile-page .profile-identity { column-gap: 14px; }

@@ -1,3 +1,10 @@
+/* Content cap plus one shared gutter on each side. Forms retain their own width limits. */
+:root {
+  --filme-container:1440px;
+  --filme-gutter:clamp(24px,2.8vw,40px);
+  --filme-frame:calc(var(--filme-container) + 2 * var(--filme-gutter));
+}
+@media(max-width:767px) {:root {--filme-gutter:18px}}
 :root,:root[data-theme='light'] {
   color-scheme: light;
   --bg-primary:#E8EBF4;--bg-secondary:#E8EBF4;--bg-card:#fff;--bg-card-hover:#f7f8fc;
@@ -25,7 +32,7 @@
   --filme-coral-fill:#bd2445;
   --filme-booked-stripe:#667391;--filme-booked-base:#303b5b;
 }
-html {scroll-behavior:smooth}
+html {scroll-behavior:smooth;scrollbar-gutter:stable}
 body {background:var(--bg-primary);color:var(--text-primary);font-family:'Instrument Sans Variable',sans-serif;line-height:1.45}
 h1,h2,h3,h4,.btn,.nav-link {font-family:'Bricolage Grotesque Variable',sans-serif}
 h1,h2,h3 {letter-spacing:-.055em}
@@ -53,7 +60,7 @@ a {color:inherit}
 .btn-dark:hover {background:#252b5c;color:#fff}
 .btn-danger {background:transparent;border:1.5px solid #E94560;color:#E94560}
 .eyebrow,.home-section-eyebrow,.booking-eyebrow {font-family:'JetBrains Mono Variable',monospace;font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#59658e}
-.footer {background:transparent;border-top:1px solid #d4d9e9;color:#525d83;padding:20px 4vw}
+.footer {background:var(--nav-refined-surface);border-top:1px solid #d4d9e9;color:#525d83;padding:20px 4vw}
 .footer-content {max-width:1440px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:20px}
 .footer-brand {display:flex;align-items:center;gap:7px}
 .footer-brand .brand-mark {width:36px;height:28px}
@@ -61,7 +68,7 @@ a {color:inherit}
 .footer-content p {font-size:13px}
 
 /* Tonight */
-.tonight-page {max-width:1440px;margin:auto;padding:40px clamp(20px,4vw,72px) 55px}
+.tonight-page {max-width:var(--filme-frame);margin:auto;padding:40px var(--filme-gutter) 55px}
 .tonight-hero {display:grid;grid-template-columns:42% 58%;gap:18px;align-items:start;min-height:385px}
 .tonight-intro {padding-top:10px}
 .tonight-intro h1 {font-size:clamp(52px,6.3vw,105px);line-height:.91;margin:22px 0 24px;font-weight:800}
@@ -147,7 +154,7 @@ a {color:inherit}
 :root[data-theme='light'] .opening-section a:focus-visible,:root[data-theme='light'] .opening-section button:focus-visible {outline-color:#a12442}
 
 /* Shared pages */
-.movies-page,.bookings-page,.admin-page {max-width:1440px;width:auto;margin:0 auto;padding:55px clamp(20px,4vw,72px)}
+.movies-page,.bookings-page,.admin-page {max-width:var(--filme-frame);width:100%;margin:0 auto;padding:55px var(--filme-gutter)}
 .movies-page h1,.bookings-page h1,.admin-page h1,.auth-card h1 {font-size:clamp(44px,5vw,82px);line-height:1.03}
 .movies-page>p,.bookings-page>p,.admin-heading p {color:#525d83}
 .movies-grid {gap:18px}
@@ -176,7 +183,7 @@ a {color:inherit}
 .admin-row {padding:15px;background:#fff;border:1px solid #d3d8e8;border-radius:9px}
 
 /* Seat selection */
-.booking-experience {max-width:1440px;width:auto;margin:auto;padding:34px clamp(20px,4vw,72px)}
+.booking-experience {max-width:var(--filme-frame);width:100%;margin:auto;padding:34px var(--filme-gutter)}
 .booking-progress {display:flex;justify-content:flex-start;gap:25px;margin:0 0 38px;padding:0;border:0;color:#727da0}
 .booking-progress>* {font-size:14px}
 .booking-progress .current {background:#12163A;color:#fff;border-radius:30px;padding:4px 11px}
@@ -372,7 +379,7 @@ a {color:inherit}
 }
 @media(max-width:500px) {
   .main-content {margin-top:68px}.navbar {height:68px;padding:0 18px}.nav-brand {font-size:23px}.nav-brand img {width:28px}
-  .tonight-page {padding:25px 18px 45px}.tonight-intro h1 {margin:18px 0 23px;font-size:60px}
+  .tonight-page {padding:25px var(--filme-gutter) 45px}.tonight-intro h1 {margin:18px 0 23px;font-size:60px}
   .filmstrip-frame {height:260px}.featured-caption h2 {font-size:27px}
   .featured-caption .btn {padding:10px 16px}
   .section-title h2 {font-size:36px}.section-title>p {display:none}
@@ -405,7 +412,7 @@ a {color:inherit}
   .opening-remind {min-width:0;min-height:40px;padding:7px 11px;gap:6px;font-size:12px}
   .opening-remind svg {font-size:15px}
   .opening-calendar-hint {font-size:11px}
-  .booking-experience {padding:10px 0 100px}.booking-film-panel {padding:0 18px}
+  .booking-experience {padding:10px var(--filme-gutter) 100px}.booking-film-panel {padding:0}
   .booking-experience .movie-detail-text h1 {font-size:34px;margin:0 0 3px}
   .booking-active .movie-detail-info {display:block}
   .booking-active .movie-detail-poster {display:none}
@@ -415,13 +422,13 @@ a {color:inherit}
   .booking-experience .movie-detail-text .booking-mobile-context {display:block;font-size:14px;color:#525d83}
   .booking-active .movie-detail-stats {display:none}
   .booking-experience .movie-detail-tags {display:none}
-  .booking-schedule {border:0;border-radius:0;background:transparent;padding:8px 18px 15px}
+  .booking-schedule {border:0;border-radius:0;background:transparent;padding:8px 0 15px}
   .booking-schedule>div:first-child {display:none}
   .booking-schedule>div+div {margin:0}
   .booking-schedule h3 {display:none}
   .booking-active .showtime-selector {display:flex;gap:8px}
   .booking-experience .showtime-btn {padding:10px 15px}
-  .booking-summary {margin:20px 18px!important}
+  .booking-summary {margin:20px 0!important}
   .booking-mobile-bar {padding:10px max(18px, env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left))}
   .bookings-page,.movies-page,.admin-page {padding:30px 18px}
   .footer-content {display:block}.footer-content p {margin-top:10px}
@@ -579,8 +586,7 @@ body,.navbar,.theme-toggle,.movie-card,.auth-card,.admin-panel,.admin-row,.booki
 }
 
 /* Shared schedule layout and accessible controls. */
-:root {--filme-container:1440px;--filme-gutter:clamp(18px,4vw,72px);--filme-coral-hover:#a31d3b}
-.tonight-page {max-width:var(--filme-container);padding-inline:var(--filme-gutter)}
+:root {--filme-coral-hover:#a31d3b}
 .board-section,.opening-section {width:auto;margin:32px 0 0;background:transparent}
 .board-section-inner,.opening-section-inner {max-width:none;padding:28px 0}
 .board-heading {align-items:start;padding-bottom:24px;gap:20px}
@@ -619,12 +625,12 @@ body,.navbar,.theme-toggle,.movie-card,.auth-card,.admin-panel,.admin-row,.booki
 .confirmation-close {width:44px;height:44px}
 :where(button,a,input,select,textarea,summary):focus-visible {outline:3px solid var(--accent-primary);outline-offset:3px}
 .footer {padding:24px var(--filme-gutter);color:var(--text-secondary)}
-.footer-content {max-width:calc(var(--filme-container) - 2 * var(--filme-gutter));padding-right:60px}
+.footer-content {max-width:var(--filme-container)}
 .footer-content p {font-size:14px;max-width:50ch;line-height:1.5}
 .movie-fixture-note {padding:10px;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-card)}
 .movie-details-copy p {margin:12px 0;color:var(--text-secondary);font-size:15px;line-height:1.6}
 @media(max-width:1000px) {.movie-showing-grid,.opening-grid {grid-template-columns:1fr}.board-heading {flex-direction:column}.board-heading p {max-width:none}.opening-card {min-height:0}}
-@media(max-width:600px) {.movie-showing-card {padding:16px}.movie-showing-heading {grid-template-columns:72px minmax(0,1fr);gap:12px}.movie-showing-heading h3 {font-size:23px}.board-showtime-chips {grid-template-columns:repeat(2,minmax(0,1fr))}.board-showtime-chip {padding:10px}.opening-card {padding:16px;gap:14px}.opening-poster {width:80px;min-height:120px}.opening-title {font-size:24px}.footer-content {align-items:start}.demo-mode-banner {padding:12px 18px}}
+@media(max-width:600px) {.movie-showing-card {padding:16px}.movie-showing-heading {grid-template-columns:72px minmax(0,1fr);gap:12px}.movie-showing-heading h3 {font-size:23px}.board-showtime-chips {grid-template-columns:repeat(2,minmax(0,1fr))}.board-showtime-chip {padding:10px}.opening-card {padding:16px;gap:14px}.opening-poster {width:80px;min-height:120px}.opening-title {font-size:24px}.footer-content {align-items:start}.demo-mode-banner {padding:12px var(--filme-gutter)}}
 
 :root {--accent-gradient:var(--filme-coral-fill)}
 .booking-experience .booking-summary .btn-primary,.booking-experience .date-btn.active,.booking-experience .showtime-btn.active {background:var(--filme-coral-fill);color:#fff;border-color:var(--filme-coral-fill)}

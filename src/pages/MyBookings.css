@@ -7,7 +7,7 @@
 :root[data-theme='dark'] .ticket-note { background: #3a2f12; color: #ffd98a; }
 :root[data-theme='dark'] .ticket-note.is-cancelled { background: #3a2038; color: #ff8294; }
 
-.bookings-page.wallet-timeline-page {--wallet-bg:#e8eaf5;--wallet-ink:#172347;--wallet-muted:#637297;--wallet-card:#fff;--wallet-control:#eff0f8;--wallet-divider:#dce2f1;--wallet-accent:#c82448;--wallet-accent-fill:#c82448;--wallet-soft:#fbe6ec;--wallet-seat-border:#f3b5c5;--wallet-refund-ink:#7f3046;max-width:1340px;padding:42px clamp(22px,4vw,54px);background:var(--wallet-bg);color:var(--wallet-ink)}
+.bookings-page.wallet-timeline-page {--wallet-bg:#e8eaf5;--wallet-ink:#172347;--wallet-muted:#637297;--wallet-card:#fff;--wallet-control:#eff0f8;--wallet-divider:#dce2f1;--wallet-accent:#c82448;--wallet-accent-fill:#c82448;--wallet-soft:#fbe6ec;--wallet-seat-border:#f3b5c5;--wallet-refund-ink:#7f3046;max-width:var(--filme-frame);padding:42px var(--filme-gutter);background:var(--wallet-bg);color:var(--wallet-ink)}
 .main-content:has(.wallet-timeline-page) {background:#e8eaf5}
 .wallet-content-grid {display:grid;grid-template-columns:minmax(0,2.4fr) minmax(250px,1fr);gap:32px;grid-template-areas:'history upcoming';align-items:start}
 .wallet-content-grid.has-upcoming {grid-template-columns:minmax(0,1.7fr) minmax(400px,1fr)}
@@ -52,7 +52,7 @@
 :root[data-theme='dark'] .main-content:has(.wallet-timeline-page) {background:#11172d}
 @media(max-width:1199px) {.wallet-content-grid.has-upcoming {display:flex;flex-direction:column}.wallet-content-grid.has-upcoming > section {width:100%}.wallet-content-grid.has-upcoming .wallet-upcoming {grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:839px) {
-  .bookings-page.wallet-timeline-page {padding:28px 22px 40px}
+  .bookings-page.wallet-timeline-page {padding:28px var(--filme-gutter) 40px}
   .wallet-content-grid {display:flex;flex-direction:column;gap:30px}
   .wallet-content-grid > section {width:100%}
   .wallet-timeline-page .wallet-upcoming-section .bookings-empty {padding:52px 22px 22px}

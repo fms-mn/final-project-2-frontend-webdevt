@@ -1,17 +1,20 @@
 /* The admin frame: a sidebar on a computer, a bar along the bottom on a phone. Every section
    uses the same width and spacing, so nothing jumps when the admin moves between them. */
-.app:has(.admin-shell) { background: #eef0f9; }
+.app:has(.admin-shell) { --admin-side:176px;--admin-gap:16px;background: #eef0f9; }
+.app:has(.admin-shell) .footer-content {max-width:calc(var(--filme-container) + var(--admin-side) + var(--admin-gap))}
 :root[data-theme='dark'] .app:has(.admin-shell) { background: #10152a; }
 
 .admin-shell {
-  --shell-side: 232px;
+  --shell-side: var(--admin-side);
+  --shell-gap: var(--admin-gap);
   display: grid;
   grid-template-columns: var(--shell-side) minmax(0, 1fr);
   align-items: start;
+  column-gap: var(--shell-gap);
   width: 100%;
-  max-width: 1560px;
+  max-width: calc(var(--filme-frame) + var(--shell-side) + var(--shell-gap));
   margin: 0 auto;
-  padding: 24px clamp(16px, 2.4vw, 40px) 56px 0;
+  padding: 24px var(--filme-gutter) 56px;
 }
 
 .admin-sidebar {
@@ -20,7 +23,7 @@
   display: grid;
   gap: 22px;
   align-content: start;
-  margin: 0 0 0 clamp(16px, 2.4vw, 40px);
+  margin: 0;
   padding: 8px 4px;
 }
 .admin-nav-group { display: grid; gap: 4px; }
@@ -68,8 +71,7 @@
 .overview-quick button:focus-visible { outline: 3px solid var(--a-coral); outline-offset: 2px; }
 
 @media (max-width: 1000px) {
-  .admin-shell { --shell-side: 76px; }
-  .admin-sidebar { margin-left: 12px; }
+  .app:has(.admin-shell) { --admin-side:76px; }
   .admin-nav-heading { display: none; }
   .admin-nav-item { flex-direction: column; justify-content: center; gap: 4px; padding: 8px 2px; min-height: 56px; font-size: 11px; text-align: center; }
   .admin-nav-item.active { box-shadow: inset 0 -3px 0 var(--a-coral), 0 1px 3px #12163a14; }
@@ -77,7 +79,8 @@
 
 /* Phone: the menu moves to a bar along the bottom, always one tap away. */
 @media (max-width: 700px) {
-  .admin-shell { display: block; padding: 18px 16px 96px; }
+  .app:has(.admin-shell) {--admin-side:0px;--admin-gap:0px}
+  .admin-shell { display: block; padding: 18px var(--filme-gutter) 96px; }
   .admin-sidebar {
     position: fixed; z-index: 900; inset: auto 0 0 0; margin: 0; padding: 6px 6px max(6px, env(safe-area-inset-bottom));
     grid-auto-flow: column; grid-auto-columns: 1fr; gap: 0;

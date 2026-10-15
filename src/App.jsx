@@ -1,4 +1,5 @@
 import BrandMark from './components/BrandMark';
+import { useRef } from 'react';
 import { BrowserRouter as Router, Navigate, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
@@ -25,6 +26,7 @@ function HomepageRedirect() {
 }
 
 function AppContent() {
+  const footerRef = useRef(null);
   const { loading, user } = useAuth();
   const isLanding = useLocation().pathname === '/';
   if (loading) return <div className="loading" style={{ minHeight: '100vh' }}><div className="spinner" /></div>;
@@ -48,8 +50,8 @@ function AppContent() {
           <Route path="/profile" element={<ProtectedRoute role="user"><Profile /></ProtectedRoute>} />
         </Routes>
       </main>
-      <BackToTop />
-      <footer className="footer"><div className="footer-content"><div className="footer-brand"><BrandMark /><strong>filme</strong></div><p>Browse movies and manage your bookings. Test bookings are not valid for cinema admission.</p></div></footer>
+      <BackToTop footerRef={footerRef} />
+      <footer ref={footerRef} className="footer"><div className="footer-content"><div className="footer-brand"><BrandMark /><strong>filme</strong></div><p>Browse movies and manage your bookings. Test bookings are not valid for cinema admission.</p></div></footer>
     </div>
   );
 }

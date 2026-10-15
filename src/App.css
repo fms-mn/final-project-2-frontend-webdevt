@@ -313,7 +313,7 @@ input, select {
 .back-to-top {
   position: fixed;
   right: clamp(1rem, 3vw, 2rem);
-  bottom: clamp(1rem, 3vw, 2rem);
+  bottom: calc(clamp(1rem, 3vw, 2rem) + var(--footer-overlap, 0px));
   z-index: 900;
   display: inline-flex;
   align-items: center;

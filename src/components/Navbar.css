@@ -1,4 +1,6 @@
-.navbar.filme-navbar { --nav-refined-ink: #171a3d; --nav-refined-muted: #555e7c; --nav-refined-border: #dfe3f0; --nav-refined-surface: #fff; --nav-refined-active: #fdecf0; --nav-refined-accent: #b92343; display: grid; grid-template-columns: 1fr auto 1fr; gap: 24px; height: 70px; padding: 0 clamp(18px, 3.2vw, 54px); background: var(--nav-refined-surface); border-bottom: 1px solid var(--nav-refined-border); box-shadow: none; }
+:root { --nav-refined-surface: #fff; }
+:root[data-theme='dark'] { --nav-refined-surface: #171e36; }
+.navbar.filme-navbar { --nav-refined-ink: #171a3d; --nav-refined-muted: #555e7c; --nav-refined-border: #dfe3f0; --nav-refined-active: #fdecf0; --nav-refined-accent: #b92343; display: grid; grid-template-columns: 1fr auto 1fr; gap: 24px; height: 70px; padding: 0 clamp(18px, 3.2vw, 54px); background: var(--nav-refined-surface); border-bottom: 1px solid var(--nav-refined-border); box-shadow: none; }
 .navbar.filme-navbar.scrolled { background: var(--nav-refined-surface); }
 .filme-navbar .nav-links { justify-self: center; }
 .filme-navbar .nav-mobile-sign-up { display: none; }
@@ -18,7 +20,7 @@
 .filme-navbar .nav-logout svg { width: 20px; height: 20px; flex: none; }
 .filme-navbar .nav-logout:hover { background: var(--nav-refined-active); color: var(--nav-refined-accent); }
 .filme-navbar a:focus-visible, .filme-navbar button:focus-visible { outline: 3px solid var(--accent-primary); outline-offset: 3px; }
-:root[data-theme='dark'] .navbar.filme-navbar { --nav-refined-surface: #171e36; --nav-refined-ink: #f1f3ff; --nav-refined-muted: #bec7df; --nav-refined-border: #3d4764; --nav-refined-active: #442838; --nav-refined-accent: #ff9aaa; background: var(--nav-refined-surface); border-color: var(--nav-refined-border); }
+:root[data-theme='dark'] .navbar.filme-navbar { --nav-refined-ink: #f1f3ff; --nav-refined-muted: #bec7df; --nav-refined-border: #3d4764; --nav-refined-active: #442838; --nav-refined-accent: #ff9aaa; background: var(--nav-refined-surface); border-color: var(--nav-refined-border); }
 :root[data-theme='dark'] .filme-navbar .nav-link { color: var(--nav-refined-muted); }
 :root[data-theme='dark'] .filme-navbar .nav-link.active, :root[data-theme='dark'] .filme-navbar .nav-link:hover { color: var(--nav-refined-accent); }
 :root[data-theme='dark'] .filme-navbar .nav-user-name { color: inherit; }
