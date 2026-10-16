@@ -10,6 +10,7 @@ import { showingAvailability } from '../utils/bookingHero';
 import MovieDetails from '../components/MovieDetails';
 import BookingConfirmationModal from '../components/BookingConfirmationModal';
 import BookingAuthPrompt from '../components/BookingAuthPrompt';
+import ChairShape from '../components/ChairShape';
 import { clearPendingBooking, readPendingBooking, restoreTentativeSeats, savePendingBooking } from '../utils/pendingBooking';
 import { MAX_SEATS_PER_BOOKING, toggleSeatSelection } from '../utils/seatSelection';
 import { paymentModeOf } from '../utils/payment';
@@ -18,10 +19,6 @@ export { toggleSeatSelection } from '../utils/seatSelection';
 
 const ROWS = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
 const SEATS_PER_ROW = 10;
-
-function ChairShape({ label }) {
-  return <><span className="chair-backrest" /><span className="chair-cushion" /><span className="chair-label">{label}</span></>;
-}
 
 const formatDate = manilaDay;
 
