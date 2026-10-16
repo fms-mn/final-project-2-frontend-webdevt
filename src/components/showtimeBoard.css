@@ -133,14 +133,35 @@
   .cinematic-home .schedule-single .board-showtime-chips { grid-template-columns: minmax(0, 1fr); }
 }
 
-@media (max-width: 480px) {
-  .cinematic-home .movie-showing-card { padding: 18px; }
-  .cinematic-home .movie-showing-card .movie-showing-heading { grid-template-columns: 80px minmax(0, 1fr); gap: 14px; }
-  .cinematic-home .movie-showing-card .movie-showing-heading h3 { font-size: 24px; }
-  .cinematic-home .movie-showing-card .board-synopsis { font-size: 13px; }
-  .cinematic-home .movie-showing-card .board-showtime-chip span { font-size: 12px; }
-}
-
 @media (max-width: 600px) {
-  .cinematic-home .movie-showing-card .board-showtime-chips { grid-template-columns: minmax(0, 1fr); }
+  .cinematic-home .movie-showing-card { padding: 16px; gap: 14px; border-radius: 24px; }
+  .cinematic-home .movie-showing-card .movie-showing-heading { grid-template-columns: 64px minmax(0, 1fr); gap: 0 14px; align-items: start; }
+  .cinematic-home .movie-showing-card .board-movie-copy { display: contents; }
+  .cinematic-home .movie-showing-card .board-poster { grid-column: 1; grid-row: 1 / span 3; box-shadow: none; }
+  .cinematic-home .movie-showing-card .movie-showing-heading h3 { grid-column: 2; grid-row: 1; font-size: 22px; line-height: 1.15; }
+  .cinematic-home .movie-showing-card .board-movie-tags { grid-column: 2; grid-row: 2; gap: 5px; margin-top: 7px; }
+  .cinematic-home .movie-showing-card .board-movie-tags span { padding: 1px 8px; border-radius: 999px; font-size: 12px; line-height: 1.5; }
+  .cinematic-home .movie-showing-card .board-movie-tags .board-rating { border-radius: 6px; }
+  .cinematic-home .movie-showing-card .board-details { grid-column: 2; grid-row: 3; justify-self: start; text-decoration: underline; }
+  .cinematic-home .movie-showing-card .board-synopsis { grid-column: 1 / -1; grid-row: 4; margin-top: 10px; font-size: 14px; line-height: 1.5; }
+  .cinematic-home .movie-showing-card .board-movie-meta { grid-column: 1 / -1; grid-row: 5; margin-top: 6px; }
+  .cinematic-home .movie-showing-card .board-showtime-chips { grid-template-columns: minmax(0, 1fr); grid-auto-rows: auto; gap: 10px; padding-top: 14px; }
+  .cinematic-home .movie-showing-card .board-showtime-chip { grid-template-columns: minmax(0, 64fr) minmax(0, 36fr); min-height: 112px; border-radius: 16px; box-shadow: none; }
+  .cinematic-home .movie-showing-card .board-ticket-main { justify-content: center; gap: 6px; padding: 12px 14px; }
+  .cinematic-home .movie-showing-card .board-showtime-chip span { font-size: 12px; }
+  .cinematic-home .movie-showing-card .board-ticket-main .board-ticket-room { font-size: 10px; font-weight: 700; letter-spacing: .1em; }
+  .cinematic-home .movie-showing-card .board-ticket-main strong { gap: 4px; font-size: clamp(28px, 9.8cqw, 38px); }
+  .cinematic-home .movie-showing-card .board-ticket-status { gap: 6px; }
+  .cinematic-home .movie-showing-card .board-ticket-status i { width: 7px; height: 7px; }
+  .cinematic-home .movie-showing-card .board-ticket-bottom { gap: 8px; padding: 12px 8px; }
+  .cinematic-home .movie-showing-card .board-ticket-bottom::before,
+  .cinematic-home .movie-showing-card .board-ticket-bottom::after { left: -9px; width: 16px; height: 16px; }
+  .cinematic-home .movie-showing-card .board-ticket-bottom::before { top: -9px; }
+  .cinematic-home .movie-showing-card .board-ticket-bottom::after { bottom: -9px; }
+  .cinematic-home .movie-showing-card .board-ticket-price { max-width: 100%; text-align: center; }
+  .cinematic-home .movie-showing-card .board-ticket-price b { max-width: 100%; font-size: clamp(23px, 7.5cqw, 30px); overflow-wrap: anywhere; }
+  .cinematic-home .movie-showing-card .board-ticket-price small { font-size: 12px; }
+  .cinematic-home .movie-showing-card .board-ticket-book { max-width: 100%; min-height: 32px; padding: 6px 12px; }
+  .cinematic-home .movie-showing-card .is-unavailable .board-ticket-book { padding: 0; }
+  .cinematic-home .movie-showing-card .board-showtime-more { min-height: 64px; padding: 10px; }
 }
