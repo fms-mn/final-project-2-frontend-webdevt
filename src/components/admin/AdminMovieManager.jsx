@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FiArchive, FiCalendar, FiEdit2, FiExternalLink, FiRotateCcw, FiTrash2, FiUploadCloud, FiUsers, FiX } from 'react-icons/fi';
 import { api } from '../../api';
 import ConfirmDialog from './ConfirmDialog';
@@ -10,6 +10,7 @@ import useMovieSummary from './useMovieSummary';
 import MovieRemove from './MovieRemove';
 import MovieShowingsList from './MovieShowingsList';
 import useAdminAction from './useAdminAction';
+import useMovieLeaveGuard from './useMovieLeaveGuard';
 import DatePicker from '../DatePicker';
 import { durationText, movieErrors } from '../../utils/movieForm';
 import { pesos } from '../../utils/adminTools';
@@ -298,7 +299,7 @@ function SalesCell({ movie }) {
   );
 }
 
-export default function AdminMovieManager({ movies, reload, onSchedule, onOpenShowing, addRequest = 0, onAddHandled }) {
+export default function AdminMovieManager({ movies, reload, onSchedule, onOpenShowing, addRequest = 0, onAddHandled, registerLeave }) {
   const { busy, busyAction, error, notice, setNotice, clear, run } = useAdminAction();
   const [query, setQuery] = useState('');
   const [genre, setGenre] = useState('all');
@@ -328,11 +329,11 @@ export default function AdminMovieManager({ movies, reload, onSchedule, onOpenSh
     setDraft(value); setInitial(value); setSaved(null); setStartTab(tab); setDialog(null); clear();
   };
   const isDirty = !saved && draft && JSON.stringify(draft) !== JSON.stringify(initial);
-  const closeEditor = () => {
-    if (busy) return;
-    if (isDirty && !window.confirm('Discard unsaved movie changes?')) return;
+  const discard = useCallback(() => {
     setDraft(null); setInitial(null); setSaved(null); clear();
-  };
+  }, [clear]);
+  const { requestLeave, confirming, keepEditing, confirmDiscard } = useMovieLeaveGuard({ dirty: isDirty, busy, discard, register: registerLeave });
+  const closeEditor = () => requestLeave();
   // mode: 'draft' saves a draft, 'publish' saves a coming-soon movie as published, 'schedule' saves a
   // draft and goes straight to scheduling its showings (a released movie is published afterwards).
   const save = async (mode = 'draft') => {
@@ -355,14 +356,8 @@ export default function AdminMovieManager({ movies, reload, onSchedule, onOpenSh
     const done = await run(() => api(`/admin/movies/${saved.id}`, { method: 'PATCH', body: { status: 'published' } }), '', 'save');
     if (done) { setSaved({ ...saved, status: 'published' }); reload(); }
   };
-  // Leaving the panel for another screen: ask first when there are unsaved changes.
-  const leave = (then) => {
-    if (isDirty && !window.confirm('Discard unsaved movie changes?')) return;
-    setDraft(null); setInitial(null); setSaved(null); clear();
-    then();
-  };
-  const goSchedule = (movieId) => leave(() => onSchedule?.(movieId));
-  const openShowing = (showing) => leave(() => onOpenShowing?.(showing));
+  const goSchedule = (movieId) => requestLeave(() => onSchedule?.(movieId));
+  const openShowing = (showing) => requestLeave(() => onOpenShowing?.(showing));
   const changed = (message) => { setDraft(null); setInitial(null); setSaved(null); setNotice(message); reload(); };
 
   const setStatusOf = async (movie, next, message, id) => {
@@ -513,6 +508,9 @@ export default function AdminMovieManager({ movies, reload, onSchedule, onOpenSh
       {draft && <MovieEditor key={`${draft._id || 'new'}`} draft={draft} setDraft={setDraft} movie={movies.find((item) => item._id === draft._id)} dirty={isDirty} startTab={startTab} onOpenShowing={openShowing} onChanged={changed} onClose={closeEditor} onSave={save} busy={busy} error={error} saved={saved} onSchedule={goSchedule} onPublishNow={publishNow} />}
       {withdrawDialog}
       {deleteDialog}
+      {confirming && <ConfirmDialog title="Discard your changes?" tone="danger" variant="discard" cancelLabel="Keep editing" confirmLabel="Discard changes" busy={busy} onClose={keepEditing} onConfirm={confirmDiscard}>
+        <p>You have unsaved movie changes. Leaving now will discard them.</p>
+      </ConfirmDialog>}
     </section>
   );
 }

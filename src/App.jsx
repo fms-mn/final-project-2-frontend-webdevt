@@ -1,6 +1,6 @@
 import BrandMark from './components/BrandMark';
 import { useRef } from 'react';
-import { BrowserRouter as Router, Navigate, Routes, Route, useLocation } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import BackToTop from './components/BackToTop';
@@ -56,8 +56,10 @@ function AppContent() {
   );
 }
 
+const router = createBrowserRouter([{ path: '*', element: <AppContent /> }]);
+
 function App() {
-  return <AuthProvider><Router><AppContent /></Router></AuthProvider>;
+  return <AuthProvider><RouterProvider router={router} /></AuthProvider>;
 }
 
 export default App;
