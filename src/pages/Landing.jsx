@@ -8,7 +8,6 @@ import './homeTheme.css';
 function SampleTicket() {
   return <div className="landing-ticket-stage" role="img" aria-label="Sample cinema ticket for illustration only. Not a booking or valid cinema ticket.">
     <div className="landing-ticket-float"><div className="landing-ticket" aria-hidden="true">
-      <div className="landing-ticket-shine" />
       <div className="landing-ticket-banner"><span>SAMPLE TICKET</span><span>FILME CINEMA</span></div>
       <div className="landing-ticket-details">
         <p className="landing-ticket-notice">For illustration only — not a booking or valid cinema ticket.</p>
