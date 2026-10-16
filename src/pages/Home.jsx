@@ -86,7 +86,7 @@ export default function Home() {
       {isLoading ? <div className="loading"><div className="spinner" /></div> : pageError ? <div className="showtime-board-empty"><p>{pageError}</p><button className="btn btn-primary" onClick={retry}>Try again</button></div> : rows.length ? <>
         {boardGroups.length ? <ShowtimeBoard groups={boardGroups} dateLabel={manilaDate(selectedDate)} showingLink={showingLink} role={user?.role} /> : <p className="showtime-board-empty">No more showtimes are available today. Review earlier sessions below or choose another date.</p>}
         {earlierGroups.length > 0 && <details className="showtime-earlier"><summary>Earlier today <span>{earlierRows.length} {earlierRows.length === 1 ? 'showing' : 'showings'}</span></summary><ShowtimeBoard groups={earlierGroups} dateLabel={manilaDate(selectedDate)} showingLink={showingLink} role={user?.role} /></details>}
-      </> : <div className="showtime-board-empty">No showings are scheduled for this day. <Link to="/movies">Explore Movies</Link></div>}
+      </> : <div className="schedule-empty"><span>No showings are scheduled for this day.</span><Link to="/movies">Explore Movies <span aria-hidden="true">&#8250;</span></Link></div>}
     </div></section>
     <OpeningSoon movies={coming} currentDay={currentDay} />
   </div>;
