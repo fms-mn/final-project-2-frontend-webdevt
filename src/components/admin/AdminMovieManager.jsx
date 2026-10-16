@@ -10,16 +10,19 @@ import useMovieSummary from './useMovieSummary';
 import MovieRemove from './MovieRemove';
 import MovieShowingsList from './MovieShowingsList';
 import useAdminAction from './useAdminAction';
+import DatePicker from '../DatePicker';
 import { durationText, movieErrors } from '../../utils/movieForm';
 import { pesos } from '../../utils/adminTools';
-import { today as manilaToday } from '../../utils/manila';
+import { manilaDay, today as manilaToday } from '../../utils/manila';
+import { validDay } from '../../utils/calendar';
 import './adminMovies.css';
 import './adminMoviesPanel.css';
 
 const STATUSES = ['draft', 'published', 'archived'];
 const RATINGS = ['G', 'PG', 'PG-13', 'R'];
 const today = manilaToday; // the cinema's calendar day
-const isReleased = (releaseDate) => String(releaseDate).slice(0, 10) <= today();
+const releaseDay = value => validDay(value) ? value : manilaDay(value);
+const isReleased = (releaseDate) => releaseDay(releaseDate) <= today();
 const blankMovie = () => ({
   title: '', synopsis: '', genre: '', rating: 'PG-13', posterUrl: '', trailerUrl: '',
   duration: 120, releaseDate: today(), status: 'draft',
@@ -27,7 +30,7 @@ const blankMovie = () => ({
 const toDraft = (movie) => ({
   _id: movie._id, title: movie.title, synopsis: movie.synopsis, genre: movie.genre,
   rating: movie.rating, posterUrl: movie.posterUrl, trailerUrl: movie.trailerUrl || '',
-  duration: movie.duration, releaseDate: String(movie.releaseDate).slice(0, 10), status: movie.status,
+  duration: movie.duration, releaseDate: releaseDay(movie.releaseDate), status: movie.status,
 });
 // What the admin should know about a movie's showings at a glance.
 function showingsSummary(movie) {
@@ -112,7 +115,7 @@ function MovieEditor({ draft, setDraft, movie, dirty, startTab, onClose, onSave,
   const released = isReleased(draft.releaseDate);
   const submit = (mode) => (event) => {
     event?.preventDefault?.();
-    const found = movieErrors(draft);
+    const found = movieErrors(draft, { futureRelease: mode === 'publish' && isNew });
     setErrors(found);
     const first = Object.keys(found)[0];
     if (first) {
@@ -236,7 +239,7 @@ function MovieEditor({ draft, setDraft, movie, dirty, startTab, onClose, onSave,
                     </label>
                   </div>
                   <div className="movie-field-pair">
-                    {field('releaseDate', <>Release date <em>*</em></>, <input type="date" {...props('releaseDate')} />)}
+                    {field('releaseDate', <>Release date <em>*</em></>, <DatePicker name="releaseDate" label="Release date" required value={draft.releaseDate} onChange={value => edit('releaseDate')({ target: { value } })} />, 'Choose today or a future date. Existing saved dates are preserved. A future date makes a published movie Coming soon.')}
                     {field('duration', <>Length (minutes) <em>*</em></>, <input type="number" min="1" step="1" {...props('duration')} />)}
                   </div>
                   {field('trailerUrl', 'Trailer (optional)', <input type="text" inputMode="url" placeholder="https://www.youtube.com/watch?v=..." {...props('trailerUrl')} />, 'A YouTube link. It plays in the home page banner and when customers hover over the movie.')}
@@ -334,7 +337,8 @@ export default function AdminMovieManager({ movies, reload, onSchedule, onOpenSh
   // draft and goes straight to scheduling its showings (a released movie is published afterwards).
   const save = async (mode = 'draft') => {
     const { _id, ...fields } = draft;
-    const body = { ...fields, duration: Number(fields.duration), ...(mode === 'publish' && !_id ? { status: 'published' } : {}) };
+    const releaseDate = _id && fields.releaseDate === initial?.releaseDate ? movies.find(movie => movie._id === _id)?.releaseDate ?? fields.releaseDate : fields.releaseDate;
+    const body = { ...fields, releaseDate, duration: Number(fields.duration), ...(mode === 'publish' && !_id ? { status: 'published' } : {}) };
     let result = null;
     const done = await run(async () => {
       result = await (_id

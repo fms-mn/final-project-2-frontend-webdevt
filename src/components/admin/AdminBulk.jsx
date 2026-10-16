@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../../api';
 import ActionPending from '../ActionPending';
+import DatePicker from '../DatePicker';
+import { dateProblem } from '../../utils/calendar';
 import { describeError, pesos } from '../../utils/adminTools';
 
 // Just the reasons, without the leading "Validation failed".
@@ -70,10 +72,16 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
   const chosenRoom = active.find((item) => item._id === (room || active[0]?._id));
   const manyDates = span === 'one' ? { startDate: oneDay, endDate: oneDay } : (range === 'custom' ? custom : rangeFor(range, today()));
   const copyDates = copyRange === 'custom' ? copyCustom : rangeFor(copyRange, today());
+  const timeProblem = mode === 'many' && manyDates.startDate <= today() && manyDates.endDate >= today()
+    && (span === 'one' || weekdays.includes(new Date(`${today()}T12:00:00+08:00`).getUTCDay()))
+    && times.some(time => Date.parse(`${today()}T${time}:00+08:00`) <= Date.now())
+    ? 'A selected showtime has already passed in Manila. Choose later times or another day.' : '';
 
   // What would be sent, or why nothing can be sent yet.
   const request = useMemo(() => {
     if (mode === 'many') {
+      const invalidDate = dateProblem(manyDates.startDate, { min: today(), required: true }) || dateProblem(manyDates.endDate, { min: manyDates.startDate, required: true });
+      if (invalidDate || timeProblem) return { problem: invalidDate || timeProblem };
       if (!chosenMovie || !chosenRoom) return { problem: 'Add a movie (it can be a draft) and an active room first.' };
       if (times.length === 0) return { problem: 'Pick at least one start time.' };
       if (span === 'many' && weekdays.length === 0) return { problem: 'Pick at least one day of the week.' };
@@ -91,11 +99,12 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
     }
     // The day being copied is never a target.
     const toDates = copyDates.startDate && copyDates.endDate ? daysBetween(copyDates.startDate, copyDates.endDate).filter((day) => day !== copyFrom) : [];
-    if (!copyFrom) return { problem: 'Choose the day to copy.' };
+    const invalidDate = dateProblem(copyFrom, { required: true }) || dateProblem(copyDates.startDate, { min: today(), required: true }) || dateProblem(copyDates.endDate, { min: copyDates.startDate, required: true });
+    if (invalidDate) return { problem: invalidDate };
     if (toDates.length === 0) return { problem: 'Choose at least one day to copy to (other than the day being copied).' };
     if (toDates.length > MAX_DAYS) return { problem: `Choose at most ${MAX_DAYS} days at a time.` };
     return { path: '/showtimes/copy', body: { fromDate: copyFrom, toDates, ...(hidden ? { published: false } : {}) } };
-  }, [mode, span, chosenMovie, chosenRoom, times, weekdays, price, manyDates.startDate, manyDates.endDate, hidden, copyFrom, copyDates.startDate, copyDates.endDate]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [mode, span, chosenMovie, chosenRoom, times, weekdays, price, manyDates.startDate, manyDates.endDate, hidden, copyFrom, copyDates.startDate, copyDates.endDate, timeProblem]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Check the request against the schedule a moment after the admin stops changing things.
   useEffect(() => {
@@ -125,6 +134,10 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
 
   const schedule = async () => {
     if (saving.current || checking || !result || count === 0) return;
+    const dates = mode === 'many' ? manyDates : copyDates;
+    const invalidDate = (mode === 'copy' && dateProblem(copyFrom, { required: true })) || dateProblem(dates.startDate, { min: today(), required: true }) || dateProblem(dates.endDate, { min: dates.startDate, required: true });
+    if (invalidDate) { setError(invalidDate); return; }
+    if (mode === 'many' && daysBetween(dates.startDate, dates.endDate).some(day => (!request.body.weekdays || request.body.weekdays.includes(new Date(`${day}T12:00:00+08:00`).getUTCDay())) && times.some(time => Date.parse(`${day}T${time}:00+08:00`) <= Date.now()))) { setError('A selected showtime has already passed. Choose later times or another day.'); return; }
     saving.current = true;
     setError('');
     setBusy(true);
@@ -159,8 +172,8 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
       </div>
       {current === 'custom' && (
         <div className="bulk-dates">
-          <label>First day<input type="date" min={today()} value={customDates.startDate} onChange={(event) => setCustomDates({ ...customDates, startDate: event.target.value })} /></label>
-          <label>Last day<input type="date" min={customDates.startDate} value={customDates.endDate} onChange={(event) => setCustomDates({ ...customDates, endDate: event.target.value })} /></label>
+          <label>First day<DatePicker label="First day" required min={today()} max={customDates.endDate} value={customDates.startDate} onChange={startDate => setCustomDates({ ...customDates, startDate })} /></label>
+          <label>Last day<DatePicker label="Last day" required min={customDates.startDate > today() ? customDates.startDate : today()} value={customDates.endDate} onChange={endDate => setCustomDates({ ...customDates, endDate })} /></label>
         </div>
       )}
       {dates.startDate && dates.endDate && dates.endDate >= dates.startDate && <p className="bulk-hint">{dayLabel(dates.startDate)} to {dayLabel(dates.endDate)} · {daysBetween(dates.startDate, dates.endDate).length} days</p>}
@@ -206,7 +219,7 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
                   ))}
                 </div>
                 <label className="when-other">Another day
-                  <input type="date" min={today()} value={oneDay} onChange={(event) => event.target.value && setOneDay(event.target.value)} />
+                  <DatePicker label="Showing day" required min={today()} value={oneDay} onChange={setOneDay} />
                 </label>
                 {oneDay && <p className="bulk-hint">{dayLabel(oneDay)}</p>}
               </>
@@ -227,6 +240,7 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
 
           <section className="bulk-step">
             <h3><span>3</span> Start times <small className="bulk-pick-many">tap as many as you like</small></h3>
+            {timeProblem && <p className="when-problem" role="alert">{timeProblem}</p>}
             <div className="when-chips" role="group" aria-label="Start times">
               {[...COMMON_TIMES, ...extraTimes].map((clock) => (
                 <button key={clock} type="button" className={`when-chip${times.includes(clock) ? ' active' : ''}`} aria-pressed={times.includes(clock)} onClick={() => toggleTime(clock)}>{clock12(clock)}</button>
@@ -256,7 +270,7 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
         <div className="bulk-steps">
           <section className="bulk-step">
             <h3><span>1</span> Which day to copy</h3>
-            <label>Copy the showings of<input type="date" value={copyFrom} onChange={(event) => setCopyFrom(event.target.value)} /></label>
+            <label>Copy the showings of<DatePicker label="Copy source day" required value={copyFrom} onChange={setCopyFrom} /></label>
           </section>
           <section className="bulk-step">
             <h3><span>2</span> Copy it to</h3>

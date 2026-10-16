@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, apiAll } from '../../api';
 import ActionPending from '../ActionPending';
+import DatePicker from '../DatePicker';
+import { dateProblem } from '../../utils/calendar';
 import { describeError, pesos } from '../../utils/adminTools';
 import { dayHeading, fromInputValue, manilaClock, manilaDay, minutesOfDay, shiftDay, shortDate, toInputValue, today } from '../../utils/manila';
 import { findClash } from '../../utils/clashes';
@@ -164,8 +166,11 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
 
   const save = async (event) => {
     event.preventDefault();
+    const dateError = dateProblem(draft.startTime?.split('T')[0], { min: today(), required: true });
+    if (dateError) { setError(dateError); return; }
     const startTime = fromInputValue(draft.startTime);
     if (!startTime) { setError('Choose a start date and time.'); return; }
+    if (Date.parse(startTime) <= Date.now()) { setError('That showing time has already passed. Choose a later time or another day.'); return; }
     const body = { movie: draft.movie, auditorium: draft.auditorium, startTime, ticketPrice: Math.round(Number(draft.ticketPrice) * 100) };
     const done = await run(() => api(`/showtimes/${selectedId}`, { method: 'PATCH', body }), 'Showing updated', 'save');
     if (done) { setSelectedId(''); setDraft(null); setRevision((value) => value + 1); }
@@ -191,8 +196,11 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
 
   const moveShowing = async (event) => {
     event.preventDefault();
+    const dateError = dateProblem(move.startTime?.split('T')[0], { min: today(), required: true });
+    if (dateError) { setError(dateError); return; }
     const startTime = fromInputValue(move.startTime);
     if (!startTime) { setError('Choose the new start date and time.'); return; }
+    if (Date.parse(startTime) <= Date.now()) { setError('That showing time has already passed. Choose a later time or another day.'); return; }
     const done = await run(
       () => api(`/showtimes/${selectedId}/reschedule`, { method: 'PATCH', body: { startTime, auditorium: move.auditorium } }),
       'Showing moved. Customers keep their seats and the price they paid', 'move',
@@ -273,7 +281,7 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
           <button type="button" className="btn btn-secondary btn-small" onClick={() => step(-1)} aria-label={view === 'week' ? 'Previous week' : 'Previous day'}>←</button>
           <button type="button" className="btn btn-secondary btn-small" onClick={() => step(1)} aria-label={view === 'week' ? 'Next week' : 'Next day'}>→</button>
           <button type="button" className="btn btn-secondary btn-small" onClick={() => goToDay(today())} disabled={visibleDays.includes(today()) && (view === 'week' || date === today())}>Today</button>
-          <input type="date" aria-label="Go to date" value={date} onChange={(event) => goToDay(event.target.value)} />
+          <DatePicker label="Go to date" required value={date} onChange={goToDay} />
           <h2 className="show-toolbar-title">{view === 'week' ? weekLabel(date) : dayHeading(date)}</h2>
         </div>
         <div className="show-toolbar-actions">

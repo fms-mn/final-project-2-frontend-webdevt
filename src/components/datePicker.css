@@ -1,0 +1,41 @@
+.filme-date-field { display: inline-flex; flex-direction: column; gap: 6px; min-width: 0; vertical-align: middle; }
+.filme-date-trigger { display: inline-flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-card); color: var(--text-primary); font: 600 14px/1.4 'Instrument Sans Variable', sans-serif; cursor: pointer; text-align: left; }
+.filme-date-trigger svg { flex: none; }
+.filme-date-trigger:disabled { opacity: .55; cursor: not-allowed; }
+.filme-date-error { display: block; margin: 0; max-width: 40ch; color: var(--error-text, #b4233e); font: 500 12px/1.5 'Instrument Sans Variable', sans-serif; }
+.filme-calendar { box-sizing: border-box; position: fixed; inset: 0; width: min(360px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); margin: auto; padding: 20px; overflow: auto; border: 1px solid var(--border-color); border-radius: 20px; background: var(--bg-card); color: var(--text-primary); box-shadow: 0 16px 48px #10132d33; font: 500 14px/1.4 'Instrument Sans Variable', sans-serif; }
+.filme-calendar::backdrop { background: #10132d70; }
+.filme-calendar button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; border: 0; border-radius: 10px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.filme-calendar button:disabled { color: var(--text-muted); opacity: .35; cursor: not-allowed; }
+.filme-calendar button:not(:disabled):hover { background: var(--surface-tint, var(--bg-secondary)); }
+.filme-calendar-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.filme-calendar-title h2 { margin: 0; font: 700 16px/1.3 'Instrument Sans Variable', sans-serif; }
+.filme-calendar-title button, .filme-calendar-heading > button { width: 44px; flex: none; }
+.filme-calendar-heading { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+.filme-calendar-heading > div { display: flex; align-items: center; min-width: 0; }
+.filme-calendar select, .filme-calendar input { box-sizing: border-box; min-width: 0; min-height: 44px; padding: 8px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-card); color: var(--text-primary); font: inherit; }
+.filme-calendar-heading select { max-width: 126px; border: 0; font-weight: 700; }
+.filme-calendar-heading input { width: 78px; border: 0; font-weight: 700; }
+.filme-calendar-grid { margin-top: 10px; }
+.filme-calendar-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); text-align: center; }
+.filme-calendar-week > [role=columnheader] { padding-block: 8px; color: var(--text-secondary); font-size: 12px; }
+.filme-calendar-week [role=gridcell] { min-width: 0; }
+.filme-calendar-week button { width: 100%; min-height: 40px; height: 40px; padding: 0; border: 2px solid transparent; }
+.filme-calendar-week .is-other-month { color: var(--text-secondary); }
+.filme-calendar-week .is-today { border-color: var(--accent-primary); }
+.filme-calendar-week .is-selected, .filme-calendar-week .is-selected:not(:disabled):hover { background: var(--filme-coral-fill, #bd2448); color: #fff; font-weight: 700; }
+.filme-calendar-shortcuts { display: flex; gap: 8px; padding-block: 8px; }
+.filme-calendar-shortcuts button { padding-inline: 14px; border: 1px solid var(--border-color); }
+.filme-calendar-manual { display: grid; gap: 6px; font-size: 12px; font-weight: 600; }
+.filme-calendar-entry { display: flex; gap: 8px; }
+.filme-calendar-entry input { width: 100%; }
+.filme-calendar-entry button { padding-inline: 14px; background: var(--filme-coral-fill, #bd2448); color: #fff; }
+.filme-calendar-manual > span:last-child { color: var(--text-secondary); font-weight: 400; }
+.filme-date-trigger:focus-visible, .filme-calendar :is(button, select, input):focus-visible { outline: 3px solid var(--accent-primary); outline-offset: 2px; }
+.filme-calendar-sr { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); }
+:root[data-theme='dark'] .filme-date-error { color: #ff9caf; }
+@media (max-width: 360px) {
+  .filme-calendar-heading > div { flex-direction: column; }
+  .filme-calendar-heading select { width: 140px; max-width: 100%; text-align: center; }
+  .filme-calendar-heading input { width: 86px; text-align: center; }
+}
