@@ -3,6 +3,7 @@
 
 import { dateProblem } from './calendar.js';
 import { shiftDay, today } from './manila.js';
+import { splitGenres } from './genres.js';
 const WEB_LINK = /^https?:\/\/[^\s]+$/i;
 const YOUTUBE = /^https?:\/\/(www\.|m\.)?(youtube\.com|youtube-nocookie\.com|youtu\.be)\/[^\s]+$/i;
 
@@ -10,7 +11,7 @@ export function movieErrors(draft, { futureRelease = false } = {}) {
   const errors = {};
   if (!String(draft.title ?? '').trim()) errors.title = 'Enter the movie title.';
   if (!String(draft.synopsis ?? '').trim()) errors.synopsis = 'Write a short description.';
-  if (!String(draft.genre ?? '').trim()) errors.genre = 'Enter a genre, for example Action.';
+  if (!splitGenres(draft.genre).length) errors.genre = 'Select at least one genre.';
   const releaseProblem = dateProblem(draft.releaseDate, { required: true, min: futureRelease ? shiftDay(today(), 1) : undefined });
   if (releaseProblem) errors.releaseDate = releaseProblem;
   if (!Number.isInteger(Number(draft.duration)) || Number(draft.duration) < 1) {

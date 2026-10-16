@@ -47,10 +47,10 @@ export default function MovieCard({ movie, showShowtimes = false, previewOnHover
           {refined ? (
             <>
               {movie.duration > 0 && <span><FiClock aria-hidden="true" />{movie.duration} min</span>}
-              {movie.genre[0] && <span className="movie-refined-genre"><FiFilm aria-hidden="true" />{movie.genre[0]}</span>}
+              {movie.genre.map(genre => <span className="movie-refined-genre" key={genre}><FiFilm aria-hidden="true" />{genre}</span>)}
             </>
           ) : (
-            <><span>⏱ {movie.duration}min</span>{movie.genre[0] && <span>🎬 {movie.genre[0]}</span>}<span>{movie.rating}</span></>
+            <><span>⏱ {movie.duration}min</span>{movie.genre.map(genre => <span key={genre}>🎬 {genre}</span>)}<span>{movie.rating}</span></>
           )}
         </div>
         {isShowing ? (

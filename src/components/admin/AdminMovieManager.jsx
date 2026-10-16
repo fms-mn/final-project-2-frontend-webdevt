@@ -12,6 +12,8 @@ import MovieShowingsList from './MovieShowingsList';
 import useAdminAction from './useAdminAction';
 import useMovieLeaveGuard from './useMovieLeaveGuard';
 import DatePicker from '../DatePicker';
+import GenrePicker from './GenrePicker';
+import { splitGenres } from '../../utils/genres';
 import { durationText, movieErrors } from '../../utils/movieForm';
 import { pesos } from '../../utils/adminTools';
 import { manilaDay, today as manilaToday } from '../../utils/manila';
@@ -233,15 +235,15 @@ function MovieEditor({ draft, setDraft, movie, dirty, startTab, onClose, onSave,
                   <h3 id="movie-sec-details">Details</h3>
                   {field('title', <>Title <em>*</em></>, <input maxLength="160" {...props('title')} />)}
                   {field('synopsis', <>Description <em>*</em></>, <textarea rows="4" maxLength="500" {...props('synopsis')} />, `${draft.synopsis.length}/500`)}
+                  <GenrePicker value={draft.genre} existing={movie?.genre} onChange={value => edit('genre')({ target: { value } })} error={errors.genre} />
                   <div className="movie-field-pair">
-                    {field('genre', <>Genre <em>*</em></>, <input placeholder="e.g. Action" {...props('genre')} />)}
                     <label>
                       <span className="movie-field-label">Age rating</span>
                       <select value={draft.rating} onChange={edit('rating')}>{RATINGS.map((rating) => <option key={rating}>{rating}</option>)}</select>
                     </label>
                   </div>
                   <div className="movie-field-pair">
-                    {field('releaseDate', <>Release date <em>*</em></>, <DatePicker name="releaseDate" label="Release date" required value={draft.releaseDate} onChange={value => edit('releaseDate')({ target: { value } })} />, 'Choose today or a future date. Existing saved dates are preserved. A future date makes a published movie Coming soon.')}
+                    {field('releaseDate', <>Release date <em>*</em></>, <DatePicker name="releaseDate" label="Release date" required value={draft.releaseDate} onChange={value => edit('releaseDate')({ target: { value } })} />)}
                     {field('duration', <>Length (minutes) <em>*</em></>, <input type="number" min="1" step="1" {...props('duration')} />)}
                   </div>
                   {field('trailerUrl', 'Trailer (optional)', <input type="text" inputMode="url" placeholder="https://www.youtube.com/watch?v=..." {...props('trailerUrl')} />, 'A YouTube link. It plays in the home page banner and when customers hover over the movie.')}
@@ -349,10 +351,10 @@ export default function AdminMovieManager({ movies, reload, onSchedule, onOpenSh
   const [startTab, setStartTab] = useState('overview');
   const [saved, setSaved] = useState(null); // { id, title, status }: the movie just added, while its next steps show
   const [dialog, setDialog] = useState(null); // { kind: 'withdraw' | 'delete', movie, plan, loading }
-  const genres = useMemo(() => [...new Set(movies.map((movie) => movie.genre).filter(Boolean))].sort(), [movies]);
+  const genres = useMemo(() => [...new Set(movies.flatMap(movie => splitGenres(movie.genre)))].sort(), [movies]);
   const shown = useMemo(() => movies
     .filter((movie) => movie.title.toLowerCase().includes(query.trim().toLowerCase()))
-    .filter((movie) => genre === 'all' || movie.genre === genre)
+    .filter((movie) => genre === 'all' || splitGenres(movie.genre).includes(genre))
     .filter((movie) => (status === 'all' ? true : status === 'needs' ? movie.status === 'published' && (movie.upcomingShowings ?? 0) === 0 : movie.status === status))
     .sort((a, b) => {
       if (sort === 'title') return a.title.localeCompare(b.title);
