@@ -1,3 +1,5 @@
+import ChairShape from '../ChairShape';
+
 // A small seat chart for choosing seats to block. Seat labels are A1, A2, ... row by row.
 // `locked` seats are blocked somewhere else (for example by the room) and cannot be toggled here.
 export default function SeatGrid({ rows, seatsPerRow, selected, onChange, locked = [], disabled = false }) {
@@ -35,7 +37,7 @@ export function SeatPreview({ rows, seatsPerRow }) {
     <figure className="seat-preview" aria-label={`Seat map preview: ${r} rows of ${c} seats, ${r * c} seats in total`}>
       <div className="seat-preview-screen" aria-hidden="true">Screen</div>
       <div className="seat-preview-grid" aria-hidden="true" style={{ '--seats': c }}>
-        {Array.from({ length: r * c }, (_, index) => <span key={index} />)}
+        {Array.from({ length: r * c }, (_, index) => <span className="seat-preview-chair" key={index}><ChairShape /></span>)}
       </div>
       <figcaption>{r} rows × {c} seats = <b>{r * c} seats</b></figcaption>
     </figure>
