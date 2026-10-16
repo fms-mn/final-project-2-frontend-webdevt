@@ -2,10 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { api, apiAll } from '../../api';
 import ActionPending from '../ActionPending';
 import { describeError, pesos } from '../../utils/adminTools';
-import { dayHeading, fromInputValue, manilaClock, minutesOfDay, shiftDay, shortDate, toInputValue, today } from '../../utils/manila';
+import { dayHeading, fromInputValue, manilaClock, manilaDay, minutesOfDay, shiftDay, shortDate, toInputValue, today } from '../../utils/manila';
 import { findClash } from '../../utils/clashes';
 import { movieColor, timeAtFraction, weekDays, weekLabel } from '../../utils/schedule';
 import AdminBulk from './AdminBulk';
+import ScheduleSuccess from './ScheduleSuccess';
 import Drawer from './Drawer';
 import WhenPicker from './WhenPicker';
 import Feedback from './Feedback';
@@ -41,6 +42,7 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
   const [move, setMove] = useState({ startTime: '', auditorium: '' });
   const [blockedDraft, setBlockedDraft] = useState([]);
   const [bulk, setBulk] = useState({ open: false, mode: 'many', preset: null });
+  const [scheduleResult, setScheduleResult] = useState(null);
   const [publishPrompt, setPublishPrompt] = useState(null); // a draft movie that just got showings: { id, title }
   const [gapMinutes, setGapMinutes] = useState(15); // the cinema's gap between shows
   const [otherDays, setOtherDays] = useState({}); // showings of days picked in a form that are not on screen
@@ -477,8 +479,13 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
         defaultDay={date}
         onModeChange={(mode) => setBulk((current) => ({ ...current, mode }))}
         onClose={() => setBulk((current) => ({ ...current, open: false }))}
-        onDone={(message, movieId, day) => { setBulk((current) => ({ ...current, open: false })); setNotice(message); if (movieId) askToPublish(movieId); if (day) { setView('day'); setDate(day); } afterChange(); }}
+        onDone={(message, movieId, day, result) => { setBulk((current) => ({ ...current, open: false })); setScheduleResult(result); setNotice(message); if (movieId) askToPublish(movieId); if (day) { setView('day'); setDate(day); } afterChange(); }}
       />
+      {scheduleResult && <ScheduleSuccess result={scheduleResult} movies={movies} rooms={rooms}
+        onClose={() => setScheduleResult(null)}
+        onAnother={() => { const day = manilaDay(scheduleResult.created[0].startTime); setScheduleResult(null); startAdd({ day }); }}
+        onView={() => { const day = manilaDay(scheduleResult.created[0].startTime); setScheduleResult(null); openDay(day); }}
+      />}
     </>
   );
 }

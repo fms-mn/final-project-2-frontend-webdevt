@@ -43,12 +43,14 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
   const [preview, setPreview] = useState(null); // { ok, result } | { problem }
   const [checking, setChecking] = useState(false);
   const ticket = useRef(0);
+  const saving = useRef(false);
 
   // Arriving from "Schedule showings" after adding a movie: that movie is already chosen.
   useEffect(() => { if (scheduleFor) setMovie(scheduleFor.movieId); }, [scheduleFor]);
   // Opened from "+ Add showing" (one day, maybe a clicked time and room) or from "Many days".
   useEffect(() => {
     if (!open || !preset) return;
+    setError('');
     setSpan(preset.span || 'many');
     if (preset.span === 'one') {
       const day = preset.day || today();
@@ -122,14 +124,21 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
   const count = result?.createdCount || 0;
 
   const schedule = async () => {
+    if (saving.current || checking || !result || count === 0) return;
+    saving.current = true;
     setError('');
     setBusy(true);
     try {
       const done = await api(request.path, { method: 'POST', body: { ...request.body, skipConflicts: skipped > 0, dryRun: false } });
-      onDone(`${done.createdCount} showing${done.createdCount === 1 ? '' : 's'} scheduled${done.skippedCount ? `, ${done.skippedCount} skipped` : ''}`, mode === 'many' ? chosenMovie?._id : null, mode === 'many' && span === 'one' ? oneDay : null);
+      if (!done.created.length) {
+        setError(['No showings were scheduled.', ...done.skipped.map(item => `${item.label}: ${item.reason}`)].join(' '));
+        return;
+      }
+      onDone(`${done.created.length} showing${done.created.length === 1 ? '' : 's'} scheduled${done.skippedCount ? `, ${done.skippedCount} skipped` : ''}`, mode === 'many' ? chosenMovie?._id : null, mode === 'many' && span === 'one' ? oneDay : null, done);
     } catch (err) {
       setError(reasons(err));
     } finally {
+      saving.current = false;
       setBusy(false);
     }
   };
@@ -159,7 +168,8 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
   );
 
   return (
-    <Drawer title={mode === 'copy' ? 'Copy a day' : span === 'one' ? 'Add showings' : 'Schedule showings'} onClose={onClose} wide>
+    <Drawer title={mode === 'copy' ? 'Copy a day' : span === 'one' ? 'Add showings' : 'Schedule showings'} onClose={() => { if (!saving.current) onClose(); }} wide>
+      <fieldset className="bulk-save-fields" disabled={busy} aria-busy={busy}>
       <div className="when-chips bulk-mode" role="group" aria-label="What to do">
         <button type="button" className={`when-chip${mode === 'many' ? ' active' : ''}`} aria-pressed={mode === 'many'} onClick={() => onModeChange('many')}>New showings</button>
         <button type="button" className={`when-chip${mode === 'copy' ? ' active' : ''}`} aria-pressed={mode === 'copy'} onClick={() => onModeChange('copy')}>Copy a day</button>
@@ -283,6 +293,7 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
           <ActionPending pending={busy}>{busy ? 'Scheduling…' : count > 0 ? `${mode === 'copy' ? 'Copy' : 'Schedule'} ${count} showing${count === 1 ? '' : 's'}` : 'Nothing to schedule yet'}</ActionPending>
         </button>
       </div>
+      </fieldset>
     </Drawer>
   );
 }
