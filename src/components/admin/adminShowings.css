@@ -72,10 +72,10 @@
 
 /* Stage 4: status chips, booking cards, seat map preview */
 .status-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.status-chips .filter-btn { min-height: 38px; padding: 0 14px; border: 1px solid var(--a-line); border-radius: 999px; background: var(--a-paper); color: var(--a-soft); font: 700 13px 'Instrument Sans Variable', sans-serif; }
-.status-chips .filter-btn.active { border-color: var(--a-ink); background: var(--a-ink); color: var(--a-ink-on); }
-.status-chips .filter-btn:hover:not(.active) { border-color: var(--a-coral); color: var(--a-ink); }
-.status-chips .filter-btn:focus-visible { outline: 3px solid var(--a-coral); outline-offset: 2px; }
+.admin-workspace .status-chips button.filter-btn { min-height: 38px; padding: 0 14px; border: 1px solid var(--a-line); border-radius: 999px; background: var(--a-paper); color: var(--a-soft); font: 700 13px 'Instrument Sans Variable', sans-serif; }
+.admin-workspace .status-chips button.filter-btn.active { border-color: var(--a-ink); background: var(--a-ink); color: var(--a-ink-on); }
+.admin-workspace .status-chips button.filter-btn:hover:not(.active) { border-color: var(--a-coral); background: var(--a-ground); color: var(--a-ink); }
+.admin-workspace .status-chips button.filter-btn:focus-visible { outline: 3px solid var(--a-coral); outline-offset: 2px; }
 .chip-count { margin-left: 4px; opacity: .7; font-weight: 600; }
 
 .booking-cards { display: none; }
