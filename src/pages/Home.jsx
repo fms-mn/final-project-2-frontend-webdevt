@@ -88,6 +88,6 @@ export default function Home() {
         {earlierGroups.length > 0 && <details className="showtime-earlier"><summary>Earlier today <span>{earlierRows.length} {earlierRows.length === 1 ? 'showing' : 'showings'}</span></summary><ShowtimeBoard groups={earlierGroups} dateLabel={manilaDate(selectedDate)} showingLink={showingLink} role={user?.role} /></details>}
       </> : <div className="schedule-empty"><span>No showings are scheduled for this day.</span><Link to="/movies">Explore Movies <span aria-hidden="true">&#8250;</span></Link></div>}
     </div></section>
-    <OpeningSoon movies={coming} currentDay={currentDay} />
+    <OpeningSoon movies={coming} currentDay={currentDay} loading={loading} error={error} onRetry={reload} />
   </div>;
 }

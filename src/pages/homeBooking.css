@@ -6,8 +6,8 @@
 .cinematic-home .board-heading p {font-size:14px;max-width:32ch;text-align:right;margin:0}
 .cinematic-home .board-date-selector {margin-bottom:24px}
 .cinematic-home .showtime-earlier {margin-top:28px}
-.cinematic-home .schedule-empty {display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:0 6px;width:100%;padding:12px 24px;border-radius:18px;background:var(--surface-tint);color:var(--text-secondary);font-size:14px;line-height:1.6;text-align:center}
-.cinematic-home .schedule-empty a {display:inline-flex;align-items:center;gap:4px;min-height:44px;color:var(--accent-primary);font-weight:600;white-space:nowrap}
-.cinematic-home .schedule-empty a:hover {text-decoration:underline;text-underline-offset:3px}
+.cinematic-home :is(.schedule-empty,.opening-empty) {display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:0 6px;width:100%;padding:12px 24px;border-radius:18px;background:var(--surface-tint);color:var(--text-secondary);font-size:14px;line-height:1.6;text-align:center}
+.cinematic-home :is(.schedule-empty,.opening-empty) a {display:inline-flex;align-items:center;gap:4px;min-height:44px;color:var(--accent-primary);font-weight:600;white-space:nowrap}
+.cinematic-home :is(.schedule-empty,.opening-empty) a:hover {text-decoration:underline;text-underline-offset:3px}
 @media(max-width:850px) {.tonight-page.cinematic-home {padding:22px var(--filme-gutter) 44px}.cinematic-home .board-section {margin-top:36px}.cinematic-home .board-heading {align-items:flex-start;gap:12px}.cinematic-home .board-heading p {text-align:left;max-width:none}.cinematic-home .board-heading h2 {font-size:30px}}
 .guest-seat-notice {margin:12px 0;color:var(--text-secondary);font-size:14px;line-height:1.5}
