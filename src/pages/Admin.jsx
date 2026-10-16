@@ -85,7 +85,7 @@ export default function Admin() {
   return (
     <div className="admin-shell">
       <AdminSidebar current={tab} onSelect={selectSection} />
-      <div className={`admin-page admin-workspace fade-in${tab === 'overview' ? ' admin-overview-page' : ''}`}>
+      <div className={`admin-page admin-workspace fade-in${tab === 'overview' ? ' admin-overview-page' : ''}${tab === 'movies' ? ' admin-movies-page' : ''}`}>
         <header className="admin-topbar">
           <div>
             <h1 id="admin-page-title">{section.title}</h1>

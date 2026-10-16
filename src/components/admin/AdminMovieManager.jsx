@@ -18,6 +18,7 @@ import { manilaDay, today as manilaToday } from '../../utils/manila';
 import { validDay } from '../../utils/calendar';
 import './adminMovies.css';
 import './adminMoviesPanel.css';
+import './adminMoviesMobile.css';
 
 const STATUSES = ['draft', 'published', 'archived'];
 const RATINGS = ['G', 'PG', 'PG-13', 'R'];
@@ -293,10 +294,48 @@ function SalesCell({ movie }) {
   if (!sales || (sales.bookings === 0 && sales.cancelled === 0)) return <span className="movie-sales-none">No sales yet</span>;
   return (
     <span className="movie-sales">
-      <strong>{pesos(sales.revenue)}</strong>
+      <strong className={pesos(sales.revenue).length > 10 ? 'movie-sales-large-amount' : undefined}>{pesos(sales.revenue)}</strong>
       <small>{sales.tickets} {sales.tickets === 1 ? 'ticket' : 'tickets'}{sales.cancelled > 0 && ` · ${sales.cancelled} cancelled`}</small>
     </span>
   );
+}
+
+function MovieCardPoster({ movie }) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => { setFailed(false); }, [movie.posterUrl]);
+  return <div className="movie-card-poster">
+    {movie.posterUrl && !failed
+      ? <img src={movie.posterUrl} alt="" loading="lazy" onError={() => setFailed(true)} />
+      : <span role="img" aria-label={`Poster unavailable for ${movie.title}`}>{movie.title.split(/\s+/).filter(Boolean).slice(0, 2).map(word => word[0]).join('')}</span>}
+  </div>;
+}
+
+function MobileMovieCard({ movie, onManage, onSchedule, onPublish, busy, items }) {
+  const info = showingsSummary(movie);
+  const viewShowings = movie.status === 'archived' || (movie.upcomingShowings ?? 0) > 0;
+  return <article className="movie-mobile-card" aria-label={movie.title}>
+    <MovieCardPoster movie={movie} />
+    <div className="movie-card-details">
+      <h2>{movie.title}</h2>
+      <p>{[dateYear(movie.releaseDate), movie.genre, movie.rating].filter(Boolean).join(' · ')}</p>
+      <div className="movie-card-meta"><span>{durationLabel(movie.duration)}</span><span className={`movie-status movie-status-${movie.status}`}>{movie.status}</span></div>
+    </div>
+    <div className="movie-card-summary">
+      <div className="movie-card-showing">
+        <span className={`movie-card-showing-badge movie-card-showing-${info.tone}`} title={info.hint}>{info.text}</span>
+        {info.hint && <span className="visually-hidden">{info.hint}</span>}
+        {info.action === 'publish' && <button type="button" className="movie-schedule-link" disabled={busy} onClick={() => onPublish(movie)}>Publish now →</button>}
+      </div>
+      <SalesCell movie={movie} />
+    </div>
+    <div className="movie-mobile-actions">
+      {(viewShowings || onSchedule) && <button type="button" className="movie-schedule-link" aria-label={`${viewShowings ? 'View showings' : 'Schedule showings'} for ${movie.title}`} onClick={() => viewShowings ? onManage(movie, 'showings') : onSchedule(movie._id)}>
+        {viewShowings ? 'View showings' : 'Schedule showings'} <span aria-hidden="true">→</span>
+      </button>}
+      <button type="button" className="movie-button movie-card-manage" aria-label={`Manage ${movie.title}`} onClick={() => onManage(movie)}>Manage</button>
+      <RowMenu label={`More actions for ${movie.title}`} items={items} />
+    </div>
+  </article>;
 }
 
 export default function AdminMovieManager({ movies, reload, onSchedule, onOpenShowing, addRequest = 0, onAddHandled, registerLeave }) {
@@ -457,11 +496,15 @@ export default function AdminMovieManager({ movies, reload, onSchedule, onOpenSh
   return (
     <section className="movie-manager" aria-label="Movie management">
       <Feedback error={draft || dialog ? '' : error} notice={notice} />
+      <dl className="movie-mobile-stats" aria-label="Totals for listed movies">
+        <div><dt>{query.trim() || genre !== 'all' || status !== 'all' ? 'Matching movies' : 'Movies'}</dt><dd>{shown.length.toLocaleString('en-PH')}</dd></div>
+        <div><dt>Revenue</dt><dd className={pesos(totalRevenue).length > 10 ? 'movie-stat-large-amount' : undefined}>{pesos(totalRevenue)}</dd></div>
+      </dl>
       <div className="movie-manager-toolbar">
         <label className="movie-search"><span className="visually-hidden">Search movies</span><span aria-hidden="true">⌕</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search movies..." /></label>
-        <label className="movie-filter"><span className="visually-hidden">Filter by genre</span><select value={genre} onChange={(event) => setGenre(event.target.value)}><option value="all">All genres</option>{genres.map((name) => <option key={name}>{name}</option>)}</select></label>
-        <label className="movie-filter"><span className="visually-hidden">Filter by status</span><select value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">All statuses</option><option value="needs">Needs showings</option>{STATUSES.map((name) => <option key={name} value={name}>{name[0].toUpperCase() + name.slice(1)}</option>)}</select></label>
-        <label className="movie-sort"><span className="visually-hidden">Sort movies</span><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="title">Title A–Z</option><option value="revenue">Top revenue</option></select></label>
+        <label className="movie-filter"><span className="visually-hidden">Filter by genre</span><select aria-label="Filter by genre" value={genre} onChange={(event) => setGenre(event.target.value)}><option value="all">All genres</option>{genres.map((name) => <option key={name}>{name}</option>)}</select></label>
+        <label className="movie-filter"><span className="visually-hidden">Filter by status</span><select aria-label="Filter by status" value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">All statuses</option><option value="needs">Needs showings</option>{STATUSES.map((name) => <option key={name} value={name}>{name[0].toUpperCase() + name.slice(1)}</option>)}</select></label>
+        <label className="movie-sort"><span className="visually-hidden">Sort movies</span><select aria-label="Sort movies" value={sort} onChange={(event) => setSort(event.target.value)}><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="title">Title A–Z</option><option value="revenue">Top revenue</option></select></label>
         <span className="movie-count">{shown.length} {shown.length === 1 ? 'movie' : 'movies'} · <b>{pesos(totalRevenue)}</b> revenue</span>
         <button type="button" className="movie-button movie-button-primary movie-add" onClick={() => openEditor(null)}><span aria-hidden="true">＋</span> Add movie</button>
       </div>
@@ -486,22 +529,7 @@ export default function AdminMovieManager({ movies, reload, onSchedule, onOpenSh
         </table>
         {shown.length === 0 && <p className="movie-empty">{movies.length ? 'No movies match these filters.' : 'No movies yet. Add your first movie.'}</p>}
         <div className="movie-mobile-list">
-          {shown.map((movie) => (
-            <article className="movie-mobile-card" key={movie._id}>
-              <img src={movie.posterUrl} alt="" />
-              <div>
-                <strong>{movie.title}</strong>
-                <small>{dateYear(movie.releaseDate)} · {movie.genre} · {movie.rating}</small>
-                <span>{durationLabel(movie.duration)} <span className={`movie-status movie-status-${movie.status}`}>{movie.status}</span></span>
-                {(() => { const info = showingsSummary(movie); return info.tone === 'none' ? null : <span className={`movie-showings movie-showings-${info.tone}`}>{info.text}{info.action === 'schedule' && onSchedule && <button type="button" className="movie-schedule-link" onClick={() => onSchedule(movie._id)}>Schedule showings →</button>}{info.action === 'publish' && <button type="button" className="movie-schedule-link" disabled={busy} onClick={() => publishRow(movie)}>Publish now →</button>}</span>; })()}
-                <SalesCell movie={movie} />
-              </div>
-              <div className="movie-mobile-actions">
-                <button type="button" className="movie-button movie-button-outline" onClick={() => openEditor(movie)}>Manage</button>
-                <RowMenu label={`More actions for ${movie.title}`} items={menuItems(movie)} />
-              </div>
-            </article>
-          ))}
+          {shown.map(movie => <MobileMovieCard key={movie._id} movie={movie} onManage={openEditor} onSchedule={onSchedule} onPublish={publishRow} busy={busy} items={menuItems(movie)} />)}
         </div>
         <div className="movie-table-footer">Showing {shown.length} of {movies.length} movies</div>
       </div>
