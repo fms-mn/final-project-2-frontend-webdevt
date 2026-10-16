@@ -1,0 +1,158 @@
+/* Page-local palette: other routes continue to use the shared theme unchanged. */
+.app:has(> .landing-main) {
+  --bg-primary: #f8f7fa;
+  --bg-secondary: #f0eef6;
+  --bg-card: #fff;
+  --bg-card-hover: #faf8fc;
+  --text-primary: #151735;
+  --text-secondary: #5d617d;
+  --text-muted: #696d88;
+  --border-color: #e1dfed;
+  --surface-tint: #f0eff7;
+  --nav-refined-surface: #fff;
+  --home-glow: #ecc5d3;
+  --home-glow-soft: #e6e2f6;
+  --home-media: #121533;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+:root[data-theme='dark'] .app:has(> .landing-main) {
+  --bg-primary: #131535;
+  --bg-secondary: #191c46;
+  --bg-card: #1d214f;
+  --bg-card-hover: #252959;
+  --text-primary: #faf9ff;
+  --text-secondary: #babbd6;
+  --text-muted: #a6a8c8;
+  --border-color: #30345f;
+  --surface-tint: #141736;
+  --nav-refined-surface: #131535;
+  --home-glow: #77213f;
+  --home-glow-soft: #3e3055;
+  --shadow-sm: 0 5px 18px #080a241a;
+  --shadow-md: 0 12px 32px #080a2429;
+}
+.landing-page {
+  --landing-text: var(--text-primary);
+  --landing-muted: var(--text-secondary);
+  --landing-focus: var(--accent-primary);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+.app:has(> .landing-main) .navbar.filme-navbar {
+  --nav-refined-ink: var(--text-primary);
+  --nav-refined-muted: var(--text-secondary);
+  --nav-refined-border: var(--border-color);
+  --nav-refined-active: var(--bg-secondary);
+  --nav-refined-accent: var(--accent-primary);
+  padding-inline: max(var(--filme-gutter), calc((100% - var(--filme-container)) / 2));
+}
+.app:has(> .landing-main) .footer { background: var(--nav-refined-surface); border-color: var(--border-color); }
+.app:has(> .landing-main) .footer-brand strong { color: var(--text-primary); }
+.landing-page .landing-hero {
+  --hero-panel: var(--bg-primary);
+  position: relative;
+  isolation: isolate;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(32px, 6vw, 100px);
+  margin-block: 0;
+  padding: clamp(52px, 6vw, 88px) 0;
+  border-radius: 0;
+  background: transparent;
+}
+.landing-page .landing-hero::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0 calc(-1 * var(--filme-gutter));
+  background: radial-gradient(ellipse at 87% 55%, var(--home-glow), transparent 57%), radial-gradient(ellipse at 65% 10%, var(--home-glow-soft), transparent 62%);
+  pointer-events: none;
+}
+.landing-page .landing-hero h1 { max-width: 10.5ch; font-size: clamp(48px, 5.5vw, 80px); letter-spacing: -.065em; }
+.landing-page .landing-hero-copy > p { max-width: 40ch; margin-block: 26px 30px; }
+.landing-page .landing-hero .landing-button { background: var(--filme-coral-fill); color: #fff; }
+.landing-page .landing-hero .landing-button:hover { background: var(--filme-coral-hover); }
+:root[data-theme='dark'] .landing-page .landing-hero .landing-button { background: #fff; color: #151735; }
+:root[data-theme='dark'] .landing-page .landing-hero .landing-button:hover { background: #eae8f5; }
+.landing-page .landing-hero .landing-schedule-link { min-height: 48px; padding: 11px 22px; border: 1px solid color-mix(in srgb, var(--text-secondary) 65%, transparent); border-radius: 999px; text-decoration: none; }
+.landing-page .landing-hero .landing-schedule-link:hover { background: color-mix(in srgb, var(--bg-card) 55%, transparent); border-color: var(--text-primary); }
+.landing-page .landing-ticket-stage { padding: 28px 12px; }
+.landing-page .landing-ticket-float { width: min(100%, 460px); margin-inline: auto; animation: home-ticket-float 5s ease-in-out infinite; }
+.landing-page .landing-ticket {
+  --text-primary: #151735;
+  --text-secondary: #5d617d;
+  --border-color: #e3e3ef;
+  width: 100%;
+  border-color: #ffffff50;
+  background: #fff;
+  box-shadow: 0 20px 50px #15173526;
+}
+.landing-page .landing-ticket-banner { position: relative; z-index: 1; color: #fff; }
+.landing-page .landing-ticket-bottom::before,
+.landing-page .landing-ticket-bottom::after { content: none; }
+.landing-page .landing-ticket-shine { position: absolute; z-index: 2; inset-block: -40%; left: -45%; width: 30%; background: linear-gradient(90deg, transparent, #fff5, transparent); transform: skewX(-18deg); pointer-events: none; animation: home-ticket-shine 5s ease-in-out infinite; }
+@keyframes home-ticket-float { 0%,100% { transform: translateY(0) rotate(2deg); } 50% { transform: translateY(-12px) rotate(.5deg); } }
+@keyframes home-ticket-shine { 0%,45% { left: -45%; } 80%,100% { left: 130%; } }
+.landing-page .tonight-page.cinematic-home { padding-top: 28px; padding-bottom: 64px; }
+.landing-page .cinema-hero { grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr); gap: 24px; }
+.landing-page .cinema-media { align-self: stretch; min-height: 100%; border: 1px solid var(--border-color); background: var(--home-media); border-radius: 26px; }
+.landing-page .cinema-empty-art { background: linear-gradient(145deg, #2b3066, #10132f); }
+.landing-page .cinema-panel {
+  --showcase-text: var(--text-primary);
+  --showcase-muted: var(--text-secondary);
+  padding: 26px;
+  border-color: var(--border-color);
+  border-radius: 26px;
+  background: radial-gradient(ellipse at 100% 100%, #f2dce5, transparent 85%), var(--bg-card);
+  box-shadow: var(--shadow-sm);
+}
+:root[data-theme='dark'] .landing-page .cinema-panel { background: linear-gradient(155deg, var(--bg-primary) 30%, #5c1c3b); }
+.landing-page .cinema-identity { grid-template-columns: 90px minmax(0, 1fr); gap: 16px; }
+.landing-page .cinema-title { font-size: clamp(24px, 2vw, 30px); }
+.landing-page .cinema-meta span { background: var(--surface-tint); color: var(--text-primary); border: 1px solid var(--border-color); }
+.landing-page .cinema-meta .cinema-rating { color: #fff; background: var(--filme-coral-fill); border-color: transparent; }
+.landing-page .cinema-attribution.has-credit { background: color-mix(in srgb, var(--bg-card) 50%, transparent); border-color: var(--border-color); }
+.landing-page .cinema-demo-label { color: var(--accent-primary); }
+.landing-page .cinema-credit a { text-decoration-color: currentColor; }
+.landing-page .cinema-indicators span { background: var(--border-color); }
+.landing-page .cinema-indicators .is-active { background: var(--accent-primary); }
+.landing-page .board-section { margin-top: 72px; }
+.landing-page .board-eyebrow { color: var(--accent-primary); }
+.landing-page .cinematic-home .movie-showing-card { box-shadow: var(--shadow-sm); }
+.landing-page .tonight-page.cinematic-home .opening-section {
+  --opening-card: var(--bg-card);
+  --opening-rule: var(--border-color);
+  --opening-text: var(--text-primary);
+  --opening-muted: var(--text-secondary);
+  --opening-button: var(--filme-coral-fill);
+  --opening-button-text: #fff;
+  margin: 64px 0 0;
+}
+.landing-page .opening-section .opening-section-inner { max-width: none; padding: 0; }
+.landing-page .cinematic-home .opening-section:has(.opening-empty) { margin-top: 64px; }
+.landing-page .cinematic-home .opening-section:has(.opening-empty) .opening-section-inner { padding: 0; }
+.landing-page .cinematic-home :is(.schedule-empty, .opening-empty) { border: 1px solid var(--border-color); padding-block: 16px; background: var(--bg-secondary); }
+.landing-page .cinematic-home .opening-empty { margin-top: 24px; }
+.landing-page .cinematic-home:has(.opening-empty) { padding-bottom: 56px; }
+@media (max-width: 1100px) {
+  .landing-page .cinema-hero { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .landing-page .cinema-media { min-height: 0; }
+  .landing-page .cinema-identity { grid-template-columns: 112px minmax(0, 1fr); }
+}
+@media (max-width: 767px) {
+  .landing-page .landing-hero { grid-template-columns: minmax(0, 1fr); padding: 38px 0 30px; gap: 0; }
+  .landing-page .landing-hero h1 { max-width: 13ch; font-size: clamp(38px, 9vw, 58px); }
+  .landing-page .landing-hero-copy > p { font-size: 16px; margin-block: 20px 24px; }
+  .landing-page .landing-hero .landing-button { padding-inline: 22px; }
+  .landing-page .landing-hero .landing-schedule-link { padding-inline: 18px; font-size: 13px; }
+  .landing-page .cinema-panel { padding: 20px; border-radius: 22px; }
+  .landing-page .cinema-identity { grid-template-columns: 90px minmax(0, 1fr); }
+  .landing-page .board-section { margin-top: 40px; }
+  .landing-page .cinematic-home .opening-section,
+  .landing-page .cinematic-home .opening-section:has(.opening-empty) { margin-top: 40px; }
+  .landing-page .tonight-page.cinematic-home { padding-bottom: 40px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-page .landing-ticket-float { animation: none; transform: none; }
+  .landing-page .landing-ticket-shine { display: none; animation: none; }
+}
