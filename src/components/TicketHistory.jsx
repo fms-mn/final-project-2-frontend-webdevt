@@ -34,20 +34,19 @@ function HistoryRow({ booking, getDetail, expanded, onToggle, onRetryRefund, ref
     <article className={`history-card${expanded ? ' is-expanded' : ''}`} onClick={event => {
       if (!event.target.closest('.history-details, button, a, input, select, textarea')) onToggle();
     }}>
-      <div className="history-row">
+      <header className="history-row">
         <div className="history-main">
         <h4 className="history-movie">{booking.movie?.title || 'Movie no longer in catalog'}</h4>
-        <p className="history-mobile-showtime">{info.time}<span className="history-mobile-room"> · {info.room}</span></p>
         <div className="history-seats">{booking.seats.map(seat => <span className="history-seat" key={seat}>{seat}</span>)}<small className="history-room">{info.room}</small></div>
         </div>
         <div className="history-side">
+        <div className="history-status"><span className={'history-badge ' + (cancelled ? 'is-cancelled' : '')}>{status}</span>{refundRecord && refundApplicable && <small className="history-refund-brief">{refund.title}</small>}</div>
         <div className="history-amount"><strong>{money(info.price)}</strong><small>Original amount</small></div>
-        <div className="history-status"><span className={'history-badge ' + (cancelled ? 'is-cancelled' : '')}>{status}</span>{refundApplicable && <small className="history-refund-brief">{refund.title}</small>}</div>
         </div>
-      </div>
       <button type="button" className="history-expand" aria-expanded={expanded} aria-controls={detailsId} aria-label={(expanded ? 'Hide' : 'Show') + ' details for ' + (booking.movie?.title || 'booking') + ', ' + info.date + ', ' + info.code} onClick={onToggle}><span>{expanded ? 'Hide details' : 'Details'}</span><FiChevronDown aria-hidden="true" /></button>
-      {byCinema && <p className="ticket-note is-cancelled" role="note">The cinema cancelled this showing.</p>}
+      </header>
       <div className="history-details" id={detailsId} hidden={!expanded}>
+        {byCinema && <p className="ticket-note is-cancelled" role="note">The cinema cancelled this showing.</p>}
         <div className="history-receipt-columns">
           <section className="history-booking" aria-label="Booking">
             <h5 className="history-receipt-heading">Booking</h5>
