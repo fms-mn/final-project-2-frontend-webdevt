@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../api';
 import ActionPending from '../ActionPending';
+import DatePicker from '../DatePicker';
 import { describeError, pesos, toCsv } from '../../utils/adminTools';
 import { manilaClock, shortDate, today } from '../../utils/manila';
 import { paymentSummary } from '../../utils/payment';
@@ -88,7 +89,7 @@ export default function AdminBookings() {
             {movieTitles.map((title) => <option key={title} value={title}>{title}</option>)}
           </select>
         </label>
-        <label>Showing date<input type="date" value={date} onChange={changeFilter(setDate)} /></label>
+        <label>Showing date<DatePicker label="Booking showing date" value={date} onChange={value => changeFilter(setDate)({ target: { value } })} /></label>
         <button type="button" className="btn btn-secondary btn-small" onClick={exportCsv} disabled={shown.length === 0}>Export CSV</button>
       </div>
 

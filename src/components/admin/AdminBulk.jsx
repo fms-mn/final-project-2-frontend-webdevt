@@ -1,16 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../../api';
 import ActionPending from '../ActionPending';
+import DatePicker from '../DatePicker';
+import { dateProblem } from '../../utils/calendar';
 import { describeError, pesos } from '../../utils/adminTools';
 
-import { daysBetween, manilaDay, shiftDay, today } from '../../utils/manila';
+// Just the reasons, without the leading "Validation failed".
+const reasons = (err) => (err.errors ? Object.values(err.errors).join(' ') : describeError(err));
+import { daysBetween, shiftDay, today } from '../../utils/manila';
 import { RANGES, rangeFor } from '../../utils/schedule';
 import { COMMON_TIMES, TIME_OPTIONS, clock12, defaultStart, endsText, quickDays } from '../../utils/timeSlots';
 import Drawer from './Drawer';
 import Feedback from './Feedback';
+import PlanReview from './PlanReview';
+import { fixedKey, planCounts, slotKey, slotsToSave } from '../../utils/planReview';
 
-// Just the reasons, without the leading Validation failed.
-const reasons = (err) => (err.errors ? Object.values(err.errors).join(' ') : describeError(err));
 const MAX_DAYS = 31;
 // Monday first, as people read a week. The number is what the server expects (Sunday = 0).
 const WEEKDAYS = [['Mon', 1], ['Tue', 2], ['Wed', 3], ['Thu', 4], ['Fri', 5], ['Sat', 6], ['Sun', 0]];
@@ -20,72 +24,52 @@ const dayLabel = (day) => new Date(`${day}T12:00:00+08:00`).toLocaleDateString('
 // Schedule many showings, or copy one day to other days. The admin taps a movie, a room, some days
 // and some times; the screen works out the rest and checks it against the schedule as they go, so
 // "Schedule 27 showings" is a button they press once they have seen what will happen.
-export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mode, onModeChange, onClose, defaultDay, preset, lockedMovie = false, roomError, onRetryRooms, onBack, onManageRooms }) {
+export default function AdminBulk({ movies, rooms, onDone, open, mode, onModeChange, onClose, defaultDay, preset, gapMinutes = 15, lockedMovie = false, roomError, onRetryRooms, onBack, onManageRooms }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   // Drafts can be scheduled too (customers see the showings once the movie is published); archived ones cannot.
-  const availableMovies = movies.filter((movie) => movie.status !== 'archived');
+  const published = movies.filter((movie) => movie.status !== 'archived');
   const active = rooms.filter((room) => room.isActive);
 
-  const [movie, setMovie] = useState('');
-  const [room, setRoom] = useState('');
-  const [span, setSpan] = useState('one'); // 'one': just one day, 'many': a range of days
-  const [oneDay, setOneDay] = useState(today());
+  const [movie, setMovie] = useState(preset?.movieId || '');
+  const [room, setRoom] = useState(preset?.room || '');
+  const [span, setSpan] = useState(preset?.span || 'one'); // 'one': just one day, 'many': a range of days
+  const [oneDay, setOneDay] = useState(() => preset?.time ? preset.day || today() : defaultStart(preset?.day || today()).split('T')[0]);
   const [range, setRange] = useState('next7');
   const [custom, setCustom] = useState({ startDate: shiftDay(today(), 1), endDate: shiftDay(today(), 7) });
   const [weekdays, setWeekdays] = useState(ALL_DAYS);
-  const [times, setTimes] = useState(['10:00', '13:30', '17:00', '20:30']);
+  const [times, setTimes] = useState(() => preset?.span === 'one'
+    ? [preset.time || defaultStart(preset.day || today()).split('T')[1]]
+    : ['10:00', '13:30', '17:00', '20:30']);
   const [price, setPrice] = useState('400');
   const [hidden, setHidden] = useState(false);
   const [publishMovie, setPublishMovie] = useState(true);
-  const [skipConflicts, setSkipConflicts] = useState(false);
-  const [completion, setCompletion] = useState(null);
-  const [retry, setRetry] = useState(0);
-  const [copyFrom, setCopyFrom] = useState(today());
+  const [skipUnavailable, setSkipUnavailable] = useState(false);
+  const [copyFrom, setCopyFrom] = useState(() => defaultDay || today());
   const [copyRange, setCopyRange] = useState('next7');
   const [copyCustom, setCopyCustom] = useState({ startDate: shiftDay(today(), 1), endDate: shiftDay(today(), 7) });
-  const [preview, setPreview] = useState(null); // { result, request } | { problem, request }
+  const [preview, setPreview] = useState(null); // { ok, result } | { problem }
   const [checking, setChecking] = useState(false);
+  const [decisions, setDecisions] = useState({}); // what the admin chose for each clash: { time | room | skip }
+  const [collisions, setCollisions] = useState(() => new Map()); // fixes that no longer fit, with the reason
+  const [refresh, setRefresh] = useState(0);
   const ticket = useRef(0);
+  const saving = useRef(false);
 
-  useEffect(() => { if (open) { setCompletion(null); setError(''); } }, [open]);
-
-  // Arriving from "Schedule showings" after adding a movie: that movie is already chosen.
-  useEffect(() => { if (scheduleFor) setMovie(scheduleFor.movieId); }, [scheduleFor]);
-  // Opened from "+ Add showing" (one day, maybe a clicked time and room) or from "Many days".
-  useEffect(() => {
-    if (!open || !preset) return;
-    setCompletion(null);
-    setError('');
-    setSkipConflicts(false);
-    setHidden(false);
-    setPublishMovie(true);
-    setSpan(preset.span || 'one');
-    if (preset.span === 'one') {
-      const selectedMovie = movies.find((item) => item._id === scheduleFor?.movieId);
-      const releaseDay = String(selectedMovie?.releaseDate || '').slice(0, 10);
-      const day = preset.day || (releaseDay > today() ? releaseDay : today());
-      const [startDay, startClock] = defaultStart(day).split('T');
-      setOneDay(preset.time ? day : startDay);
-      setTimes([preset.time || startClock]);
-    }
-    if (preset.room) setRoom(preset.room);
-    setPreview(null);
-  }, [open, preset]);
-  // Opening from a day on the schedule: copy that day, and start the new showings after it.
-  useEffect(() => {
-    if (!open || !defaultDay) return;
-    setCopyFrom(defaultDay);
-  }, [open, defaultDay]);
-
-  const chosenMovie = availableMovies.find((item) => item._id === (movie || availableMovies[0]?._id));
+  const chosenMovie = published.find((item) => item._id === (movie || published[0]?._id));
   const chosenRoom = active.find((item) => item._id === (room || active[0]?._id));
   const manyDates = span === 'one' ? { startDate: oneDay, endDate: oneDay } : (range === 'custom' ? custom : rangeFor(range, today()));
   const copyDates = copyRange === 'custom' ? copyCustom : rangeFor(copyRange, today());
+  const timeProblem = mode === 'many' && manyDates.startDate <= today() && manyDates.endDate >= today()
+    && (span === 'one' || weekdays.includes(new Date(`${today()}T12:00:00+08:00`).getUTCDay()))
+    && times.some(time => Date.parse(`${today()}T${time}:00+08:00`) <= Date.now())
+    ? 'A selected showtime has already passed in Manila. Choose later times or another day.' : '';
 
   // What would be sent, or why nothing can be sent yet.
   const request = useMemo(() => {
     if (mode === 'many') {
+      const invalidDate = dateProblem(manyDates.startDate, { min: today(), required: true }) || dateProblem(manyDates.endDate, { min: manyDates.startDate, required: true });
+      if (invalidDate || timeProblem) return { problem: invalidDate || timeProblem };
       if (!chosenMovie || !chosenRoom) return { problem: 'Add a movie (it can be a draft) and an active room first.' };
       if (times.length === 0) return { problem: 'Pick at least one start time.' };
       if (times.length > 20) return { problem: 'Choose up to 20 start times per day.' };
@@ -95,7 +79,7 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
       if (!manyDates.startDate || !manyDates.endDate || manyDates.endDate < manyDates.startDate) return { problem: 'Choose the first and last day.' };
       const days = daysBetween(manyDates.startDate, manyDates.endDate);
       const slotDays = span === 'one' ? days : days.filter((day) => weekdays.includes(new Date(`${day}T12:00:00+08:00`).getUTCDay()));
-      if (slotDays.length * times.length > 200) return { problem: 'Choose at most 200 showings at a time. Reduce the days or start times.' };
+      if (slotDays.length * times.length > 200) return { problem: 'Choose at most 200 showings at a time.' };
       if (days.length > MAX_DAYS) return { problem: `Choose at most ${MAX_DAYS} days at a time.` };
       return {
         path: '/showtimes/bulk',
@@ -108,53 +92,87 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
     }
     // The day being copied is never a target.
     const toDates = copyDates.startDate && copyDates.endDate ? daysBetween(copyDates.startDate, copyDates.endDate).filter((day) => day !== copyFrom) : [];
-    if (!copyFrom) return { problem: 'Choose the day to copy.' };
+    const invalidDate = dateProblem(copyFrom, { required: true }) || dateProblem(copyDates.startDate, { min: today(), required: true }) || dateProblem(copyDates.endDate, { min: copyDates.startDate, required: true });
+    if (invalidDate) return { problem: invalidDate };
     if (toDates.length === 0) return { problem: 'Choose at least one day to copy to (other than the day being copied).' };
     if (toDates.length > MAX_DAYS) return { problem: `Choose at most ${MAX_DAYS} days at a time.` };
     return { path: '/showtimes/copy', body: { fromDate: copyFrom, toDates, ...(hidden ? { published: false } : {}) } };
-  }, [mode, span, chosenMovie, chosenRoom, times, weekdays, price, manyDates.startDate, manyDates.endDate, hidden, publishMovie, copyFrom, copyDates.startDate, copyDates.endDate]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [mode, span, chosenMovie, chosenRoom, times, weekdays, price, manyDates.startDate, manyDates.endDate, hidden, publishMovie, copyFrom, copyDates.startDate, copyDates.endDate, timeProblem]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Check the request against the schedule a moment after the admin stops changing things.
   useEffect(() => {
     const mine = ++ticket.current;
-    setSkipConflicts(false);
     setPreview(null);
-    if (!open || completion) { setChecking(false); return undefined; }
+    setSkipUnavailable(false);
+    if (!open) { setChecking(false); return undefined; }
     if (request.problem) { setPreview({ problem: request.problem, request }); setChecking(false); return undefined; }
     setChecking(true);
     const timer = setTimeout(async () => {
       try {
         const result = await api(request.path, { method: 'POST', body: { ...request.body, skipConflicts: true, dryRun: true } });
-        if (ticket.current === mine) setPreview({ result, request });
+        if (ticket.current === mine) { setPreview({ result, request }); setDecisions({}); setCollisions(new Map()); }
       } catch (err) {
         if (ticket.current === mine) setPreview({ problem: reasons(err), request });
       } finally {
         if (ticket.current === mine) setChecking(false);
       }
     }, 400);
-    return () => { clearTimeout(timer); if (ticket.current === mine) ticket.current += 1; };
-  }, [open, request, retry, completion]);
+    return () => { clearTimeout(timer); ticket.current += 1; };
+  }, [open, request, refresh]);
+
+  // Two fixes can land on the same time. Check the plan as it now stands and flag any fix that no longer fits.
+  const planResult = preview?.request === request ? preview.result : null;
+  useEffect(() => {
+    if (!open || !planResult) return undefined;
+    const fixes = (planResult.skipped || []).filter((item) => item.kind === 'clash' && decisions[slotKey(item)] && decisions[slotKey(item)].type !== 'skip');
+    if (fixes.length === 0) { setCollisions((current) => (current.size ? new Map() : current)); return undefined; }
+    let current = true;
+    const timer = setTimeout(async () => {
+      try {
+        const check = await api('/showtimes/slots', { method: 'POST', body: { slots: slotsToSave(planResult, decisions), publishMovie: mode === 'many' && request.body.publishMovie, skipConflicts: true, dryRun: true } });
+        if (!current) return;
+        const reasonsByKey = new Map(check.skipped.map((item) => [slotKey(item), item.reason]));
+        const next = new Map();
+        for (const item of fixes) {
+          const key = fixedKey(item, decisions[slotKey(item)]);
+          if (reasonsByKey.has(key)) next.set(key, `This fix no longer fits: ${reasonsByKey.get(key)}. Choose another fix.`);
+        }
+        setCollisions(next);
+      } catch { /* the final save checks again */ }
+    }, 300);
+    return () => { current = false; clearTimeout(timer); };
+  }, [open, planResult, decisions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!open) return null;
 
   const result = preview?.request === request ? preview.result : null;
-  const skipped = result?.skippedCount || 0;
-  const count = result?.createdCount || 0;
+  const unavailable = result?.skipped.filter((item) => item.kind !== 'clash').length || 0;
+
+  const counts = result ? planCounts(result, decisions, collisions) : { ready: 0, open: 0, fixed: 0, skipped: 0, total: 0 };
+  const plural = (n, word) => `${n} ${n === 1 ? word : word === 'clash' ? 'clashes' : `${word}s`}`;
 
   const schedule = async () => {
-    if (busy || checking || !result || !count || (skipped > 0 && !skipConflicts)) return;
+    if (saving.current || checking || !result || counts.open > 0 || counts.total === 0 || (unavailable > 0 && !skipUnavailable)) return;
+    const dates = mode === 'many' ? manyDates : copyDates;
+    const invalidDate = (mode === 'copy' && dateProblem(copyFrom, { required: true })) || dateProblem(dates.startDate, { min: today(), required: true }) || dateProblem(dates.endDate, { min: dates.startDate, required: true });
+    if (invalidDate) { setError(invalidDate); return; }
+    saving.current = true;
     setError('');
     setBusy(true);
     try {
-      const done = await api(request.path, { method: 'POST', body: { ...request.body, skipConflicts, dryRun: false } });
-      if (!done.createdCount) { setError('No showings were saved. The schedule may have changed. Review the updated check below.'); setRetry((value) => value + 1); return; }
-      const live = mode === 'many' && (done.moviePublished || (chosenMovie?.status === 'published' && !hidden));
-      const message = `${done.createdCount} showing${done.createdCount === 1 ? '' : 's'} saved${done.skippedCount ? ` · ${done.skippedCount} skipped` : ''}. ${mode === 'copy' ? 'Copied showings keep their original visibility unless you chose to hide them.' : live ? 'The movie is visible and tickets are on sale.' : chosenMovie?.status === 'draft' ? 'The movie is still a draft, hidden from customers.' : hidden ? 'These showings are hidden from customers.' : 'Copied showings keep their original visibility.'}`;
-      setCompletion({ message, live, movieId: mode === 'many' ? chosenMovie?._id : null, day: done.created[0]?.startTime ? manilaDay(done.created[0].startTime) : null });
+      // Save exactly what was reviewed: the ready showings plus the fixes, all or nothing.
+      const done = await api('/showtimes/slots', { method: 'POST', body: { slots: slotsToSave(result, decisions), publishMovie: mode === 'many' && request.body.publishMovie, skipConflicts: false, dryRun: false } });
+      if (!done.created.length) { setError('No showings were saved. Review the schedule again.'); setRefresh((value) => value + 1); return; }
+      const live = mode === 'many' && Boolean(done.moviePublished);
+      const visibilityMessage = mode === 'copy' ? hidden ? 'These copies are hidden from customers.' : 'Copied showings keep their original visibility.' : live ? 'The movie is visible and tickets are on sale.' : chosenMovie?.status === 'draft' ? 'The movie is still a draft, hidden from customers.' : 'These showings are hidden from customers.';
+      const skipped = result.skipped.filter((item) => item.kind !== 'clash' || decisions[slotKey(item)]?.type === 'skip');
+      const saved = { ...done, skipped, skippedCount: skipped.length, requested: result.requested, visibilityMessage };
+      onDone(`${plural(done.created.length, 'showing')} scheduled${skipped.length ? `, ${skipped.length} left out` : ''}. ${visibilityMessage}`, mode === 'many' ? chosenMovie?._id : null, mode === 'many' && span === 'one' ? oneDay : null, saved);
     } catch (err) {
-      setError(reasons(err));
-      setRetry((value) => value + 1);
+      setError(`${reasons(err)} The schedule may have changed while you were deciding, so it is being checked again.`);
+      setRefresh((value) => value + 1);
     } finally {
+      saving.current = false;
       setBusy(false);
     }
   };
@@ -175,23 +193,21 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
       </div>
       {current === 'custom' && (
         <div className="bulk-dates">
-          <label>First day<input type="date" min={today()} value={customDates.startDate} onChange={(event) => setCustomDates({ ...customDates, startDate: event.target.value })} /></label>
-          <label>Last day<input type="date" min={customDates.startDate} value={customDates.endDate} onChange={(event) => setCustomDates({ ...customDates, endDate: event.target.value })} /></label>
+          <label>First day<DatePicker label="First day" required min={today()} max={customDates.endDate} value={customDates.startDate} onChange={startDate => setCustomDates({ ...customDates, startDate })} /></label>
+          <label>Last day<DatePicker label="Last day" required min={customDates.startDate > today() ? customDates.startDate : today()} value={customDates.endDate} onChange={endDate => setCustomDates({ ...customDates, endDate })} /></label>
         </div>
       )}
       {dates.startDate && dates.endDate && dates.endDate >= dates.startDate && <p className="bulk-hint">{dayLabel(dates.startDate)} to {dayLabel(dates.endDate)} · {daysBetween(dates.startDate, dates.endDate).length} days</p>}
     </>
   );
 
-  if (completion) return <Drawer title={completion.live ? 'Movie and tickets are live' : 'Schedule saved'} onClose={() => onDone(completion.message, completion.movieId, completion.day)} wide>
-    <div className="movie-saved" role="status"><span className="movie-saved-mark" aria-hidden="true">✓</span><h3>{chosenMovie?.title || 'Showings saved'}</h3><p>{completion.message}</p>
-      <div className="movie-saved-actions">{completion.live && completion.movieId && <a className="movie-button movie-button-outline" href={`/movie/${completion.movieId}`} target="_blank" rel="noreferrer">View customer page ↗</a>}<button type="button" className="btn btn-primary drawer-first" autoFocus onClick={() => onDone(completion.message, completion.movieId, completion.day)}>Done</button></div>
-    </div></Drawer>;
-
   return (
-    <Drawer title={mode === 'copy' ? 'Copy a day' : span === 'one' ? 'Add showings' : 'Schedule showings'} onClose={() => { if (!busy) onClose(); }} wide>
-      {onBack && <button type="button" className="bulk-link" disabled={busy} onClick={onBack}>← Back to movie details</button>}
-      {lockedMovie && <div className="movie-flow-intro"><ol className="movie-flow-steps" aria-label="Create movie progress"><li><b>✓</b> Details saved</li><li aria-current="step"><b>2</b> Showings & publish</li></ol><p>Your movie is saved. Choose a room and time, then finish below. All times are in Manila.</p></div>}
+    <Drawer title={mode === 'copy' ? 'Copy a day' : span === 'one' ? 'Add showings' : 'Schedule showings'} onClose={() => { if (!saving.current) onClose(); }} className="admin-drawer-planner">
+      <fieldset className="bulk-save-fields" disabled={busy} aria-busy={busy}>
+      <div className="planner-grid">
+      <div className="planner-inputs">
+      {onBack && <button type="button" className="bulk-link" onClick={onBack}>← Back to movie details</button>}
+      {lockedMovie && <div className="movie-flow-intro"><ol className="movie-flow-steps" aria-label="Create movie progress"><li><b>✓</b> Details saved</li><li aria-current="step"><b>2</b> Showings & publish</li></ol><p>Choose showtimes, review conflicts, then publish the movie and tickets together. All times are in Manila.</p></div>}
       {!lockedMovie && <div className="when-chips bulk-mode" role="group" aria-label="What to do">
         <button type="button" className={`when-chip${mode === 'many' ? ' active' : ''}`} aria-pressed={mode === 'many'} onClick={() => onModeChange('many')}>New showings</button>
         <button type="button" className={`when-chip${mode === 'copy' ? ' active' : ''}`} aria-pressed={mode === 'copy'} onClick={() => onModeChange('copy')}>Copy a day</button>
@@ -199,14 +215,13 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
       <Feedback error={error || roomError} notice="" />
       {roomError && <button type="button" className="btn btn-secondary" onClick={onRetryRooms}>Retry loading rooms</button>}
 
-      <fieldset className="bulk-fields" disabled={busy}>
       {mode === 'many' ? (
         <div className="bulk-steps">
           <section className="bulk-step">
             <h3><span>1</span> Movie and room</h3>
             <label>Movie
               <select disabled={lockedMovie} value={chosenMovie?._id || ''} onChange={(event) => setMovie(event.target.value)}>
-                {availableMovies.map((item) => <option key={item._id} value={item._id}>{item.title} ({item.duration} min){item.status === 'draft' ? ' · draft' : ''}</option>)}
+                {published.map((item) => <option key={item._id} value={item._id}>{item.title} ({item.duration} min){item.status === 'draft' ? ' · draft' : ''}</option>)}
               </select>
             </label>
             <label>Room
@@ -214,9 +229,9 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
                 {active.map((item) => <option key={item._id} value={item._id}>{item.name} · {item.rows * item.seatsPerRow} seats</option>)}
               </select>
             </label>
-            {!active.length && <p className="bulk-problem">No active rooms. Add or activate a room to continue; your movie is saved.{onManageRooms && <button type="button" className="bulk-link" onClick={onManageRooms}>Set up a room →</button>}</p>}
           </section>
 
+          {!active.length && <p className="bulk-problem">No active rooms. Your movie is saved.{onManageRooms && <button type="button" className="bulk-link" onClick={onManageRooms}>Set up a room →</button>}</p>}
           <section className="bulk-step">
             <h3><span>2</span> {span === 'one' ? 'Which day' : 'Which days'}</h3>
             <div className="when-chips" role="group" aria-label="One day or several">
@@ -231,7 +246,7 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
                   ))}
                 </div>
                 <label className="when-other">Another day
-                  <input type="date" min={today()} value={oneDay} onChange={(event) => event.target.value && setOneDay(event.target.value)} />
+                  <DatePicker label="Showing day" required min={today()} value={oneDay} onChange={setOneDay} />
                 </label>
                 {oneDay && <p className="bulk-hint">{dayLabel(oneDay)}</p>}
               </>
@@ -252,6 +267,7 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
 
           <section className="bulk-step">
             <h3><span>3</span> Start times <small className="bulk-pick-many">tap as many as you like</small></h3>
+            {timeProblem && <p className="when-problem" role="alert">{timeProblem}</p>}
             <div className="when-chips" role="group" aria-label="Start times">
               {[...COMMON_TIMES, ...extraTimes].map((clock) => (
                 <button key={clock} type="button" className={`when-chip${times.includes(clock) ? ' active' : ''}`} aria-pressed={times.includes(clock)} onClick={() => toggleTime(clock)}>{clock12(clock)}</button>
@@ -276,14 +292,14 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
             <label>Price per seat (₱)<input type="number" min="0" step="0.01" value={price} onChange={(event) => setPrice(event.target.value)} /></label>
             {chosenMovie?.status === 'draft' && <label className="admin-check"><input type="checkbox" checked={publishMovie && !hidden} onChange={(event) => { setPublishMovie(event.target.checked); if (event.target.checked) setHidden(false); }} /> Publish the movie and put these tickets on sale together</label>}
             <details className="bulk-advanced"><summary>Advanced: keep these showings hidden</summary><label className="admin-check"><input type="checkbox" checked={hidden} onChange={(event) => { setHidden(event.target.checked); if (event.target.checked) setPublishMovie(false); }} /> Hide these showings from customers</label></details>
-            <p className="bulk-hint">{chosenMovie?.status === 'draft' && (!publishMovie || hidden) ? 'Save schedule only: the movie stays a draft, hidden from customers.' : hidden ? 'The movie page stays visible. These showings cannot be booked until you make them visible.' : 'Customers can choose these showings and book seats as soon as you finish.'}</p>
+            <p className="bulk-hint">{chosenMovie?.status === 'draft' && (!publishMovie || hidden) ? 'Save schedule only: the movie stays a draft, hidden from customers.' : hidden ? 'These showings cannot be booked until you make them visible.' : 'Customers can book these showings as soon as you finish.'}</p>
           </section>
         </div>
       ) : (
         <div className="bulk-steps">
           <section className="bulk-step">
             <h3><span>1</span> Which day to copy</h3>
-            <label>Copy the showings of<input type="date" value={copyFrom} onChange={(event) => setCopyFrom(event.target.value)} /></label>
+            <label>Copy the showings of<DatePicker label="Copy source day" required value={copyFrom} onChange={setCopyFrom} /></label>
           </section>
           <section className="bulk-step">
             <h3><span>2</span> Copy it to</h3>
@@ -293,35 +309,37 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
         </div>
       )}
 
-      </fieldset>
+      </div>
+      <div className="planner-review">
+        {preview?.problem
+          ? <p className="bulk-problem" role="alert">{preview.problem}</p>
+          : !result
+            ? <div className="planner-review-empty">{checking ? 'Checking the schedule…' : 'Choose a movie, a room, days and times. The plan appears here with anything that clashes.'}</div>
+            : <PlanReview result={result} decisions={decisions} setDecisions={setDecisions} collisions={collisions} gapMinutes={gapMinutes} rooms={rooms} movies={movies} />}
+      </div>
+      </div>
+
       <div className="bulk-footer">
         <div className="bulk-result" aria-live="polite">
-          {preview?.problem && <p className="bulk-problem">{preview.problem}</p>}
-          {(checking || (!result && !preview?.problem)) && <p className="bulk-hint">Checking the schedule…</p>}
-          {!checking && result && (
-            <>
-              <p className="bulk-count">
-                <b>{count}</b> showing{count === 1 ? '' : 's'} available to schedule
-                {mode === 'many' && chosenMovie && chosenRoom && count > 0 ? <> for <b>{chosenMovie.title}</b> in {chosenRoom.name}, {span === 'one' ? `on ${dayLabel(oneDay)}` : weekdaySummary}, at {pesos(Math.round(Number(price) * 100))} a seat</> : null}.
-              </p>
-              {count === 0 && skipped > 0 && <p className="bulk-problem">None of these times can be scheduled. Review the reasons below, then change the times or days{mode === 'many' ? ', or another room' : ''}.</p>}
-              {skipped > 0 && (
-                <details className="bulk-skipped" open>
-                  <summary>{skipped} time{skipped === 1 ? '' : 's'} need attention</summary>
-                  <ul>
-                    {result.skipped.map((item) => <li key={item.startTime}><b>{item.label}</b>: {item.reason}</li>)}
-                  </ul>
-                </details>
-              )}
-              {skipped > 0 && count > 0 && <label className="admin-check bulk-skip-choice"><input type="checkbox" checked={skipConflicts} disabled={busy} onChange={(event) => setSkipConflicts(event.target.checked)} /> Skip the {skipped} unavailable time{skipped === 1 ? '' : 's'} and save only the {count} available showing{count === 1 ? '' : 's'}</label>}
-              {skipped > 0 && !skipConflicts && <p className="bulk-hint">Fix the unavailable times{count > 0 ? ', or choose to skip them above' : ''}. Nothing has been saved.</p>}
-            </>
+          {checking && <p className="bulk-hint">Checking the schedule…</p>}
+          {!checking && result && !preview?.problem && (
+            counts.open > 0
+              ? <p className="planner-status">{plural(counts.open, 'clash')} still {counts.open === 1 ? 'needs' : 'need'} a decision.</p>
+              : counts.total === 0
+                ? <p className="bulk-problem">Nothing can be scheduled with these choices. Pick other times or days{mode === 'many' ? ', or another room' : ''}.</p>
+                : <p className="planner-status">
+                  <b>{counts.total}</b> showing{counts.total === 1 ? '' : 's'} will be scheduled
+                  {mode === 'many' && chosenMovie && chosenRoom ? <> for <b>{chosenMovie.title}</b>{counts.fixed === 0 ? <> in {chosenRoom.name}, {span === 'one' ? `on ${dayLabel(oneDay)}` : weekdaySummary}</> : null}, at {pesos(Math.round(Number(price) * 100))} a seat</> : null}
+                  {counts.fixed > 0 ? `, ${counts.fixed} of them fixed` : ''}{counts.skipped > 0 ? `, ${counts.skipped} left out` : ''}.
+                </p>
           )}
         </div>
-        <button type="button" className="btn btn-primary" disabled={busy || checking || !result || count === 0 || (skipped > 0 && !skipConflicts)} aria-busy={busy} onClick={schedule}>
-          <ActionPending pending={busy}>{busy ? 'Scheduling…' : count > 0 ? `${chosenMovie?.status === 'draft' && request.body?.publishMovie ? 'Publish movie & ' : ''}${mode === 'copy' ? 'copy' : 'save'} ${count} showing${count === 1 ? '' : 's'}` : 'Nothing to schedule yet'}</ActionPending>
+        {unavailable > 0 && counts.total > 0 && <label className="admin-check bulk-skip-choice"><input type="checkbox" checked={skipUnavailable} onChange={(event) => setSkipUnavailable(event.target.checked)} /> Leave out the {unavailable} unavailable time{unavailable === 1 ? '' : 's'} and save only the reviewed showings</label>}
+        <button type="button" className="btn btn-primary" disabled={busy || checking || !result || counts.open > 0 || counts.total === 0 || (unavailable > 0 && !skipUnavailable)} aria-busy={busy} onClick={schedule}>
+          <ActionPending pending={busy}>{busy ? 'Scheduling…' : checking ? 'Checking…' : counts.open > 0 ? `Decide ${plural(counts.open, 'clash')} first` : counts.total > 0 ? `${chosenMovie?.status === 'draft' && request.body?.publishMovie ? 'Publish movie & save' : mode === 'copy' ? 'Copy' : 'Save'} ${plural(counts.total, 'showing')}` : 'Nothing to schedule yet'}</ActionPending>
         </button>
       </div>
+      </fieldset>
     </Drawer>
   );
 }

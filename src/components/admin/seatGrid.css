@@ -1,0 +1,5 @@
+.showing-seat-map { --room-blocked-fill: #12163a; --room-blocked-edge: #12163a; display: grid; gap: 14px; min-width: 0; }
+:root[data-theme='dark'] .showing-seat-map { --room-blocked-fill: #080e24; --room-blocked-edge: #68799c; }
+.showing-seat-map .showing-seat-selected { --room-chair-fill: var(--a-coral-fill); --room-chair-edge: var(--a-coral-fill); --room-chair-text: #fff; }
+.showing-seat-map .room-seat-legend .showing-seat-selected { border-color: var(--a-coral-fill); background: var(--a-coral-fill); color: #fff; }
+.showing-seat-map .room-seat-legend { margin: 0; }

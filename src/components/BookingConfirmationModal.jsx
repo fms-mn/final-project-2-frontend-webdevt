@@ -1,3 +1,4 @@
+import { lockPageScroll } from '../utils/pageLock';
 import BrandMark from './BrandMark';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -32,12 +33,7 @@ export default function BookingConfirmationModal({ draft, booking, pending, erro
   useEffect(() => {
     const previousFocus = document.activeElement;
     const appRoot = document.getElementById('root');
-    const wasInert = appRoot?.inert;
-    const previousOverflow = document.body.style.overflow;
-    const previousPageOverflow = document.documentElement.style.overflow;
-    if (appRoot) appRoot.inert = true;
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
+    const releasePage = lockPageScroll({ inertRoot: appRoot });
     dialogRef.current?.focus({ preventScroll: true });
 
     const handleKeyDown = (event) => {
@@ -61,9 +57,7 @@ export default function BookingConfirmationModal({ draft, booking, pending, erro
     document.addEventListener('keydown', handleKeyDown);
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
-      if (appRoot) appRoot.inert = wasInert;
-      document.body.style.overflow = previousOverflow;
-      document.documentElement.style.overflow = previousPageOverflow;
+      releasePage();
       clearTimeout(feedbackTimer.current);
       if (previousFocus?.isConnected && previousFocus !== document.body && previousFocus !== document.documentElement && previousFocus.getClientRects().length) previousFocus.focus({ preventScroll: true });
       else returnFocusRef?.current?.focus({ preventScroll: true });

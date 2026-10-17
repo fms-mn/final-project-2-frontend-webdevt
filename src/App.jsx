@@ -1,6 +1,6 @@
 import BrandMark from './components/BrandMark';
 import { useRef } from 'react';
-import { BrowserRouter as Router, Navigate, Routes, Route, useLocation } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import BackToTop from './components/BackToTop';
@@ -10,6 +10,8 @@ import Movies from './pages/Movies';
 import MovieDetail from './pages/MovieDetail';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import MyBookings from './pages/MyBookings';
 import Admin from './pages/Admin';
 import Profile from './pages/Profile';
@@ -45,6 +47,8 @@ function AppContent() {
           <Route path="/movie/:id" element={<MovieDetail />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/my-bookings" element={<ProtectedRoute role="user"><MyBookings /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute role="admin"><Admin /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute role="user"><Profile /></ProtectedRoute>} />
@@ -56,8 +60,10 @@ function AppContent() {
   );
 }
 
+const router = createBrowserRouter([{ path: '*', element: <AppContent /> }]);
+
 function App() {
-  return <AuthProvider><Router><AppContent /></Router></AuthProvider>;
+  return <AuthProvider><RouterProvider router={router} /></AuthProvider>;
 }
 
 export default App;

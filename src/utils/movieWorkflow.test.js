@@ -19,3 +19,7 @@ test('a released movie with closed sales asks for later showings, while archived
   assert.match(movieWorkflow({ ...movie, status: 'published', scheduledShowings: 1 }, day).text, /sales have closed/);
   assert.equal(movieWorkflow({ ...movie, status: 'archived' }, day).action, 'restore');
 });
+
+test('movie visibility follows the Manila release day for timestamp values', () => {
+  assert.match(movieWorkflow({ ...movie, status: 'published', releaseDate: '2026-10-17T20:00:00Z' }, day).title, /announcement live/);
+});

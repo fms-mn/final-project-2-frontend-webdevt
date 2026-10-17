@@ -1,0 +1,10 @@
+.movie-genre-picker { min-width:0; margin:0; padding:0; border:0; }
+.movie-genre-picker legend { padding:0; margin-bottom:8px; color:var(--m-ink); font:700 12px 'Instrument Sans Variable',sans-serif; }
+.movie-genre-picker legend em { color:var(--a-coral); font-style:normal; }
+.movie-genre-options { display:flex; flex-wrap:wrap; gap:7px; }
+.movie-editor-scroll .movie-genre-option { display:flex; align-items:center; gap:7px; min-height:42px; max-width:100%; padding:8px 10px; border:1px solid var(--m-line); border-radius:10px; background:var(--m-paper); color:var(--m-ink); font-size:12px; font-weight:600; cursor:pointer; }
+.movie-editor-scroll .movie-genre-option:has(input:checked) { border-color:var(--a-coral); background:var(--a-coral-tint); }
+.movie-editor-scroll .movie-genre-option:hover { border-color:var(--a-coral); }
+.movie-editor-scroll .movie-genre-option input { flex:none; width:16px; height:16px; min-height:16px; margin:0; padding:0; accent-color:var(--filme-coral-fill); }
+.movie-genre-option span { overflow-wrap:anywhere; }
+.movie-genre-picker .movie-field-message { display:block; margin-top:7px; }

@@ -1,3 +1,4 @@
+import { lockPageScroll } from '../../utils/pageLock';
 import { useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { FiAlertTriangle, FiInfo, FiLoader } from 'react-icons/fi';
@@ -7,7 +8,7 @@ import { FiAlertTriangle, FiInfo, FiLoader } from 'react-icons/fi';
 // with Escape or a click outside. `tone`: "danger" (red), "primary" or "info" (no confirm button).
 export default function ConfirmDialog({
   title, children, confirmLabel, cancelLabel = 'Cancel', tone = 'primary', busy = false, loading = false,
-  error = '', onConfirm, onClose, extraAction,
+  error = '', onConfirm, onClose, extraAction, variant,
 }) {
   const box = useRef(null);
   const titleId = useId();
@@ -19,8 +20,7 @@ export default function ConfirmDialog({
 
   useEffect(() => {
     const previous = document.activeElement;
-    const oldOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const releasePage = lockPageScroll();
     box.current?.querySelector('[data-safe]')?.focus();
     const onKeyDown = (event) => {
       if (event.key === 'Escape') {
@@ -29,6 +29,7 @@ export default function ConfirmDialog({
         return;
       }
       if (event.key !== 'Tab') return;
+      event.stopPropagation();
       const controls = [...box.current.querySelectorAll('button:not(:disabled)')];
       if (!controls.length) return;
       if (event.shiftKey && document.activeElement === controls[0]) { event.preventDefault(); controls.at(-1).focus(); }
@@ -37,16 +38,16 @@ export default function ConfirmDialog({
     document.addEventListener('keydown', onKeyDown, true);
     return () => {
       document.removeEventListener('keydown', onKeyDown, true);
-      document.body.style.overflow = oldOverflow;
+      releasePage();
       previous?.focus?.();
     };
   }, []);
 
   const Icon = tone === 'danger' ? FiAlertTriangle : FiInfo;
   return createPortal(
-    <div className="movie-dialog-layer">
+    <div className={`movie-dialog-layer${variant ? ` movie-dialog-layer-${variant}` : ''}`}>
       <button type="button" className="movie-dialog-backdrop" aria-label="Close" tabIndex={-1} onClick={() => { if (!busy) onClose(); }} />
-      <div ref={box} className={`movie-dialog movie-dialog-${tone}`} role="alertdialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={bodyId}>
+      <div ref={box} className={`movie-dialog movie-dialog-${tone}${variant ? ` movie-dialog-${variant}` : ''}`} role="alertdialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={bodyId}>
         <div className="movie-dialog-head">
           <span className="movie-dialog-icon" aria-hidden="true">{loading ? <FiLoader className="movie-spin" /> : <Icon />}</span>
           <h2 id={titleId}>{title}</h2>

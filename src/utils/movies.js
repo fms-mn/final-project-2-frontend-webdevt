@@ -1,6 +1,7 @@
 import { DEMO_TICKET_PRICE } from '../constants/pricing.js';
+import { splitGenres } from './genres.js';
 
-// The API stores movies as { title, synopsis, genre (one text), rating, posterUrl, duration,
+// The API stores movies as { title, synopsis, genre (delimited text), rating, posterUrl, duration,
 // releaseDate, status: draft | published | archived } and only publishes the "published" ones.
 // The pages were built around { description, genre: [..], status: now_showing | coming_soon,
 // price }, so this adapter converts one shape into the other in a single place.
@@ -22,7 +23,7 @@ export function normalizeMovie(movie, now = new Date()) {
   return {
     ...movie,
     description: movie.synopsis,
-    genre: movie.genre ? [movie.genre] : [],
+    genre: splitGenres(movie.genre),
     status: fromServer ? movie.showStatus : (isReleased(movie, now) ? 'now_showing' : 'coming_soon'),
     price,
   };

@@ -4,6 +4,7 @@
 .navbar.filme-navbar.scrolled { background: var(--nav-refined-surface); }
 .filme-navbar .nav-links { justify-self: center; }
 .filme-navbar .nav-mobile-sign-up { display: none; }
+.filme-navbar :is(.nav-mobile-sign-in, .nav-mobile-theme) { display: none; }
 .filme-navbar .nav-brand { justify-self: start; gap: 12px; color: var(--nav-refined-ink); -webkit-text-fill-color: currentColor; background: none; font: 800 34px/1 'Bricolage Grotesque Variable', sans-serif; letter-spacing: -.045em; text-transform: none; white-space: nowrap; }
 .filme-navbar .nav-brand .brand-mark { width: 48px; height: 37px; }
 .filme-navbar .nav-links { position: static; transform: none; height: auto; display: flex; gap: 10px; }

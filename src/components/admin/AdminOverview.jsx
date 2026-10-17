@@ -4,6 +4,8 @@ import { api, apiAll } from '../../api';
 import { describeError, pesos, trend } from '../../utils/adminTools';
 import { manilaClock, shiftDay, today } from '../../utils/manila';
 import LineChart from './LineChart';
+import DatePicker from '../DatePicker';
+import { dateProblem } from '../../utils/calendar';
 
 const PERIODS = [['7days', 'Last 7 days'], ['30days', 'Last 30 days'], ['custom', 'Custom']];
 
@@ -32,7 +34,7 @@ export default function AdminOverview({ movies, users, periodControlsTarget, onV
     : { from: shiftDay(today(), period === '7days' ? -6 : -29), to: today() };
 
   useEffect(() => {
-    if (!range.from || !range.to || range.to < range.from) return undefined;
+    if (dateProblem(range.from, { required: true }) || dateProblem(range.to, { min: range.from, required: true })) return undefined;
     const controller = new AbortController();
     setError('');
     setStatsLoading(true);
@@ -70,8 +72,8 @@ export default function AdminOverview({ movies, users, periodControlsTarget, onV
       ))}
     </div>
     {period === 'custom' && <div className="period-dates">
-      <label>From<input type="date" value={from} max={to} onChange={(event) => setFrom(event.target.value)} /></label>
-      <label>To<input type="date" value={to} min={from} onChange={(event) => setTo(event.target.value)} /></label>
+      <label>From<DatePicker label="Report start date" required value={from} max={to} onChange={setFrom} /></label>
+      <label>To<DatePicker label="Report end date" required value={to} min={from} onChange={setTo} /></label>
     </div>}
   </div>;
 

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { FiClock, FiFilm, FiArrowRight } from 'react-icons/fi';
+import { FiArrowRight } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import { displayClock } from '../utils/manila';
 import { listShowtimes } from '../data/demoSchedule';
@@ -8,6 +8,8 @@ import { useHoverPreview } from '../hooks/useHoverPreview';
 import { trailerVideoId } from '../utils/trailer';
 import { previewMediaFor } from '../utils/trailerPreview';
 import MovieTrailerPreview from './MovieTrailerPreview';
+import MovieCardMetadata from './MovieCardMetadata';
+import './movieCard.css';
 
 // `previewOnHover` opens a floating trailer panel beside the card while the mouse rests on it,
 // or in the middle of the screen while a finger holds the card (release to close).
@@ -24,8 +26,10 @@ export default function MovieCard({ movie, showShowtimes = false, previewOnHover
   const releaseLabel = Number.isNaN(release.getTime()) ? '' : release.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 
   return (
-    <Link ref={cardRef} to={`/movie/${movie._id}`} state={{ browsingPage: 'movies' }} className={`movie-card${refined ? ' movie-card-refined' : ''}${preview.visible ? ' is-previewing' : ''}`} aria-label={refined ? `${movie.title}: ${isShowing || presale ? 'Choose a showing' : notShowing ? 'No showings right now' : 'View details'}` : undefined} {...(refined ? {} : preview.handlers)}>
+    <article ref={cardRef} className={`movie-card${refined ? ' movie-card-refined' : ''}${preview.visible ? ' is-previewing' : ''}`} {...(refined ? {} : { ...preview.handlers, onClickCapture: event => { if (!event.target.closest('.movie-genres-toggle')) preview.handlers.onClickCapture(event); } })}>
+      <Link className="movie-card-navigation" to={`/movie/${movie._id}`} state={{ browsingPage: 'movies' }} aria-label={`${movie.title}: ${isShowing || presale ? 'Choose a showing' : notShowing ? 'No showings right now' : 'View details'}`} />
       <div className="movie-card-poster" {...(refined ? preview.handlers : {})}>
+        <Link className="movie-card-poster-link" to={`/movie/${movie._id}`} state={{ browsingPage: 'movies' }} tabIndex={-1} aria-hidden="true">
         {refined && (!movie.posterUrl || failedPoster === movie.posterUrl) ? (
           <div className="movie-poster-fallback" aria-label="Poster unavailable">FILME</div>
         ) : (
@@ -40,28 +44,20 @@ export default function MovieCard({ movie, showShowtimes = false, previewOnHover
             {presale ? 'Book advance tickets' : isShowing ? 'Book Now' : 'View Details'}
           </span>
         </div>}
+        </Link>
       </div>
       <div className="movie-card-info">
         <h3>{movie.title}</h3>
-        <div className="movie-card-meta">
-          {refined ? (
-            <>
-              {movie.duration > 0 && <span><FiClock aria-hidden="true" />{movie.duration} min</span>}
-              {movie.genre[0] && <span className="movie-refined-genre"><FiFilm aria-hidden="true" />{movie.genre[0]}</span>}
-            </>
-          ) : (
-            <><span>⏱ {movie.duration}min</span>{movie.genre[0] && <span>🎬 {movie.genre[0]}</span>}<span>{movie.rating}</span></>
-          )}
-        </div>
+        <MovieCardMetadata key={movie._id} movie={movie} refined={refined} />
         {isShowing ? (
-          <div className="movie-card-price">
+          <Link className="movie-card-price" to={`/movie/${movie._id}`} state={{ browsingPage: 'movies' }}>
             {movie.price != null && <small className="movie-card-from">From ₱{movie.price.toLocaleString('en-PH')} · </small>}
             Choose a showing {refined ? <FiArrowRight aria-hidden="true" /> : '→'}
-          </div>
+          </Link>
         ) : refined ? (
           <div className="movie-coming-action">
             {notShowing ? <small>No showings right now</small> : releaseLabel && <small>In cinemas {releaseLabel}{presale ? ' · Tickets on sale' : ''}</small>}
-            <span className="movie-card-price">{presale ? 'Book advance tickets' : 'View details'} <FiArrowRight aria-hidden="true" /></span>
+            <Link className="movie-card-price" to={`/movie/${movie._id}`} state={{ browsingPage: 'movies' }}>{presale ? 'Book advance tickets' : 'View details'} <FiArrowRight aria-hidden="true" /></Link>
           </div>
         ) : notShowing ? (
           <div className="movie-card-release">No showings right now</div>
@@ -81,6 +77,6 @@ export default function MovieCard({ movie, showShowtimes = false, previewOnHover
       {previewOnHover && preview.mounted && (
         <MovieTrailerPreview media={media} movie={movie} anchorRef={cardRef} visible={preview.visible} mode={preview.mode} />
       )}
-    </Link>
+    </article>
   );
 }

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import DatePicker from '../DatePicker';
 import { dayHeading, today } from '../../utils/manila';
 import { COMMON_TIMES, TIME_OPTIONS, clock12, endsText, hasPassed, quickDays } from '../../utils/timeSlots';
 
@@ -8,7 +9,7 @@ import { COMMON_TIMES, TIME_OPTIONS, clock12, endsText, hasPassed, quickDays } f
 // `problem` is a warning to show under the picker (for example a clash with another showing).
 export default function WhenPicker({ value, onChange, disabled = false, minutes, problem = '' }) {
   const [day, time] = String(value || '').split('T');
-  const days = useMemo(() => quickDays(today()), []);
+  const days = quickDays(today());
   const options = useMemo(() => (
     time && !TIME_OPTIONS.some((option) => option.value === time) ? [{ value: time, label: clock12(time) }, ...TIME_OPTIONS] : TIME_OPTIONS
   ), [time]);
@@ -24,7 +25,7 @@ export default function WhenPicker({ value, onChange, disabled = false, minutes,
           ))}
         </div>
         <label className="when-other">Another day
-          <input type="date" value={day || ''} min={today()} disabled={disabled} onChange={(event) => event.target.value && set(event.target.value, time)} />
+          <DatePicker label="Showing day" value={day || ''} min={today()} required disabled={disabled} onChange={nextDay => set(nextDay, time)} />
         </label>
       </div>
 

@@ -1,26 +1,37 @@
-import { FiClock, FiUsers } from 'react-icons/fi';
+import { FiCalendar, FiClock, FiUsers } from 'react-icons/fi';
 import { pesos } from '../../utils/adminTools';
 import { movieWorkflow } from '../../utils/movieWorkflow';
+import PublishChecklist from './PublishChecklist';
 
 function Stat({ label, value, hint }) {
   return <div className="movie-stat"><span>{label}</span><strong>{value}</strong>{hint && <small>{hint}</small>}</div>;
 }
 
-export default function MovieOverview({ movie, state, onTab, onSchedule, onPublish, onRestore, busy }) {
+export default function MovieOverview({ movie, state, onTab, onSchedule, onPublish, publishing, onRestore }) {
   const { summary, error, loading, reload } = state;
   const status = movieWorkflow(movie);
-  const next = () => status.action === 'publish' ? onPublish() : status.action === 'restore' ? onRestore() : status.action === 'showings' ? onTab('showings') : onSchedule(movie._id);
   const sales = summary?.sales;
   const everBooked = sales && (sales.bookings > 0 || sales.cancelled > 0);
 
   return (
     <div className="movie-overview">
-      <div className={`movie-state movie-state-${status.tone}`} role="status">
-        <b>{status.title}</b>
-        <span>{status.text}</span>
-        <button type="button" className="movie-button movie-button-primary" disabled={busy} onClick={next}>{status.label} →</button>
-        {movie.status === 'published' && <a className="movie-schedule-link" href={`/movie/${movie._id}`} target="_blank" rel="noreferrer">View customer page ↗</a>}
-      </div>
+      {movie.status === 'draft' && movie.hiddenShowings > 0 && <p className="movie-field-help">{status.text} <button type="button" className="movie-schedule-link" onClick={() => onTab('showings')}>Review showings →</button></p>}
+      {movie.status === 'draft' ? (
+        <PublishChecklist
+          movie={movie}
+          bookable={movie.upcomingShowings ?? 0}
+          busy={publishing}
+          onAction={(action) => (action.schedule ? onSchedule(movie._id) : onTab(action.tab))}
+          onPublish={onPublish}
+        />
+      ) : (
+        <div className={`movie-state movie-state-${status.tone}`} role="status">
+          <b>{status.title}</b>
+          <span>{status.text}</span>
+          <button type="button" className="movie-button movie-button-primary" disabled={publishing} onClick={() => status.action === 'restore' ? onRestore() : status.action === 'showings' ? onTab('showings') : onSchedule(movie._id)}>{status.label} →</button>
+          {movie.status === 'published' && <a className="movie-schedule-link" href={`/movie/${movie._id}`} target="_blank" rel="noreferrer">View customer page ↗</a>}
+        </div>
+      )}
 
       {error && (
         <p className="movie-field-error" role="alert">{error} <button type="button" className="movie-schedule-link" onClick={reload}>Try again</button></p>
@@ -65,6 +76,7 @@ export default function MovieOverview({ movie, state, onTab, onSchedule, onPubli
       )}
 
       <div className="movie-quick">
+        {movie.status !== 'archived' && <button type="button" className="movie-button movie-button-primary" onClick={() => onSchedule(movie._id)}><FiCalendar aria-hidden="true" /> Schedule showings</button>}
         <button type="button" className="movie-button movie-button-outline" onClick={() => onTab('bookings')}><FiUsers aria-hidden="true" /> Bookings</button>
         <button type="button" className="movie-button movie-button-outline" onClick={() => onTab('showings')}><FiClock aria-hidden="true" /> Showings</button>
       </div>

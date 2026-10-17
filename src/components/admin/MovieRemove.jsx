@@ -5,7 +5,7 @@ import useAdminAction from './useAdminAction';
 // Taking a movie off sale or deleting it, with plain words about what each does. Nothing happens
 // until the admin confirms, and a delete the server refuses (the movie has showings history)
 // points to the safe alternative instead of just failing.
-export default function MovieRemove({ movie, onChanged }) {
+export default function MovieRemove({ movie, onChanged, onDeleted }) {
   const { busy, busyAction, error, run, clear } = useAdminAction();
   const [plan, setPlan] = useState(null); // { showings, bookings } while the admin decides
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -24,7 +24,7 @@ export default function MovieRemove({ movie, onChanged }) {
   };
   const deleteIt = async () => {
     const done = await run(() => api(`/movies/${movie._id}`, { method: 'DELETE' }), '', 'delete');
-    if (done) { onChanged(`"${movie.title}" was deleted.`); return; }
+    if (done) { onDeleted(movie.title); return; }
     setConfirmDelete(false); setBlocked(true);
   };
 

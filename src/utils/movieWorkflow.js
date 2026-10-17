@@ -1,11 +1,13 @@
-import { today } from './manila.js';
+import { manilaDay, today } from './manila.js';
+import { validDay } from './calendar.js';
 
 // One answer for the list, movie panel and publishing actions.
 export function movieWorkflow(movie, currentDay = today()) {
   const bookable = movie.upcomingShowings ?? 0;
   const hidden = movie.hiddenShowings ?? 0;
   const scheduled = movie.scheduledShowings ?? bookable;
-  const coming = String(movie.releaseDate).slice(0, 10) > currentDay;
+  const release = validDay(movie.releaseDate) ? movie.releaseDate : manilaDay(movie.releaseDate);
+  const coming = release > currentDay;
   if (movie.status === 'archived') return { tone: 'muted', title: movie.autoArchivedAt ? 'Archived automatically' : 'Archived', text: 'Hidden from customers. Restore as a draft to schedule it again.', action: 'restore', label: 'Restore as draft' };
   if (movie.status === 'draft') {
     if (bookable > 0) return { tone: 'warn', title: 'Ready to publish', text: `${bookable} visible showing${bookable === 1 ? '' : 's'} ready. Publish once to make the movie and these showings available to customers.`, action: 'publish', label: 'Publish movie' };

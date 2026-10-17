@@ -3,7 +3,8 @@ import { api } from '../../api';
 import ActionPending from '../ActionPending';
 import { describeError } from '../../utils/adminTools';
 import Feedback from './Feedback';
-import SeatGrid, { SeatPreview } from './SeatGrid';
+import { SeatPreview } from './SeatGrid';
+import RoomBlockedSeats from './RoomBlockedSeats';
 import useAdminAction from './useAdminAction';
 
 const blankRoom = { name: '', rows: 8, seatsPerRow: 10, isActive: true };
@@ -14,7 +15,8 @@ export default function AdminRooms() {
   const [draft, setDraft] = useState(blankRoom);
   const [confirmRemove, setConfirmRemove] = useState('');
   const [revision, setRevision] = useState(0);
-  const [blocked, setBlocked] = useState([]);
+  const [blockedDirty, setBlockedDirty] = useState(false);
+  const [blockingBusy, setBlockingBusy] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -25,9 +27,18 @@ export default function AdminRooms() {
   }, [revision, setError]);
 
   const edit = (field) => (event) => setDraft({ ...draft, [field]: event.target.value });
+  const mayLeaveBlocked = () => !blockedDirty || window.confirm('Discard unsaved blocked-seat changes for this auditorium?');
+  const chooseRoom = room => {
+    if (room && room._id === draft._id) return;
+    if (busy || blockingBusy || !mayLeaveBlocked()) return;
+    setDraft(room ? { _id: room._id, name: room.name, rows: room.rows, seatsPerRow: room.seatsPerRow, isActive: room.isActive } : blankRoom);
+    setBlockedDirty(false);
+    clear();
+  };
 
   const save = async (event) => {
     event.preventDefault();
+    if (busy || blockingBusy || !mayLeaveBlocked()) return;
     const body = { name: draft.name, rows: Number(draft.rows), seatsPerRow: Number(draft.seatsPerRow), isActive: draft.isActive };
     const done = await run(
       () => api(draft._id ? `/auditoriums/${draft._id}` : '/auditoriums', { method: draft._id ? 'PATCH' : 'POST', body }),
@@ -36,23 +47,16 @@ export default function AdminRooms() {
     if (done) { setDraft(blankRoom); setRevision((value) => value + 1); }
   };
 
-  const saveBlocked = async () => {
-    const done = await run(
-      () => api(`/auditoriums/${draft._id}/blocked-seats`, { method: 'PUT', body: { seats: blocked } }),
-      blocked.length ? `${blocked.length} seat${blocked.length === 1 ? '' : 's'} blocked in ${draft.name}` : `No seats are blocked in ${draft.name}`, 'blocked',
-    );
-    if (done) setRevision((value) => value + 1);
-  };
-
   const remove = async (room) => {
+    if (busy || blockingBusy || (room._id === draft._id && !mayLeaveBlocked())) return;
     if (confirmRemove !== room._id) { setConfirmRemove(room._id); return; }
     setConfirmRemove('');
-    if (await run(() => api(`/auditoriums/${room._id}`, { method: 'DELETE' }), 'Room deleted', `remove:${room._id}`)) setRevision((value) => value + 1);
+    if (await run(() => api(`/auditoriums/${room._id}`, { method: 'DELETE' }), 'Room deleted', `remove:${room._id}`)) { if (room._id === draft._id) { setDraft(blankRoom); setBlockedDirty(false); } setRevision((value) => value + 1); }
   };
 
   return (
     <div className="admin-grid-two">
-      <form className="admin-panel admin-form" onSubmit={save}>
+      <form className="admin-panel admin-form room-editor-form" onSubmit={save}>
         <h2>{draft._id ? 'Edit room' : 'Add room'}</h2>
         <Feedback error={error} notice={notice} />
         <label>Name<input required value={draft.name} onChange={edit('name')} /></label>
@@ -62,16 +66,12 @@ export default function AdminRooms() {
         {!draft._id && <SeatPreview rows={Number(draft.rows)} seatsPerRow={Number(draft.seatsPerRow)} />}
         <p className="profile-help">The seat layout is locked once any showing has used the room; you can still rename it. A room with upcoming showings cannot be deactivated.</p>
         <div className="admin-actions">
-          <button className="btn btn-primary btn-small" type="submit" disabled={busy} aria-busy={busyAction === 'save'}><ActionPending pending={busyAction === 'save'}>{busyAction === 'save' ? 'Saving...' : 'Save room'}</ActionPending></button>
-          {draft._id && <button type="button" className="btn btn-secondary btn-small" onClick={() => { setDraft(blankRoom); clear(); }}>Cancel edit</button>}
+          <button className="btn btn-primary btn-small" type="submit" disabled={busy || blockingBusy} aria-busy={busyAction === 'save'}><ActionPending pending={busyAction === 'save'}>{busyAction === 'save' ? 'Saving...' : 'Save room'}</ActionPending></button>
+          {draft._id && <button type="button" className="btn btn-secondary btn-small" disabled={busy || blockingBusy} onClick={() => chooseRoom(null)}>Cancel edit</button>}
         </div>
         {draft._id && (
-          <div className="blocked-editor">
-            <h3>Blocked seats</h3>
-            <p className="profile-help">Seats that can never be booked in this room, for example a broken seat. Click a seat to block or unblock it, then save. A seat a customer holds at a coming showing cannot be blocked.</p>
-            <SeatGrid rows={Number(draft.rows)} seatsPerRow={Number(draft.seatsPerRow)} selected={blocked} onChange={setBlocked} disabled={busy} />
-            <div className="admin-actions"><button type="button" className="btn btn-secondary btn-small" disabled={busy} aria-busy={busyAction === 'blocked'} onClick={saveBlocked}><ActionPending pending={busyAction === 'blocked'}>{busyAction === 'blocked' ? 'Saving...' : 'Save blocked seats'}</ActionPending></button></div>
-          </div>
+          <RoomBlockedSeats key={draft._id} roomId={draft._id} disabled={busy} onDirtyChange={setBlockedDirty} onSavingChange={setBlockingBusy}
+            onSaved={room => setRooms(current => current.map(item => item._id === room._id ? room : item))} />
         )}
       </form>
       <div className="admin-list">
@@ -87,8 +87,8 @@ export default function AdminRooms() {
               </span>
             </div>
             <div className="admin-actions">
-              <button type="button" className="btn btn-secondary btn-small" onClick={() => { setDraft({ _id: room._id, name: room.name, rows: room.rows, seatsPerRow: room.seatsPerRow, isActive: room.isActive }); setBlocked(room.blockedSeats || []); clear(); }}>Edit</button>
-              <button type="button" className="btn btn-danger btn-small" disabled={busy} aria-busy={busyAction === `remove:${room._id}`} onClick={() => remove(room)}>
+              <button type="button" className="btn btn-secondary btn-small" disabled={busy || blockingBusy} onClick={() => chooseRoom(room)}>Edit</button>
+              <button type="button" className="btn btn-danger btn-small" disabled={busy || blockingBusy} aria-busy={busyAction === `remove:${room._id}`} onClick={() => remove(room)}>
                 <ActionPending pending={busyAction === `remove:${room._id}`}>{busyAction === `remove:${room._id}` ? 'Deleting...' : confirmRemove === room._id ? 'Confirm delete' : 'Delete'}</ActionPending>
               </button>
             </div>

@@ -205,11 +205,6 @@
 .editor-extras h3, .blocked-editor h3 { margin: 0 0 6px; font-size: 18px; }
 .editor-extras form { display: grid; gap: 12px; }
 .blocked-editor { grid-column: 1 / -1; display: grid; gap: 10px; margin-top: 8px; }
-.seat-grid { display: grid; grid-template-columns: repeat(var(--seats), minmax(30px, 1fr)); gap: 4px; max-width: 520px; overflow-x: auto; }
-.seat-cell { min-height: 30px; padding: 0; border: 1.5px solid var(--a-ink); border-radius: 6px; background: var(--a-input); color: var(--a-ink); font: 600 10px 'JetBrains Mono Variable', monospace; cursor: pointer; }
-.seat-cell.blocked { background: var(--a-ink); color: var(--a-ink-on); }
-.seat-cell:disabled { cursor: not-allowed; opacity: .75; }
-.seat-cell:focus-visible { outline: 3px solid #FFC93C; outline-offset: 1px; }
 .timeline-block.unpublished { background: repeating-linear-gradient(135deg, var(--movie-color, var(--a-block)) 0 8px, color-mix(in srgb, var(--movie-color, var(--a-block)) 70%, #fff) 8px 16px); }
 .admin-status.hidden-tag { margin-left: 6px; border-color: var(--a-warn-line); background: var(--a-warn-bg); color: var(--a-warn-text); }
 .admin-status.moved-tag { margin-left: 6px; border-color: var(--a-ink); background: var(--a-paper); color: var(--a-ink); }

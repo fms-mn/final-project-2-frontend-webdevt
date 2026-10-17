@@ -1,17 +1,17 @@
+import { lockPageScroll } from '../../utils/pageLock';
 import { useEffect, useRef } from 'react';
 
 // A panel that slides in from the right over the page: closes with Esc or a click outside,
 // keeps the keyboard inside while open, and gives focus back when it closes.
 // It reuses the look of the movie editor (see adminMovies.css).
-export default function Drawer({ title, onClose, children, wide = false }) {
+export default function Drawer({ title, onClose, children, wide = false, className = '' }) {
   const panel = useRef(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
 
   useEffect(() => {
     const previous = document.activeElement;
-    const oldOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const releasePage = lockPageScroll();
     panel.current?.querySelector('input:not([type=hidden]):not(:disabled), select:not(:disabled), textarea:not(:disabled), button.drawer-first:not(:disabled), button:not(:disabled)')?.focus();
     const onKeyDown = (event) => {
       if (event.key === 'Escape') { event.preventDefault(); closeRef.current(); }
@@ -24,7 +24,7 @@ export default function Drawer({ title, onClose, children, wide = false }) {
     document.addEventListener('keydown', onKeyDown);
     return () => {
       document.removeEventListener('keydown', onKeyDown);
-      document.body.style.overflow = oldOverflow;
+      releasePage();
       previous?.focus?.();
     };
   }, []);
@@ -32,7 +32,7 @@ export default function Drawer({ title, onClose, children, wide = false }) {
   return (
     <div className="movie-drawer-layer">
       <button type="button" className="movie-drawer-backdrop" aria-label="Close panel" onClick={onClose} tabIndex={-1} />
-      <aside ref={panel} className={`movie-drawer admin-drawer${wide ? ' admin-drawer-wide' : ''}`} role="dialog" aria-modal="true" aria-labelledby="admin-drawer-title">
+      <aside ref={panel} className={`movie-drawer admin-drawer${wide ? ' admin-drawer-wide' : ''}${className ? ` ${className}` : ''}`} role="dialog" aria-modal="true" aria-labelledby="admin-drawer-title">
         <div className="movie-drawer-head">
           <h2 id="admin-drawer-title">{title}</h2>
           <button type="button" className="movie-icon-button" onClick={onClose} aria-label="Close">×</button>
