@@ -51,6 +51,14 @@
 
 .movie-drawer-layer { position:fixed; inset:0; z-index:1100; background:#0e183c80; }
 .movie-drawer-backdrop { display:block; position:absolute; inset:0; width:100%; border:0; background:transparent; cursor:default; }
+@keyframes movie-drawer-enter {
+  from { transform:translateX(32px); opacity:0; }
+  to { transform:translateX(0); opacity:1; }
+}
+.movie-drawer-layer > .movie-drawer { animation:movie-drawer-enter .2s ease-out; }
+@media (prefers-reduced-motion:reduce) {
+  .movie-drawer-layer > .movie-drawer { animation:none; }
+}
 .movie-drawer { position:absolute; top:0; right:0; display:flex; flex-direction:column; width:clamp(340px,38vw,540px); height:100dvh; background:var(--m-paper); color:var(--m-ink); box-shadow:-10px 0 35px #13204724; pointer-events:auto; }
 .movie-drawer-head { display:flex; align-items:center; justify-content:space-between; flex:none; padding:17px 18px 12px; }
 .movie-drawer-head h2 { margin:0; font:800 19px 'Instrument Sans Variable',sans-serif; }

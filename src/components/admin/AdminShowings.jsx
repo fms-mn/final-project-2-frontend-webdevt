@@ -31,7 +31,7 @@ function place(showing, from, to) {
   return { left: `${left}%`, width: `${width}%` };
 }
 
-export default function AdminShowings({ movies, scheduleFor, focusShowing, reloadMovies }) {
+export default function AdminShowings({ movies, scheduleFor, focusShowing, onScheduleHandled, onShowingHandled, reloadMovies }) {
   const { busy, busyAction, error, notice, setError, setNotice, clear, run } = useAdminAction();
   const [view, setView] = useState('day'); // 'day' or 'week'
   const [date, setDate] = useState(today());
@@ -43,7 +43,7 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
   const [revision, setRevision] = useState(0);
   const [move, setMove] = useState({ startTime: '', auditorium: '' });
   const [blockedDraft, setBlockedDraft] = useState([]);
-  const [bulk, setBulk] = useState({ open: false, mode: 'many', preset: null });
+  const [bulk, setBulk] = useState(() => ({ open: Boolean(scheduleFor), mode: 'many', preset: scheduleFor ? { span: 'many', movieId: scheduleFor.movieId } : null }));
   const [scheduleResult, setScheduleResult] = useState(null);
   const [publishPrompt, setPublishPrompt] = useState(null); // a draft movie that just got showings: { id, title }
   const [gapMinutes, setGapMinutes] = useState(15); // the cinema's gap between shows
@@ -91,8 +91,10 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
 
   // Coming from "Schedule showings" after adding a movie: open the scheduler with it chosen.
   useEffect(() => {
-    if (scheduleFor) setBulk({ open: true, mode: 'many', preset: { span: 'many' } });
-  }, [scheduleFor]);
+    if (!scheduleFor) return;
+    setBulk({ open: true, mode: 'many', preset: { span: 'many', movieId: scheduleFor.movieId } });
+    onScheduleHandled?.();
+  }, [scheduleFor, onScheduleHandled]);
 
   // Arriving from a movie's panel: go to that showing's day, then open it.
   const [pendingId, setPendingId] = useState('');
@@ -101,7 +103,8 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
     setView('day');
     setDate(focusShowing.day);
     setPendingId(focusShowing.id);
-  }, [focusShowing]);
+    onShowingHandled?.();
+  }, [focusShowing, onShowingHandled]);
 
   const everything = useMemo(() => Object.values(byDay).flat(), [byDay]);
   const showings = byDay[date] || [];
@@ -477,10 +480,9 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
         </Drawer>
       )}
 
-      <AdminBulk
+      {bulk.open && <AdminBulk
         movies={movies}
         rooms={rooms}
-        scheduleFor={scheduleFor}
         open={bulk.open}
         mode={bulk.mode}
         preset={bulk.preset}
@@ -488,7 +490,7 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
         onModeChange={(mode) => setBulk((current) => ({ ...current, mode }))}
         onClose={() => setBulk((current) => ({ ...current, open: false }))}
         onDone={(message, movieId, day, result) => { setBulk((current) => ({ ...current, open: false })); setScheduleResult(result); setNotice(message); if (movieId) askToPublish(movieId); if (day) { setView('day'); setDate(day); } afterChange(); }}
-      />
+      />}
       {scheduleResult && <ScheduleSuccess result={scheduleResult} movies={movies} rooms={rooms}
         onClose={() => setScheduleResult(null)}
         onAnother={() => { const day = manilaDay(scheduleResult.created[0].startTime); setScheduleResult(null); startAdd({ day }); }}

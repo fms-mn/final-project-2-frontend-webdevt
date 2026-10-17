@@ -22,51 +22,32 @@ const dayLabel = (day) => new Date(`${day}T12:00:00+08:00`).toLocaleDateString('
 // Schedule many showings, or copy one day to other days. The admin taps a movie, a room, some days
 // and some times; the screen works out the rest and checks it against the schedule as they go, so
 // "Schedule 27 showings" is a button they press once they have seen what will happen.
-export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mode, onModeChange, onClose, defaultDay, preset }) {
+export default function AdminBulk({ movies, rooms, onDone, open, mode, onModeChange, onClose, defaultDay, preset }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   // Drafts can be scheduled too (customers see the showings once the movie is published); archived ones cannot.
   const published = movies.filter((movie) => movie.status !== 'archived');
   const active = rooms.filter((room) => room.isActive);
 
-  const [movie, setMovie] = useState('');
-  const [room, setRoom] = useState('');
-  const [span, setSpan] = useState('many'); // 'one': just one day, 'many': a range of days
-  const [oneDay, setOneDay] = useState(today());
+  const [movie, setMovie] = useState(preset?.movieId || '');
+  const [room, setRoom] = useState(preset?.room || '');
+  const [span, setSpan] = useState(preset?.span || 'many'); // 'one': just one day, 'many': a range of days
+  const [oneDay, setOneDay] = useState(() => preset?.day || today());
   const [range, setRange] = useState('next7');
   const [custom, setCustom] = useState({ startDate: shiftDay(today(), 1), endDate: shiftDay(today(), 7) });
   const [weekdays, setWeekdays] = useState(ALL_DAYS);
-  const [times, setTimes] = useState(['10:00', '13:30', '17:00', '20:30']);
+  const [times, setTimes] = useState(() => preset?.span === 'one'
+    ? [preset.time || defaultStart(preset.day || today()).split('T')[1]]
+    : ['10:00', '13:30', '17:00', '20:30']);
   const [price, setPrice] = useState('400');
   const [hidden, setHidden] = useState(false);
-  const [copyFrom, setCopyFrom] = useState(today());
+  const [copyFrom, setCopyFrom] = useState(() => defaultDay || today());
   const [copyRange, setCopyRange] = useState('next7');
   const [copyCustom, setCopyCustom] = useState({ startDate: shiftDay(today(), 1), endDate: shiftDay(today(), 7) });
   const [preview, setPreview] = useState(null); // { ok, result } | { problem }
   const [checking, setChecking] = useState(false);
   const ticket = useRef(0);
   const saving = useRef(false);
-
-  // Arriving from "Schedule showings" after adding a movie: that movie is already chosen.
-  useEffect(() => { if (scheduleFor) setMovie(scheduleFor.movieId); }, [scheduleFor]);
-  // Opened from "+ Add showing" (one day, maybe a clicked time and room) or from "Many days".
-  useEffect(() => {
-    if (!open || !preset) return;
-    setError('');
-    setSpan(preset.span || 'many');
-    if (preset.span === 'one') {
-      const day = preset.day || today();
-      setOneDay(day);
-      setTimes([preset.time || defaultStart(day).split('T')[1]]);
-    }
-    if (preset.room) setRoom(preset.room);
-    setPreview(null);
-  }, [open, preset]);
-  // Opening from a day on the schedule: copy that day, and start the new showings after it.
-  useEffect(() => {
-    if (!open || !defaultDay) return;
-    setCopyFrom(defaultDay);
-  }, [open, defaultDay]);
 
   const chosenMovie = published.find((item) => item._id === (movie || published[0]?._id));
   const chosenRoom = active.find((item) => item._id === (room || active[0]?._id));
@@ -123,7 +104,7 @@ export default function AdminBulk({ movies, rooms, onDone, scheduleFor, open, mo
         if (ticket.current === mine) setChecking(false);
       }
     }, 400);
-    return () => clearTimeout(timer);
+    return () => { clearTimeout(timer); ticket.current += 1; };
   }, [open, request]);
 
   if (!open) return null;
