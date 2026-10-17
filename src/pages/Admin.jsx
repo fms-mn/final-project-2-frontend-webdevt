@@ -5,6 +5,7 @@ import AdminBookings from '../components/admin/AdminBookings';
 import AdminMovieManager from '../components/admin/AdminMovieManager';
 import AdminOverview from '../components/admin/AdminOverview';
 import AdminRooms from '../components/admin/AdminRooms';
+import AdminEmail from '../components/admin/AdminEmail';
 import AdminRules from '../components/admin/AdminRules';
 import AdminGenres from '../components/admin/AdminGenres';
 import AdminShowings from '../components/admin/AdminShowings';
@@ -114,7 +115,7 @@ export default function Admin() {
             {tab === 'bookings' && <AdminBookings />}
             {tab === 'rooms' && <AdminRooms />}
             {tab === 'users' && <AdminUsers users={users} reload={reload} />}
-            {tab === 'settings' && <><AdminGenres /><AdminRules standalone /><AdminArchiveRule onChanged={reload} /></>}
+            {tab === 'settings' && <><AdminGenres /><AdminRules standalone /><AdminArchiveRule onChanged={reload} /><AdminEmail /></>}
           </div>
         )}
       </div>

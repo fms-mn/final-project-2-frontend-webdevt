@@ -179,3 +179,16 @@
 @keyframes movie-discard-fade { from { opacity:0; } to { opacity:1; } }
 @media (prefers-reduced-motion:reduce) { .movie-dialog-layer-discard { animation:none; } }
 @media (max-width:640px) { .movie-dialog-discard .movie-dialog-actions { flex-direction:column; } }
+
+/* Settings: email notifications card */
+.admin-email-head { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; }
+.admin-email-head h2 { display:flex; align-items:center; gap:10px; margin:0; }
+.admin-email-head h2 svg { width:22px; height:22px; color:var(--a-coral); }
+.admin-email-test { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin:14px 0; }
+.admin-email-test .btn { display:inline-flex; align-items:center; gap:8px; }
+.admin-email .admin-notice svg { vertical-align:-3px; margin-right:6px; }
+.admin-email-subhead { margin:20px 0 6px; font:800 14px 'Instrument Sans Variable',sans-serif; }
+.admin-email-list { display:grid; gap:0; margin:0; padding:0; list-style:none; }
+.admin-email-list li { display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px 16px; padding:9px 0; border-bottom:1px solid var(--a-line-soft); font-size:14px; }
+.admin-email-list li:last-child { border-bottom:0; }
+.admin-email-list span { color:var(--a-muted); }
