@@ -1,3 +1,4 @@
+import { lockPageScroll } from '../../utils/pageLock';
 import { useEffect, useRef } from 'react';
 
 // A panel that slides in from the right over the page: closes with Esc or a click outside,
@@ -10,8 +11,7 @@ export default function Drawer({ title, onClose, children, wide = false, classNa
 
   useEffect(() => {
     const previous = document.activeElement;
-    const oldOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const releasePage = lockPageScroll();
     panel.current?.querySelector('input:not([type=hidden]), select, textarea, button.drawer-first')?.focus();
     const onKeyDown = (event) => {
       if (event.key === 'Escape') { event.preventDefault(); closeRef.current(); }
@@ -24,7 +24,7 @@ export default function Drawer({ title, onClose, children, wide = false, classNa
     document.addEventListener('keydown', onKeyDown);
     return () => {
       document.removeEventListener('keydown', onKeyDown);
-      document.body.style.overflow = oldOverflow;
+      releasePage();
       previous?.focus?.();
     };
   }, []);

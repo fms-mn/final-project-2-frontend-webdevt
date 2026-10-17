@@ -1,3 +1,4 @@
+import { lockPageScroll } from '../../utils/pageLock';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FiArchive, FiCalendar, FiEdit2, FiExternalLink, FiRotateCcw, FiTrash2, FiUploadCloud, FiUsers, FiX } from 'react-icons/fi';
 import { api } from '../../api';
@@ -98,8 +99,7 @@ function MovieEditor({ draft, setDraft, movie, dirty, startTab, onClose, onSave,
 
   useEffect(() => {
     const previous = document.activeElement;
-    const oldOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const releasePage = lockPageScroll();
     (dialog.current?.querySelector(isNew ? 'input' : '[role="tab"][aria-selected="true"]'))?.focus();
     const onKeyDown = (event) => {
       if (event.key === 'Escape') { event.preventDefault(); closeRef.current(); }
@@ -112,7 +112,7 @@ function MovieEditor({ draft, setDraft, movie, dirty, startTab, onClose, onSave,
     document.addEventListener('keydown', onKeyDown);
     return () => {
       document.removeEventListener('keydown', onKeyDown);
-      document.body.style.overflow = oldOverflow;
+      releasePage();
       previous?.focus?.();
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

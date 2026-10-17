@@ -1,3 +1,4 @@
+import { lockPageScroll } from '../../utils/pageLock';
 import { useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { FiAlertTriangle, FiInfo, FiLoader } from 'react-icons/fi';
@@ -19,8 +20,7 @@ export default function ConfirmDialog({
 
   useEffect(() => {
     const previous = document.activeElement;
-    const oldOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const releasePage = lockPageScroll();
     box.current?.querySelector('[data-safe]')?.focus();
     const onKeyDown = (event) => {
       if (event.key === 'Escape') {
@@ -38,7 +38,7 @@ export default function ConfirmDialog({
     document.addEventListener('keydown', onKeyDown, true);
     return () => {
       document.removeEventListener('keydown', onKeyDown, true);
-      document.body.style.overflow = oldOverflow;
+      releasePage();
       previous?.focus?.();
     };
   }, []);

@@ -1,3 +1,4 @@
+import { lockPageScroll } from '../utils/pageLock';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FiAlertTriangle, FiCalendar, FiInfo } from 'react-icons/fi';
@@ -14,10 +15,7 @@ export default function CancelBookingModal({ booking, pending = false, error, re
   useEffect(() => {
     const previousFocus = document.activeElement;
     const appRoot = document.getElementById('root');
-    const wasInert = appRoot?.inert;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    if (appRoot) appRoot.inert = true;
+    const releasePage = lockPageScroll({ inertRoot: appRoot });
     keepButtonRef.current?.focus({ preventScroll: true });
 
     const handleKeyDown = (event) => {
@@ -44,8 +42,7 @@ export default function CancelBookingModal({ booking, pending = false, error, re
     document.addEventListener('keydown', handleKeyDown);
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
-      if (appRoot) appRoot.inert = wasInert;
-      document.body.style.overflow = previousOverflow;
+      releasePage();
       if (previousFocus?.isConnected) previousFocus.focus();
     };
   }, [onKeep]);

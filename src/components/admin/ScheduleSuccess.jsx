@@ -1,3 +1,4 @@
+import { lockPageScroll } from '../../utils/pageLock';
 import { useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { manilaClock, shortDate } from '../../utils/manila';
@@ -13,14 +14,13 @@ export default function ScheduleSuccess({ result, movies, rooms, onClose, onAnot
 
   useEffect(() => {
     const previousFocus = document.activeElement;
-    const previousOverflow = document.body.style.overflow;
+    const releasePage = lockPageScroll();
     const element = dialog.current;
-    document.body.style.overflow = 'hidden';
     element.showModal();
     firstAction.current.focus();
     return () => {
       element.close();
-      document.body.style.overflow = previousOverflow;
+      releasePage();
       if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
     };
   }, []);
