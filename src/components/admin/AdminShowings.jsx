@@ -28,7 +28,7 @@ function place(showing, from, to) {
   return { left: `${left}%`, width: `${width}%` };
 }
 
-export default function AdminShowings({ movies, scheduleFor, focusShowing, reloadMovies }) {
+export default function AdminShowings({ movies, focusShowing, reloadMovies, onFocusHandled }) {
   const { busy, busyAction, error, notice, setError, setNotice, clear, run } = useAdminAction();
   const [view, setView] = useState('day'); // 'day' or 'week'
   const [date, setDate] = useState(today());
@@ -41,7 +41,6 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
   const [move, setMove] = useState({ startTime: '', auditorium: '' });
   const [blockedDraft, setBlockedDraft] = useState([]);
   const [bulk, setBulk] = useState({ open: false, mode: 'many', preset: null });
-  const [publishPrompt, setPublishPrompt] = useState(null); // a draft movie that just got showings: { id, title }
   const [gapMinutes, setGapMinutes] = useState(15); // the cinema's gap between shows
   const [otherDays, setOtherDays] = useState({}); // showings of days picked in a form that are not on screen
 
@@ -85,11 +84,6 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
     return () => { current = false; };
   }, [formDaysKey, byDay]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Coming from "Schedule showings" after adding a movie: open the scheduler with it chosen.
-  useEffect(() => {
-    if (scheduleFor) setBulk({ open: true, mode: 'many', preset: { span: 'many' } });
-  }, [scheduleFor]);
-
   // Arriving from a movie's panel: go to that showing's day, then open it.
   const [pendingId, setPendingId] = useState('');
   useEffect(() => {
@@ -97,6 +91,7 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
     setView('day');
     setDate(focusShowing.day);
     setPendingId(focusShowing.id);
+    onFocusHandled?.();
   }, [focusShowing]);
 
   const everything = useMemo(() => Object.values(byDay).flat(), [byDay]);
@@ -177,16 +172,6 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
 
   const afterChange = () => setRevision((value) => value + 1);
 
-  // Showings for a movie that is still a draft are hidden from customers: offer to publish it.
-  const askToPublish = (movieId) => {
-    const movie = movies.find((item) => item._id === movieId);
-    setPublishPrompt(movie && movie.status === 'draft' ? { id: movie._id, title: movie.title } : null);
-  };
-  const publishMovie = async () => {
-    const done = await run(() => api(`/admin/movies/${publishPrompt.id}`, { method: 'PATCH', body: { status: 'published' } }), `"${publishPrompt.title}" is published. Its showings are now on sale.`, 'publish');
-    if (done) { setPublishPrompt(null); reloadMovies?.(); }
-  };
-
   const moveShowing = async (event) => {
     event.preventDefault();
     const startTime = fromInputValue(move.startTime);
@@ -201,7 +186,7 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
   const toggleVisibility = async () => {
     const done = await run(
       () => api(`/showtimes/${selectedId}/visibility`, { method: 'PATCH', body: { published: !selected.published } }),
-      selected.published ? 'Showing hidden from customers' : 'Showing is now visible to customers', 'visibility',
+      selected.published ? 'Showing hidden from customers' : selected.movie?.status === 'published' ? 'Showing is now visible to customers' : 'Showing is ready. Publish the draft movie to make it visible to customers', 'visibility',
     );
     if (done) { setSelectedId(''); setDraft(null); afterChange(); }
   };
@@ -228,7 +213,7 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
   const tags = (row) => (
     <>
       {row.status === 'cancelled' && <span className="admin-status cancelled">cancelled</span>}
-      {row.status === 'scheduled' && !row.published && <span className="admin-status hidden-tag">hidden</span>}
+      {row.status === 'scheduled' && (row.movie?.status !== 'published' || !row.published) && <span className="admin-status hidden-tag">{row.movie?.status === 'draft' ? 'movie is a draft' : 'hidden'}</span>}
       {row.rescheduledAt && <span className="admin-status moved-tag" title={`First planned for ${shortDate(row.originalStartTime)} ${manilaClock(row.originalStartTime)}`}>moved</span>}
     </>
   );
@@ -252,15 +237,6 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
   return (
     <>
       <Feedback error={panelOpen ? '' : error} notice={notice} />
-      {publishPrompt && (
-        <div className="admin-notice publish-prompt" role="status">
-          <span>Showings are scheduled for <b>{publishPrompt.title}</b>, but it is still a draft, so customers can&apos;t see them yet.</span>
-          <span className="publish-prompt-actions">
-            <button type="button" className="btn btn-primary btn-small" disabled={busy} aria-busy={busyAction === 'publish'} onClick={publishMovie}>{busyAction === 'publish' ? 'Publishing...' : `Publish ${publishPrompt.title} now`}</button>
-            <button type="button" className="btn btn-secondary btn-small" onClick={() => setPublishPrompt(null)}>Later</button>
-          </span>
-        </div>
-      )}
 
       <div className="admin-panel show-toolbar">
         <div className="show-toolbar-nav">
@@ -321,7 +297,7 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
           <section className="admin-panel" aria-label="Schedule">
             {rooms.length === 0 ? <p>No rooms yet. Add one in the Rooms tab first.</p> : (
               <>
-                {showings.length === 0 && <p className="show-empty">No showings on this day yet. Click an empty spot on a room&apos;s row to add one at that time, or use <b>Schedule many</b> to fill several days.</p>}
+                {showings.length === 0 && <p className="show-empty">No showings on this day yet. Click an empty spot on a room&apos;s row to add one at that time, or use <b>Many days</b> to fill several days.</p>}
                 <div className="timeline-scroll">
                   <div className="timeline">
                     <div className="timeline-row timeline-hours" aria-hidden="true">
@@ -450,7 +426,7 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
 
               <div>
                 <h3>Visibility</h3>
-                <p className="profile-help">{selected.published ? 'Customers can see and book this showing.' : 'Hidden: customers cannot see or book this showing. Only you can.'}{selected.published && seatsSold(selected) > 0 ? ' It cannot be hidden while customers hold tickets.' : ''}</p>
+                <p className="profile-help">{selected.published ? selected.movie?.status === 'published' ? 'Customers can see and book this showing until online sales close.' : 'The movie is a draft. Publish it in Movies before customers can see or book this showing.' : 'Hidden: customers cannot see or book this showing. Only you can.'}{selected.published && seatsSold(selected) > 0 ? ' It cannot be hidden while customers hold tickets.' : ''}</p>
                 <div className="admin-actions"><button type="button" className="btn btn-secondary btn-small" disabled={busy || (selected.published && seatsSold(selected) > 0)} aria-busy={busyAction === 'visibility'} onClick={toggleVisibility}><ActionPending pending={busyAction === 'visibility'}>{busyAction === 'visibility' ? 'Saving...' : selected.published ? 'Hide from customers' : 'Publish to customers'}</ActionPending></button></div>
               </div>
 
@@ -470,14 +446,13 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, reloa
       <AdminBulk
         movies={movies}
         rooms={rooms}
-        scheduleFor={scheduleFor}
         open={bulk.open}
         mode={bulk.mode}
         preset={bulk.preset}
         defaultDay={date}
         onModeChange={(mode) => setBulk((current) => ({ ...current, mode }))}
         onClose={() => setBulk((current) => ({ ...current, open: false }))}
-        onDone={(message, movieId, day) => { setBulk((current) => ({ ...current, open: false })); setNotice(message); if (movieId) askToPublish(movieId); if (day) { setView('day'); setDate(day); } afterChange(); }}
+        onDone={(message, movieId, day) => { setBulk((current) => ({ ...current, open: false })); setNotice(message); if (day) { setView('day'); setDate(day); } afterChange(); }}
       />
     </>
   );

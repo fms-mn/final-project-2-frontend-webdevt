@@ -434,6 +434,7 @@ export default function MovieDetail() {
               <span className="tag">⭐ {movie.rating}</span>
             </div>
             <MovieDetails movie={movie} isDemo={isDemo} />
+            {isComingSoon && !isPresale && <p className="movie-detail-closed" role="status">Showtimes have not been announced yet. Check back for advance tickets.</p>}
             {isNotShowing && <p className="movie-detail-closed" role="status">This movie has no showings to book right now. Please check back soon.</p>}
             <div className="movie-detail-stats">
               <div className="stat">

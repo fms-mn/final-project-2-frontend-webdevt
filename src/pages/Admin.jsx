@@ -28,7 +28,6 @@ export default function Admin() {
   const [periodControlsTarget, setPeriodControlsTarget] = useState(null);
   const [addRequest, setAddRequest] = useState(0);
   const [focusShowing, setFocusShowing] = useState(null); // { id, day, at }: a showing to open on the Showings screen
-  const [scheduleFor, setScheduleFor] = useState(null); // { movieId, at }: a movie just added, to schedule next
 
   // Movies and accounts are shared by several tabs. They are loaded once, and again after a
   // change, without blanking the screen the admin is working on.
@@ -58,11 +57,6 @@ export default function Admin() {
     setTab('showings');
     document.getElementById('admin-nav-showings')?.focus();
   };
-  // "Schedule showings" after adding a movie: open Showings with that movie ready in the scheduler.
-  const scheduleMovie = (movieId) => {
-    setScheduleFor({ movieId, at: Date.now() });
-    setTab('showings');
-  };
   const quickAction = (action) => {
     if (action === 'add-movie') { setTab('movies'); setAddRequest((count) => count + 1); } else setTab(action);
   };
@@ -75,7 +69,7 @@ export default function Admin() {
   return (
     <div className="admin-shell">
       <AdminSidebar current={tab} onSelect={setTab} />
-      <div className={`admin-page admin-workspace fade-in${tab === 'overview' ? ' admin-overview-page' : ''}`}>
+      <div className={`admin-page admin-workspace${tab === 'overview' ? ' admin-overview-page' : ''}`}>
         <header className="admin-topbar">
           <div>
             <h1 id="admin-page-title">{section.title}</h1>
@@ -96,8 +90,8 @@ export default function Admin() {
         {!loading && !loadError && (
           <div id="admin-panel" role="region" aria-labelledby="admin-page-title" className="admin-tab-body">
             {tab === 'overview' && <AdminOverview movies={movies} users={users} periodControlsTarget={periodControlsTarget} onViewShowings={viewShowings} onQuickAction={quickAction} />}
-            {tab === 'movies' && <AdminMovieManager movies={movies} reload={reload} onSchedule={scheduleMovie} onOpenShowing={openShowing} addRequest={addRequest} onAddHandled={() => setAddRequest(0)} />}
-            {tab === 'showings' && <AdminShowings movies={movies} scheduleFor={scheduleFor} focusShowing={focusShowing} reloadMovies={reload} />}
+            {tab === 'movies' && <AdminMovieManager movies={movies} reload={reload} onOpenShowing={openShowing} addRequest={addRequest} onAddHandled={() => setAddRequest(0)} onManageRooms={() => setTab('rooms')} />}
+            {tab === 'showings' && <AdminShowings movies={movies} focusShowing={focusShowing} onFocusHandled={() => setFocusShowing(null)} reloadMovies={reload} />}
             {tab === 'bookings' && <AdminBookings />}
             {tab === 'rooms' && <AdminRooms />}
             {tab === 'users' && <AdminUsers users={users} reload={reload} />}

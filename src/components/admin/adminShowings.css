@@ -159,3 +159,17 @@
 .publish-prompt { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
 .publish-prompt-actions { display: flex; gap: 8px; }
 .bulk-step h3 .bulk-pick-many { margin-left: auto; color: var(--a-muted); font: 500 12px 'Instrument Sans Variable', sans-serif; }
+
+.bulk-fields { min-width: 0; margin: 0; padding: 0; border: 0; }
+.bulk-advanced { font-size: 13px; color: var(--a-soft); }
+.bulk-advanced summary { cursor: pointer; padding: 5px 0; }
+.bulk-advanced label { margin-top: 8px; }
+.bulk-skip-choice { margin: 10px 0; padding: 10px; background: var(--a-ground); border-radius: 8px; line-height: 1.5; }
+.bulk-skipped ul { max-height: 160px; overflow-y: auto; overflow-wrap: anywhere; }
+.bulk-result { max-height: 38dvh; overflow-y: auto; }
+.bulk-footer > .btn { white-space: normal; }
+@media (max-width: 480px) {
+  .bulk-dates { grid-template-columns: 1fr; }
+  .bulk-pick-many { font-size: 11px; }
+  .movie-flow-steps { gap: 8px; }
+}

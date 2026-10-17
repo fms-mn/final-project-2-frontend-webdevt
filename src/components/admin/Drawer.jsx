@@ -12,7 +12,7 @@ export default function Drawer({ title, onClose, children, wide = false }) {
     const previous = document.activeElement;
     const oldOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    panel.current?.querySelector('input:not([type=hidden]), select, textarea, button.drawer-first')?.focus();
+    panel.current?.querySelector('input:not([type=hidden]):not(:disabled), select:not(:disabled), textarea:not(:disabled), button.drawer-first:not(:disabled), button:not(:disabled)')?.focus();
     const onKeyDown = (event) => {
       if (event.key === 'Escape') { event.preventDefault(); closeRef.current(); }
       if (event.key !== 'Tab') return;

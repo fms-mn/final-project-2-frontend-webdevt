@@ -19,6 +19,7 @@ function OpeningCard({ movie, currentDay }) {
     <div className="opening-card-body">
       <div className="opening-date-line"><span className="opening-date-pill">{date ? date.toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', month: 'short', day: 'numeric' }).toUpperCase() : 'TBA'}</span><span className="opening-countdown">{daysLeft === null ? 'DATE TO BE ANNOUNCED' : daysLeft === 0 ? 'OPENS TODAY' : `IN ${daysLeft} ${daysLeft === 1 ? 'DAY' : 'DAYS'}`}</span></div>
       <Link className="opening-title" to={`/movie/${movie._id}`} state={{ browsingPage: 'home' }}>{movie.title}</Link>
+      {(movie.upcomingShowings ?? 0) > 0 && <Link className="opening-more-details" to={`/movie/${movie._id}`} state={{ browsingPage: 'home' }}>Book advance tickets →</Link>}
       <Link className="opening-more-details" to={'/movie/' + movie._id + '?details=1'} state={{ browsingPage: 'home' }} aria-label={`More details about ${movie.title}`}>More details</Link>
       <p className="opening-details">{[...movie.genre, movie.rating, movie.duration && `${movie.duration} min`].filter(Boolean).join(' · ')}</p>
     </div>

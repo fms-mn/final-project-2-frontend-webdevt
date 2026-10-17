@@ -24,7 +24,7 @@ export default function MovieCard({ movie, showShowtimes = false, previewOnHover
   const releaseLabel = Number.isNaN(release.getTime()) ? '' : release.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 
   return (
-    <Link ref={cardRef} to={`/movie/${movie._id}`} state={{ browsingPage: 'movies' }} className={`movie-card${refined ? ' movie-card-refined' : ''}${preview.visible ? ' is-previewing' : ''}`} aria-label={refined ? `${movie.title}: ${isShowing ? 'Choose a showing' : notShowing ? 'No showings right now' : 'View details'}` : undefined} {...(refined ? {} : preview.handlers)}>
+    <Link ref={cardRef} to={`/movie/${movie._id}`} state={{ browsingPage: 'movies' }} className={`movie-card${refined ? ' movie-card-refined' : ''}${preview.visible ? ' is-previewing' : ''}`} aria-label={refined ? `${movie.title}: ${isShowing || presale ? 'Choose a showing' : notShowing ? 'No showings right now' : 'View details'}` : undefined} {...(refined ? {} : preview.handlers)}>
       <div className="movie-card-poster" {...(refined ? preview.handlers : {})}>
         {refined && (!movie.posterUrl || failedPoster === movie.posterUrl) ? (
           <div className="movie-poster-fallback" aria-label="Poster unavailable">FILME</div>
@@ -37,7 +37,7 @@ export default function MovieCard({ movie, showShowtimes = false, previewOnHover
         {refined && <span className="movie-poster-rating">{movie.rating}</span>}
         {!refined && <div className="movie-card-overlay">
           <span className="btn btn-primary btn-small">
-            {isShowing ? 'Book Now' : 'View Details'}
+            {presale ? 'Book advance tickets' : isShowing ? 'Book Now' : 'View Details'}
           </span>
         </div>}
       </div>
@@ -61,7 +61,7 @@ export default function MovieCard({ movie, showShowtimes = false, previewOnHover
         ) : refined ? (
           <div className="movie-coming-action">
             {notShowing ? <small>No showings right now</small> : releaseLabel && <small>In cinemas {releaseLabel}{presale ? ' · Tickets on sale' : ''}</small>}
-            <span className="movie-card-price">View details <FiArrowRight aria-hidden="true" /></span>
+            <span className="movie-card-price">{presale ? 'Book advance tickets' : 'View details'} <FiArrowRight aria-hidden="true" /></span>
           </div>
         ) : notShowing ? (
           <div className="movie-card-release">No showings right now</div>
