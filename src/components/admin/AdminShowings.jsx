@@ -11,6 +11,7 @@ import { movieColor, timeAtFraction, weekDays, weekLabel, weekStart } from '../.
 import { attentionItems, dayFacts, fractionOfDay, seatsSold, showingState } from '../../utils/showingsOverview';
 import AdminBulk from './AdminBulk';
 import ScheduleSuccess from './ScheduleSuccess';
+import ConfirmDialog from './ConfirmDialog';
 import Drawer from './Drawer';
 import WhenPicker from './WhenPicker';
 import Feedback from './Feedback';
@@ -51,6 +52,7 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, onSch
   const [selectedId, setSelectedId] = useState('');
   const [draft, setDraft] = useState(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [cancelledNotice, setCancelledNotice] = useState(false);
   const [revision, setRevision] = useState(0);
   const [move, setMove] = useState({ startTime: '', auditorium: '' });
   const [blockedDraft, setBlockedDraft] = useState([]);
@@ -200,8 +202,8 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, onSch
   };
 
   const cancelShowing = async () => {
-    const done = await run(() => api(`/showtimes/${selectedId}/cancel`, { method: 'PATCH' }), 'Showing cancelled. Its bookings were cancelled and the seats freed', 'cancel');
-    if (done) { setConfirmCancel(false); setSelectedId(''); setDraft(null); setRevision((value) => value + 1); }
+    const done = await run(() => api(`/showtimes/${selectedId}/cancel`, { method: 'PATCH' }), '', 'cancel');
+    if (done) { setConfirmCancel(false); setSelectedId(''); setDraft(null); setCancelledNotice(true); setRevision((value) => value + 1); }
   };
 
   const afterChange = () => setRevision((value) => value + 1);
@@ -566,6 +568,9 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, onSch
         onClose={() => setBulk((current) => ({ ...current, open: false }))}
         onDone={(message, movieId, day, result) => { setBulk((current) => ({ ...current, open: false })); setScheduleResult(result); setNotice(message); if (day) setDate(day); afterChange(); }}
       />}
+      {cancelledNotice && <ConfirmDialog title="Showing cancelled" tone="info" cancelLabel="OK" onClose={() => setCancelledNotice(false)}>
+        <p>Bookings were cancelled and the seats released.</p>
+      </ConfirmDialog>}
       {scheduleResult && <ScheduleSuccess result={scheduleResult} movies={movies} rooms={rooms}
         onClose={() => setScheduleResult(null)}
         onAnother={() => { const day = manilaDay(scheduleResult.created[0].startTime); setScheduleResult(null); startAdd({ day }); }}
