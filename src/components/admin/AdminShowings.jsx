@@ -11,7 +11,7 @@ import { movieColor, timeAtFraction, weekDays, weekLabel, weekStart } from '../.
 import { attentionItems, dayFacts, fractionOfDay, seatsSold, showingState } from '../../utils/showingsOverview';
 import AdminBulk from './AdminBulk';
 import ScheduleSuccess from './ScheduleSuccess';
-import ConfirmDialog from './ConfirmDialog';
+import ShowingActionSuccess from './ShowingActionSuccess';
 import Drawer from './Drawer';
 import WhenPicker from './WhenPicker';
 import Feedback from './Feedback';
@@ -52,7 +52,7 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, onSch
   const [selectedId, setSelectedId] = useState('');
   const [draft, setDraft] = useState(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
-  const [cancelledNotice, setCancelledNotice] = useState(false);
+  const [actionResult, setActionResult] = useState(null);
   const [revision, setRevision] = useState(0);
   const [move, setMove] = useState({ startTime: '', auditorium: '' });
   const [blockedDraft, setBlockedDraft] = useState([]);
@@ -62,6 +62,7 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, onSch
   const [activeAction, setActiveAction] = useState(''); // which part of the showing panel is open: edit, move or seats
   const [ghost, setGhost] = useState(null); // the "+ time" marker under the mouse on a room's row
   const detailRef = useRef(null);
+  const scheduleHeading = useRef(null);
   const [gapMinutes, setGapMinutes] = useState(15); // the cinema's gap between shows
   const [otherDays, setOtherDays] = useState({}); // showings of days picked in a form that are not on screen
 
@@ -197,13 +198,23 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, onSch
     if (!startTime) { setError('Choose a start date and time.'); return; }
     if (Date.parse(startTime) <= Date.now()) { setError('That showing time has already passed. Choose a later time or another day.'); return; }
     const body = { movie: draft.movie, auditorium: draft.auditorium, startTime, ticketPrice: Math.round(Number(draft.ticketPrice) * 100) };
-    const done = await run(() => api(`/showtimes/${selectedId}`, { method: 'PATCH', body }), 'Showing updated', 'save');
-    if (done) { setSelectedId(''); setDraft(null); setRevision((value) => value + 1); }
+    const done = await run(() => api(`/showtimes/${selectedId}`, { method: 'PATCH', body }), '', 'save');
+    if (done) {
+      setActionResult({ title: 'Showing updated', message: 'Your changes to this showing have been saved.', showing: {
+        ...selected, startTime, ticketPrice: body.ticketPrice,
+        movie: movies.find(movie => movie._id === body.movie),
+        auditorium: rooms.find(room => room._id === body.auditorium),
+      } });
+      setSelectedId(''); setDraft(null); setRevision((value) => value + 1);
+    }
   };
 
   const cancelShowing = async () => {
     const done = await run(() => api(`/showtimes/${selectedId}/cancel`, { method: 'PATCH' }), '', 'cancel');
-    if (done) { setConfirmCancel(false); setSelectedId(''); setDraft(null); setCancelledNotice(true); setRevision((value) => value + 1); }
+    if (done) {
+      setActionResult({ title: 'Showing cancelled', message: seatsSold(selected) > 0 ? 'This showing is no longer available. Its bookings have been cancelled and refunded.' : 'This showing is no longer available to book. There were no bookings to cancel.', showing: selected });
+      setConfirmCancel(false); setSelectedId(''); setDraft(null); setRevision((value) => value + 1);
+    }
   };
 
   const afterChange = () => setRevision((value) => value + 1);
@@ -223,25 +234,34 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, onSch
     if (Date.parse(startTime) <= Date.now()) { setError('That showing time has already passed. Choose a later time or another day.'); return; }
     const done = await run(
       () => api(`/showtimes/${selectedId}/reschedule`, { method: 'PATCH', body: { startTime, auditorium: move.auditorium } }),
-      'Showing moved. Customers keep their seats and the price they paid', 'move',
+      '', 'move',
     );
-    if (done) { setSelectedId(''); setDraft(null); afterChange(); }
+    if (done) {
+      setActionResult({ title: 'Showing moved', message: 'The new time and room have been saved. Existing bookings keep their seats and the price paid.', showing: { ...selected, startTime, auditorium: rooms.find(room => room._id === move.auditorium) } });
+      setDate(manilaDay(startTime)); setSelectedId(''); setDraft(null); afterChange();
+    }
   };
 
   const toggleVisibility = async () => {
     const done = await run(
       () => api(`/showtimes/${selectedId}/visibility`, { method: 'PATCH', body: { published: !selected.published } }),
-      selected.published ? 'Showing hidden from customers' : 'Showing is now visible to customers', 'visibility',
+      '', 'visibility',
     );
-    if (done) { setSelectedId(''); setDraft(null); afterChange(); }
+    if (done) {
+      setActionResult({ title: selected.published ? 'Showing hidden' : 'Showing visible', message: selected.published ? 'Customers can no longer see or book this showing.' : selectedMovieStatus === 'draft' ? 'This showing is set to visible. Publish the movie before customers can see or book it.' : 'Customers can now see and book this showing.', showing: selected });
+      setSelectedId(''); setDraft(null); afterChange();
+    }
   };
 
   const saveBlocked = async () => {
     const done = await run(
       () => api(`/showtimes/${selectedId}/blocked-seats`, { method: 'PUT', body: { seats: blockedDraft } }),
-      blockedDraft.length ? `${blockedDraft.length} seat${blockedDraft.length === 1 ? '' : 's'} blocked for this showing` : 'No seats are blocked for this showing', 'blocked',
+      '', 'blocked',
     );
-    if (done) afterChange();
+    if (done) {
+      setActionResult({ title: 'Blocked seats updated', message: blockedDraft.length ? `${plural(blockedDraft.length, 'seat')} blocked for this showing only. Customers cannot book these seats.` : 'All seat blocks for this showing have been removed. Room-level blocks still apply.', showing: selected });
+      afterChange();
+    }
   };
 
   const edit = (field) => (event) => setDraft({ ...draft, [field]: event.target.value });
@@ -314,7 +334,7 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, onSch
       <div className="admin-panel show-toolbar">
         <div className="show-toolbar-nav">
           <button type="button" className="btn btn-secondary btn-small" onClick={() => step(-1)} aria-label="Previous week">← Week</button>
-          <h2 className="show-toolbar-title">{weekLabel(date)}</h2>
+          <h2 ref={scheduleHeading} tabIndex={-1} className="show-toolbar-title">{weekLabel(date)}</h2>
           <button type="button" className="btn btn-secondary btn-small" onClick={() => step(1)} aria-label="Next week">Week →</button>
           <button type="button" className="btn btn-secondary btn-small" onClick={() => goToDay(today())} disabled={date === today()}>Today</button>
           <DatePicker label="Go to date" required value={date} onChange={goToDay} />
@@ -568,9 +588,7 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, onSch
         onClose={() => setBulk((current) => ({ ...current, open: false }))}
         onDone={(message, movieId, day, result) => { setBulk((current) => ({ ...current, open: false })); setScheduleResult(result); setNotice(message); if (day) setDate(day); afterChange(); }}
       />}
-      {cancelledNotice && <ConfirmDialog title="Showing cancelled" tone="info" cancelLabel="OK" onClose={() => setCancelledNotice(false)}>
-        <p>Bookings were cancelled and the seats released.</p>
-      </ConfirmDialog>}
+      {actionResult && <ShowingActionSuccess result={actionResult} onClose={() => setActionResult(null)} returnFocus={scheduleHeading} />}
       {scheduleResult && <ScheduleSuccess result={scheduleResult} movies={movies} rooms={rooms}
         onClose={() => setScheduleResult(null)}
         onAnother={() => { const day = manilaDay(scheduleResult.created[0].startTime); setScheduleResult(null); startAdd({ day }); }}
