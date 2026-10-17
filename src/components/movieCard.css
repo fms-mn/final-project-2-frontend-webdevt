@@ -1,0 +1,17 @@
+.movie-card { position:relative; }
+.movie-card .movie-card-navigation { position:absolute; inset:0; z-index:1; border-radius:inherit; }
+.movie-card:has(> .movie-card-navigation:focus-visible) { outline:3px solid var(--accent-primary); outline-offset:4px; }
+.movie-card .movie-card-navigation:focus-visible { outline:none; }
+.movie-card .movie-card-poster { z-index:2; }
+.movie-card .movie-card-poster-link { display:block; width:100%; height:100%; color:inherit; }
+.movie-card .movie-card-price { position:relative; z-index:2; }
+.movie-card .movie-card-meta { display:grid; justify-items:start; gap:8px; min-width:0; }
+.movie-card .movie-card-runtime { display:flex; align-items:center; gap:6px; color:var(--text-secondary); font-size:12px; line-height:1.4; }
+.movie-card .movie-card-runtime > span { padding:0; border:0; background:transparent; }
+.movie-card .movie-card-genres { display:flex; flex-wrap:wrap; align-items:center; gap:7px; width:100%; min-width:0; }
+.movie-card .movie-genre-badge { display:inline-flex; align-items:flex-start; gap:6px; min-width:0; max-width:100%; padding:5px 9px; border:1px solid color-mix(in srgb,var(--accent-primary) 20%,var(--border-color)); border-radius:8px; background:color-mix(in srgb,var(--accent-primary) 8%,var(--bg-card)); color:var(--text-primary); font-size:12px; font-weight:600; line-height:1.4; }
+.movie-card .movie-genre-badge > span { display:block; min-width:0; white-space:normal; overflow-wrap:anywhere; }
+.movie-card .movie-genre-badge > svg { flex:none; margin-top:2px; color:var(--accent-primary); }
+.movie-card .movie-genres-toggle { position:relative; z-index:2; min-height:44px; max-width:100%; padding:6px 10px; border:1px solid var(--border-color); border-radius:8px; background:var(--surface-tint); color:var(--text-primary); font:600 12px/1.4 'Instrument Sans Variable',sans-serif; white-space:normal; cursor:pointer; }
+.movie-card .movie-genres-toggle:hover { border-color:var(--accent-primary); }
+.movie-card .movie-genres-toggle:focus-visible { outline:3px solid var(--accent-primary); outline-offset:3px; }

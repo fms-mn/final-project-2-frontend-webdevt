@@ -10,6 +10,8 @@ import { showingAvailability } from '../utils/bookingHero';
 import MovieDetails from '../components/MovieDetails';
 import BookingConfirmationModal from '../components/BookingConfirmationModal';
 import BookingAuthPrompt from '../components/BookingAuthPrompt';
+import DatePicker from '../components/DatePicker';
+import ChairShape from '../components/ChairShape';
 import { clearPendingBooking, readPendingBooking, restoreTentativeSeats, savePendingBooking } from '../utils/pendingBooking';
 import { MAX_SEATS_PER_BOOKING, toggleSeatSelection } from '../utils/seatSelection';
 import { paymentModeOf } from '../utils/payment';
@@ -18,10 +20,6 @@ export { toggleSeatSelection } from '../utils/seatSelection';
 
 const ROWS = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
 const SEATS_PER_ROW = 10;
-
-function ChairShape({ label }) {
-  return <><span className="chair-backrest" /><span className="chair-cushion" /><span className="chair-label">{label}</span></>;
-}
 
 const formatDate = manilaDay;
 
@@ -485,24 +483,8 @@ export default function MovieDetail() {
           <h3 style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
             Select Date
           </h3>
-          <div className="date-selector">
-            {dates.map((date) => {
-              const dateStr = formatDate(date);
-              return (
-                <button
-                  key={dateStr}
-                  className={`date-btn ${selectedDate === dateStr ? 'active' : ''}`}
-                  aria-pressed={selectedDate === dateStr}
-                  onClick={() => { autoSelectShowing.current = true; pendingRestore.current = null; clearPendingBooking(); bookingLocked.current = false; setSelectedDate(dateStr); setSelectedTime(''); setSelectedShowtimeId(''); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); setSelectionNotice(''); }}
-                  disabled={booking}
-                >
-                  <span className="day-name">{date.toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', weekday: 'short' })}</span>
-                  <span className="day-num">{date.toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', day: 'numeric' })}</span>
-                  <span className="month">{date.toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', month: 'short' })}</span>
-                </button>
-              );
-            })}
-          </div>
+          <DatePicker label="Booking date" required value={selectedDate} min={today()} allowedDates={dates.map(formatDate)} disabled={booking}
+            onChange={dateStr => { autoSelectShowing.current = true; pendingRestore.current = null; clearPendingBooking(); bookingLocked.current = false; setSelectedDate(dateStr); setSelectedTime(''); setSelectedShowtimeId(''); setSelectedSeats([]); setBookingSuccess(null); setBookingError(''); setSelectionNotice(''); }} />
 
           </div>
           <div>

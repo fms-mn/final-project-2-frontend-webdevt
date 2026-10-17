@@ -73,6 +73,7 @@ export default function Navbar() {
         {!user && <>
           <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`} aria-current={isActive('/') ? 'page' : undefined}>Home</Link>
           <Link to="/movies" className={`nav-link ${isActive('/movies') ? 'active' : ''}`} aria-current={isActive('/movies') ? 'page' : undefined}>Movies</Link>
+          <Link to="/login" className="nav-link nav-mobile-sign-in">Sign in</Link>
           <Link to="/register" className="nav-link nav-mobile-sign-up">Sign up</Link>
         </>}
         {user?.role === 'user' && (
@@ -91,6 +92,10 @@ export default function Navbar() {
           </>
         )}
         <div className="nav-mobile-account">
+          <button type="button" className="nav-link nav-mobile-theme" onClick={toggleTheme}>
+            {theme === 'light' ? <FiMoon aria-hidden="true" /> : <FiSun aria-hidden="true" />}
+            {theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+          </button>
           {loading ? null : user ? <>
             <span className="nav-mobile-name">Hi, {user.name}</span>
             <button type="button" className="nav-logout" disabled={signingOut} aria-busy={signingOut} onClick={handleLogout}><FiLogOut aria-hidden="true" /><ActionPending pending={signingOut}>{signingOut ? 'Signing out...' : 'Log out'}</ActionPending></button>

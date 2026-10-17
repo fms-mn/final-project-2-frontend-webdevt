@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../api';
 import AdminArchiveRule from '../components/admin/AdminArchiveRule';
 import AdminBookings from '../components/admin/AdminBookings';
@@ -7,6 +7,7 @@ import AdminOverview from '../components/admin/AdminOverview';
 import AdminRooms from '../components/admin/AdminRooms';
 import AdminEmail from '../components/admin/AdminEmail';
 import AdminRules from '../components/admin/AdminRules';
+import AdminGenres from '../components/admin/AdminGenres';
 import AdminShowings from '../components/admin/AdminShowings';
 import AdminSidebar, { ALL_ITEMS } from '../components/admin/AdminSidebar';
 import AdminUsers from '../components/admin/AdminUsers';
@@ -29,6 +30,19 @@ export default function Admin() {
   const [addRequest, setAddRequest] = useState(0);
   const [focusShowing, setFocusShowing] = useState(null); // { id, day, at }: a showing to open on the Showings screen
   const [scheduleFor, setScheduleFor] = useState(null); // { movieId, at }: a movie just added, to schedule next
+  const scheduleHandled = useCallback(() => setScheduleFor(null), []);
+  const showingHandled = useCallback(() => setFocusShowing(null), []);
+  const movieLeave = useRef(null);
+  const registerMovieLeave = useCallback(guard => { movieLeave.current = guard; }, []);
+  const selectSection = next => {
+    if (next === tab) return;
+    const navigate = () => {
+      setTab(next);
+      document.getElementById(`admin-nav-${next}`)?.focus();
+    };
+    if (movieLeave.current) movieLeave.current(navigate);
+    else navigate();
+  };
 
   // Movies and accounts are shared by several tabs. They are loaded once, and again after a
   // change, without blanking the screen the admin is working on.
@@ -74,8 +88,8 @@ export default function Admin() {
 
   return (
     <div className="admin-shell">
-      <AdminSidebar current={tab} onSelect={setTab} />
-      <div className={`admin-page admin-workspace fade-in${tab === 'overview' ? ' admin-overview-page' : ''}`}>
+      <AdminSidebar current={tab} onSelect={selectSection} />
+      <div className={`admin-page admin-workspace fade-in${tab === 'overview' ? ' admin-overview-page' : ''}${tab === 'movies' ? ' admin-movies-page' : ''}`}>
         <header className="admin-topbar">
           <div>
             <h1 id="admin-page-title">{section.title}</h1>
@@ -96,12 +110,12 @@ export default function Admin() {
         {!loading && !loadError && (
           <div id="admin-panel" role="region" aria-labelledby="admin-page-title" className="admin-tab-body">
             {tab === 'overview' && <AdminOverview movies={movies} users={users} periodControlsTarget={periodControlsTarget} onViewShowings={viewShowings} onQuickAction={quickAction} />}
-            {tab === 'movies' && <AdminMovieManager movies={movies} reload={reload} onSchedule={scheduleMovie} onOpenShowing={openShowing} addRequest={addRequest} onAddHandled={() => setAddRequest(0)} />}
-            {tab === 'showings' && <AdminShowings movies={movies} scheduleFor={scheduleFor} focusShowing={focusShowing} reloadMovies={reload} />}
+            {tab === 'movies' && <AdminMovieManager movies={movies} reload={reload} onSchedule={scheduleMovie} onOpenShowing={openShowing} addRequest={addRequest} onAddHandled={() => setAddRequest(0)} registerLeave={registerMovieLeave} />}
+            {tab === 'showings' && <AdminShowings movies={movies} scheduleFor={scheduleFor} focusShowing={focusShowing} onScheduleHandled={scheduleHandled} onShowingHandled={showingHandled} reloadMovies={reload} />}
             {tab === 'bookings' && <AdminBookings />}
             {tab === 'rooms' && <AdminRooms />}
             {tab === 'users' && <AdminUsers users={users} reload={reload} />}
-            {tab === 'settings' && <><AdminRules standalone /><AdminArchiveRule onChanged={reload} /><AdminEmail /></>}
+            {tab === 'settings' && <><AdminGenres /><AdminRules standalone /><AdminArchiveRule onChanged={reload} /><AdminEmail /></>}
           </div>
         )}
       </div>

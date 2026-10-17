@@ -1,3 +1,4 @@
+import { lockPageScroll } from '../utils/pageLock';
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
@@ -13,14 +14,13 @@ export default function BookingAuthPrompt({ movieTitle, showing, onClose, backLa
   useEffect(() => {
     cancelAnimationFrame(focusFrame.current);
     const previousFocus = returnFocus.current;
-    const previousOverflow = document.body.style.overflow;
+    const releasePage = lockPageScroll();
     const element = dialog.current;
-    document.body.style.overflow = 'hidden';
     element.showModal();
     signIn.current.focus({ preventScroll: true });
     return () => {
       element.close();
-      document.body.style.overflow = previousOverflow;
+      releasePage();
       focusFrame.current = requestAnimationFrame(() => {
         if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
       });

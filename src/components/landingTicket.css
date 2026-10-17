@@ -1,0 +1,151 @@
+/* The landing page's ticket: depth, real notches, a barcode, and a live version with a booking button.
+   Loaded after landingHero.css and homeTheme.css so it refines them. The sample keeps its wording. */
+
+.landing-page .landing-ticket-stage { padding: 32px 16px 36px; }
+.landing-page .landing-ticket-float {
+  position: relative;
+  width: min(100%, 460px);
+  margin-inline: auto;
+  filter: drop-shadow(0 26px 28px #15173524) drop-shadow(0 4px 8px #15173514);
+  transition: transform .4s cubic-bezier(.2, .8, .2, 1);
+}
+/* two tickets peeking out from behind */
+.landing-page .landing-ticket-float::before,
+.landing-page .landing-ticket-float::after {
+  content: '';
+  position: absolute;
+  inset: 12px 12px -12px;
+  z-index: 0;
+  border-radius: 22px;
+  transition: transform .4s cubic-bezier(.2, .8, .2, 1);
+  pointer-events: none;
+}
+.landing-page .landing-ticket-float::before { background: color-mix(in srgb, var(--filme-coral-fill) 38%, var(--bg-card)); transform: rotate(-4deg); }
+.landing-page .landing-ticket-float::after { inset: 8px 6px -22px; background: color-mix(in srgb, var(--bg-card) 78%, var(--bg-secondary)); transform: rotate(3deg); z-index: -1; }
+.landing-page .landing-ticket-float:hover { transform: translateY(-4px); }
+.landing-page .landing-ticket-float:hover::before { transform: rotate(-6.5deg) translateX(-8px); }
+.landing-page .landing-ticket-float:hover::after { transform: rotate(5deg) translateX(8px); }
+
+/* the ticket itself: no frame (the shadow follows its real outline) */
+.landing-page .landing-hero .landing-ticket {
+  position: relative;
+  z-index: 1;
+  border: 0;
+  border-radius: 22px;
+  background: transparent;
+  box-shadow: none;
+  overflow: hidden;
+}
+.landing-page .landing-hero .landing-ticket-banner { background: var(--filme-coral-fill); padding: 14px 24px; font-size: 11px; letter-spacing: .14em; }
+.landing-page .landing-hero .landing-ticket-details { background: #fff; padding: 22px 24px 24px; }
+.landing-page .landing-hero .landing-ticket-bottom {
+  background: #fff;
+  border-top: 1px dashed #d7d9e8;
+  padding: 20px 24px 22px;
+}
+
+/* real notches where the ticket tears: a half circle cut from each side of the perforation */
+.landing-page .landing-hero .landing-ticket-details {
+  -webkit-mask: radial-gradient(circle 13px at 0 100%, #0000 98%, #000) left / 51% 100% no-repeat, radial-gradient(circle 13px at 100% 100%, #0000 98%, #000) right / 51% 100% no-repeat;
+  mask: radial-gradient(circle 13px at 0 100%, #0000 98%, #000) left / 51% 100% no-repeat, radial-gradient(circle 13px at 100% 100%, #0000 98%, #000) right / 51% 100% no-repeat;
+}
+.landing-page .landing-hero .landing-ticket-bottom {
+  -webkit-mask: radial-gradient(circle 13px at 0 0, #0000 98%, #000) left / 51% 100% no-repeat, radial-gradient(circle 13px at 100% 0, #0000 98%, #000) right / 51% 100% no-repeat;
+  mask: radial-gradient(circle 13px at 0 0, #0000 98%, #000) left / 51% 100% no-repeat, radial-gradient(circle 13px at 100% 0, #0000 98%, #000) right / 51% 100% no-repeat;
+}
+
+.landing-page .landing-hero .landing-ticket-details > strong { font-size: clamp(26px, 2.6vw, 32px); letter-spacing: -.05em; }
+.landing-page .landing-hero .landing-ticket-meta dt { font: 600 10px/1.4 'JetBrains Mono Variable', monospace; letter-spacing: .1em; text-transform: uppercase; }
+.landing-page .landing-hero .landing-ticket-meta dd { font-size: 15px; }
+
+/* the sample: the blanks look like blanks */
+.landing-page .landing-ticket-stage:not(.is-live) .landing-ticket-details > strong { color: color-mix(in srgb, var(--text-primary) 50%, #fff); }
+.landing-page .landing-ticket-stage:not(.is-live) .landing-ticket-meta dd {
+  display: inline-block;
+  padding-bottom: 2px;
+  border-bottom: 1px dashed #c9cbe0;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* a barcode along the bottom edge */
+.landing-page .landing-hero .landing-ticket-barcode {
+  grid-column: 1 / -1;
+  display: block;
+  height: 34px;
+  border-radius: 3px;
+  background: repeating-linear-gradient(90deg, #151735 0 2px, #0000 2px 5px, #151735 5px 6px, #0000 6px 9px, #151735 9px 12px, #0000 12px 14px, #151735 14px 15px, #0000 15px 19px);
+  opacity: .8;
+}
+.landing-page .landing-ticket-stage:not(.is-live) .landing-ticket-barcode { opacity: .28; }
+.landing-page .landing-hero .landing-ticket-bottom { row-gap: 14px; }
+
+/* ---- the live ticket: a real movie with a real showing ---- */
+.landing-page .landing-hero .landing-ticket-feature { display: grid; grid-template-columns: 88px minmax(0, 1fr); align-items: center; gap: 18px; }
+.landing-page .landing-hero .landing-ticket-poster {
+  display: block;
+  width: 88px;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 10px;
+  background: #e8eaf5;
+  box-shadow: 0 8px 18px #15173533;
+}
+.landing-page .landing-hero .landing-ticket-poster-empty { display: grid; place-items: center; color: #8b90b4; font: 800 20px 'Instrument Sans Variable', sans-serif; letter-spacing: -.04em; }
+.landing-page .landing-hero .landing-ticket-feature h2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  margin: 0;
+  color: #151735;
+  font: 800 clamp(23px, 2.3vw, 29px)/1.12 'Instrument Sans Variable', sans-serif;
+  letter-spacing: -.05em;
+  overflow-wrap: anywhere;
+}
+.landing-page .landing-hero .landing-ticket-facts { max-width: none; margin: 8px 0 0; color: #5d617d; font-size: 13px; line-height: 1.4; }
+.landing-page .landing-hero .is-live .landing-ticket-meta { margin-top: 20px; padding-top: 16px; border-top: 1px solid #ececf4; }
+.landing-page .landing-hero .landing-ticket-bottom .landing-ticket-cta {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 24px;
+  border-radius: 999px;
+  background: var(--filme-coral-fill);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color .18s ease, transform .18s ease;
+}
+.landing-page .landing-hero .landing-ticket-bottom .landing-ticket-cta:hover { background: var(--filme-coral-hover); transform: translateX(2px); }
+.landing-page .landing-hero .landing-ticket-bottom .landing-ticket-cta:focus-visible { outline: 3px solid #151735; outline-offset: 3px; }
+.landing-page .landing-hero .landing-ticket-more { color: #5d617d; font-size: 13px; font-weight: 600; text-align: right; }
+.landing-page .landing-ticket-stage.is-live .landing-ticket-float { animation: landing-ticket-in .55s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes landing-ticket-in { from { opacity: 0; transform: translateY(14px) scale(.98); } }
+
+:root[data-theme='dark'] .landing-page .landing-ticket-float { filter: drop-shadow(0 26px 30px #05071c88) drop-shadow(0 4px 10px #05071c55); }
+
+@media (max-width: 767px) {
+  .landing-page .landing-hero .landing-ticket-stage { padding: 48px 12px 8px; }
+  .landing-page .landing-ticket-float::before { inset: 10px 14px -10px; transform: rotate(-2.5deg); }
+  .landing-page .landing-ticket-float::after { inset: 8px 8px -18px; transform: rotate(2deg); }
+  .landing-page .landing-hero .landing-ticket-details { padding: 18px 18px 20px; }
+  .landing-page .landing-hero .landing-ticket-bottom { padding: 16px 18px 18px; }
+  .landing-page .landing-hero .landing-ticket-feature { grid-template-columns: 72px minmax(0, 1fr); gap: 14px; }
+  .landing-page .landing-hero .landing-ticket-poster { width: 72px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-page .landing-ticket-float,
+  .landing-page .landing-ticket-float::before,
+  .landing-page .landing-ticket-float::after,
+  .landing-page .landing-hero .landing-ticket-bottom .landing-ticket-cta { transition: none; }
+  .landing-page .landing-ticket-stage.is-live .landing-ticket-float { animation: none; }
+  .landing-page .landing-ticket-float:hover,
+  .landing-page .landing-ticket-float:hover::before,
+  .landing-page .landing-ticket-float:hover::after { transform: none; }
+  .landing-page .landing-ticket-float::before { transform: rotate(-4deg); }
+  .landing-page .landing-ticket-float::after { transform: rotate(3deg); }
+}
