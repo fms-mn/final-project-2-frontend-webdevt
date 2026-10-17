@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { api, forgetSession, UNAUTHORIZED_EVENT } from '../api';
 import { endDemoSession, getDemoUser, startDemoSession, updateDemoUser } from '../data/demoAccount';
 import { clearPendingBooking } from '../utils/pendingBooking';
+import { forgetSignedIn, rememberSignedIn, wasSignedIn } from '../utils/sessionMemory';
 
 const AuthContext = createContext();
 
@@ -13,6 +14,7 @@ const toUser = (user) => (user
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true); // true while we ask the server who is signed in
+  const [sessionExpired, setSessionExpired] = useState(false); // was signed in, and the session ended by itself
 
   // On first load (and after a page refresh) ask the server whether the session cookie is valid.
   useEffect(() => {
@@ -24,7 +26,7 @@ export function AuthProvider({ children }) {
     }
     const controller = new AbortController();
     api('/users/me', { signal: controller.signal })
-      .then((data) => setUser((current) => current?.isDemo ? current : toUser(data.user)))
+      .then((data) => { rememberSignedIn(); setUser((current) => current?.isDemo ? current : toUser(data.user)); })
       .catch((error) => {
         if (error.name !== 'AbortError') setUser((current) => current?.isDemo ? current : null);
       })
@@ -36,23 +38,43 @@ export function AuthProvider({ children }) {
 
   // The session ended while the site was open (api.js saw a 401).
   useEffect(() => {
-    const handleExpired = () => setUser((current) => current?.isDemo ? current : null);
+    const handleExpired = () => {
+      if (wasSignedIn()) { setSessionExpired(true); forgetSignedIn(); } // only someone who was signed in is told it ended
+      setUser((current) => current?.isDemo ? current : null);
+    };
     window.addEventListener(UNAUTHORIZED_EVENT, handleExpired);
     return () => window.removeEventListener(UNAUTHORIZED_EVENT, handleExpired);
   }, []);
 
-  const login = async (email, password) => {
-    const data = await api('/auth/login', { method: 'POST', body: { email, password } });
+  const finishSignIn = (data) => {
     if (import.meta.env.DEV) endDemoSession();
     const signedInUser = toUser(data.user);
+    rememberSignedIn();
+    setSessionExpired(false);
     setUser(signedInUser);
     return signedInUser;
   };
+
+  // Step one: the password. Answers { user } when signed in, or { verification } when the account has been
+  // away for a long time and a code was emailed (finish with verifyLogin).
+  const login = async (email, password) => {
+    const data = await api('/auth/login', { method: 'POST', body: { email, password } });
+    if (data.verificationRequired) {
+      const { challenge, email: maskedEmail, expiresInMinutes, resendInSeconds } = data;
+      return { verification: { challenge, email: maskedEmail, expiresInMinutes, resendInSeconds } };
+    }
+    return { user: finishSignIn(data) };
+  };
+
+  const verifyLogin = async (challenge, code) => finishSignIn(await api('/auth/login/verify', { method: 'POST', body: { challenge, code } }));
+  const resendLoginCode = (challenge) => api('/auth/login/resend', { method: 'POST', body: { challenge } });
 
   const register = async (name, email, password) => {
     const data = await api('/auth/register', { method: 'POST', body: { name, email, password } });
     if (import.meta.env.DEV) endDemoSession();
     const newUser = toUser(data.user);
+    rememberSignedIn();
+    setSessionExpired(false);
     setUser(newUser);
     return newUser;
   };
@@ -71,6 +93,7 @@ export function AuthProvider({ children }) {
     if (user?.isDemo) {
       endDemoSession();
       forgetSession();
+      forgetSignedIn();
       setUser(null);
       return;
     }
@@ -81,6 +104,7 @@ export function AuthProvider({ children }) {
     }
     clearPendingBooking();
     forgetSession();
+    forgetSignedIn();
     setUser(null);
   };
 
@@ -98,7 +122,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, loginAsDemo, register, logout, updateProfile }}>
+    <AuthContext.Provider value={{ user, loading, sessionExpired, login, verifyLogin, resendLoginCode, loginAsDemo, register, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );
