@@ -6,6 +6,7 @@ import AdminMovieManager from '../components/admin/AdminMovieManager';
 import AdminOverview from '../components/admin/AdminOverview';
 import AdminRooms from '../components/admin/AdminRooms';
 import AdminRules from '../components/admin/AdminRules';
+import AdminGenres from '../components/admin/AdminGenres';
 import AdminShowings from '../components/admin/AdminShowings';
 import AdminSidebar, { ALL_ITEMS } from '../components/admin/AdminSidebar';
 import AdminUsers from '../components/admin/AdminUsers';
@@ -113,7 +114,7 @@ export default function Admin() {
             {tab === 'bookings' && <AdminBookings />}
             {tab === 'rooms' && <AdminRooms />}
             {tab === 'users' && <AdminUsers users={users} reload={reload} />}
-            {tab === 'settings' && <><AdminRules standalone /><AdminArchiveRule onChanged={reload} /></>}
+            {tab === 'settings' && <><AdminGenres /><AdminRules standalone /><AdminArchiveRule onChanged={reload} /></>}
           </div>
         )}
       </div>

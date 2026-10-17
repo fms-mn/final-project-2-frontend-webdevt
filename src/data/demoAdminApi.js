@@ -1,4 +1,5 @@
 import { demoMovies } from './demoMovies.js';
+import { MOVIE_GENRES } from '../utils/genres.js';
 
 const SESSION_KEY = 'filme_preview_user';
 const OFFSET = '+08:00';
@@ -129,6 +130,18 @@ export function isDemoAdminSession() {
 }
 
 export function demoAdminRequest(path, { method = 'GET', body } = {}) {
+  if (path === '/admin/settings' && (method === 'GET' || (method === 'PATCH' && Array.isArray(body?.genres)))) {
+    const key = 'filme_preview_admin_genres_v1';
+    const genres = JSON.parse(localStorage.getItem(key) || 'null') ?? MOVIE_GENRES;
+    if (method === 'PATCH') {
+      const next = body.genres.map(item => typeof item === 'string' ? item.trim() : '');
+      if (next.length > 100 || next.some(item => !item || item.length > 40 || /[,/;|\r\n]/.test(item))
+        || new Set(next.map(item => item.toLowerCase())).size !== next.length) throw new Error('Enter unique genre names, up to 40 characters each, without separators.');
+      localStorage.setItem(key, JSON.stringify(next));
+      return Promise.resolve({ turnaroundMinutes: 15, salesCutoffMinutes: 15, autoArchiveDays: 30, genres: next });
+    }
+    return Promise.resolve({ turnaroundMinutes: 15, salesCutoffMinutes: 15, autoArchiveDays: 30, genres: [...genres] });
+  }
   const pathname = path.split('?')[0];
   if (method === 'GET' && pathname === '/movies') {
     return Promise.resolve(structuredClone(readMovies().filter((movie) => movie.status === 'published')));
@@ -185,7 +198,6 @@ export function demoAdminRequest(path, { method = 'GET', body } = {}) {
   if (method !== 'GET' && method !== 'HEAD') throw new Error('This action is not available in the demo preview.');
   if (pathname === '/users') return Promise.resolve({ users: structuredClone(users), total: users.length });
   if (pathname === '/auditoriums') return Promise.resolve(structuredClone(rooms));
-  if (pathname === '/admin/settings') return Promise.resolve({ turnaroundMinutes: 15, salesCutoffMinutes: 15 });
   if (pathname === '/admin/stats') return Promise.resolve(stats(path));
   if (pathname === '/admin/showtimes') {
     const date = new URLSearchParams(path.split('?')[1] || '').get('date') || day();
