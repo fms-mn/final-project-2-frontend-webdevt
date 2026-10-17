@@ -7,10 +7,9 @@
 
 /* ---- the list ---- */
 .movie-table-2 th:nth-child(2) { width:auto; }
-.movie-table-2 th:nth-child(3) { width:104px; }
-.movie-table-2 th:nth-child(4) { width:24%; }
-.movie-table-2 th:nth-child(5) { width:150px; }
-.movie-table-2 th:nth-child(6),.movie-table-2 th:last-child { width:156px; }
+.movie-table-2 th:nth-child(3) { width:30%; }
+.movie-table-2 th:nth-child(4) { width:150px; }
+.movie-table-2 th:nth-child(5),.movie-table-2 th:last-child { width:156px; }
 .movie-table-2 td small { white-space:normal; }
 .movie-count b { color:var(--m-ink); font-weight:800; }
 .movie-sales { display:grid; gap:2px; }

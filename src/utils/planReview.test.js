@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { applyNextFree, clashWindow, describeClash, fixedSlot, occupied, pickRooms, pickTime, planCounts, skipAllClashes, slotKey, slotsToSave } from './planReview.js';
+import { applyNextFree, autoResolve, clashWindow, describeClash, fixedSlot, occupied, pickRooms, pickTime, planCounts, skipAllClashes, slotKey, slotsToSave } from './planReview.js';
 
 const at = (clock) => `2026-10-24T${clock}:00+08:00`;
 const created = (clock, room = 'r1') => ({ movie: 'm1', auditorium: room, startTime: at(clock), endTime: at('23:00'), ticketPrice: 40000, published: true });
@@ -94,4 +94,30 @@ test('a room already filled by another fix at that time is not offered', () => {
   const taken = occupied(r, { [slotKey(r.skipped[0])]: { type: 'room', room: 'r2' } }, () => 81);
   assert.deepEqual(pickRooms(r.skipped[1], taken, { minutes: 81, gapMinutes: 15 }), []);
   assert.equal(pickRooms(r.skipped[0], taken, { minutes: 81, gapMinutes: 15 }).length, 1);
+});
+
+test('fix all automatically: a nearby free time in the same room, else another room, else the later time', () => {
+  const words = { minutesOf: () => 81, gapMinutes: 15 };
+  const near = clash('14:00', { fixes: { nextFree: at('14:20'), times: [at('14:20')], rooms: [{ _id: 'r2', name: 'Auditorium 2' }] } });
+  const far = clash('14:30', { fixes: { nextFree: at('18:00'), times: [at('18:00')], rooms: [{ _id: 'r2', name: 'Auditorium 2' }] } });
+  const onlyLate = clash('11:00', { fixes: { nextFree: at('22:00'), times: [at('22:00')], rooms: [] } });
+  const nothing = clash('12:30', { fixes: { nextFree: null, times: [], rooms: [] } });
+  const r = { createdCount: 0, created: [], skippedCount: 4, skipped: [near, far, onlyLate, nothing] };
+  const next = autoResolve(r, {}, words);
+  assert.equal(next[slotKey(near)].type, 'time', 'a 20 minute shift keeps the room');
+  assert.equal(next[slotKey(far)].type, 'room', 'a 3.5 hour shift is worse than another room at the same time');
+  assert.equal(next[slotKey(onlyLate)].type, 'time', 'a late time is better than nothing');
+  assert.equal(next[slotKey(nothing)], undefined, 'nothing fits: left for the admin');
+  const again = autoResolve(r, { [slotKey(near)]: { type: 'skip' } }, words);
+  assert.equal(again[slotKey(near)].type, 'skip', 'an earlier decision is kept');
+});
+
+test('fix all automatically does not send two clashes to the same room at the same time', () => {
+  const words = { minutesOf: () => 81, gapMinutes: 15 };
+  const a = clash('14:00', { fixes: { nextFree: null, times: [], rooms: [{ _id: 'r2', name: 'Auditorium 2' }] } });
+  const b = clash('14:30', { fixes: { nextFree: null, times: [], rooms: [{ _id: 'r2', name: 'Auditorium 2' }] } });
+  const r = { createdCount: 0, created: [], skippedCount: 2, skipped: [a, b] };
+  const next = autoResolve(r, {}, words);
+  assert.equal(next[slotKey(a)].type, 'room');
+  assert.equal(next[slotKey(b)], undefined, 'Auditorium 2 is already taken at that time');
 });

@@ -55,7 +55,7 @@ export default function MovieShowingsList({ movie, onOpen, onSchedule, refreshKe
             {movie.status === 'published'
               ? movie.showStatus === 'coming_soon' ? 'The coming-soon announcement is live. Add showings to sell advance tickets.' : 'There are no tickets available. Add showings to sell tickets again.'
               : movie.status === 'draft'
-                ? 'Add showings and publish the movie together in the scheduler.'
+                ? 'Add showings and publish the movie together.'
                 : 'This movie is archived. Set it back to Draft to schedule showings.'}
           </span>
         </div>
