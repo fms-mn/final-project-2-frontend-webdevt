@@ -1,6 +1,7 @@
 import { FiCalendar, FiClock, FiUsers } from 'react-icons/fi';
 import { pesos } from '../../utils/adminTools';
 import { displayTime, shortDate } from '../../utils/manila';
+import PublishChecklist from './PublishChecklist';
 
 // The first tab of a movie's panel: is it on sale, how much has it earned, how are its showings doing.
 function stateOf(movie, summary) {
@@ -19,7 +20,7 @@ function Stat({ label, value, hint }) {
   return <div className="movie-stat"><span>{label}</span><strong>{value}</strong>{hint && <small>{hint}</small>}</div>;
 }
 
-export default function MovieOverview({ movie, state, onTab, onSchedule }) {
+export default function MovieOverview({ movie, state, onTab, onSchedule, onPublish, publishing }) {
   const { summary, error, loading, reload } = state;
   const status = stateOf(movie, summary);
   const sales = summary?.sales;
@@ -27,10 +28,20 @@ export default function MovieOverview({ movie, state, onTab, onSchedule }) {
 
   return (
     <div className="movie-overview">
-      <div className={`movie-state movie-state-${status.tone}`} role="status">
-        <b>{status.title}</b>
-        <span>{status.text}</span>
-      </div>
+      {movie.status === 'draft' ? (
+        <PublishChecklist
+          movie={movie}
+          bookable={summary ? Math.max(0, summary.showings.upcoming - summary.showings.hidden) : null}
+          busy={publishing}
+          onAction={(action) => (action.schedule ? onSchedule(movie._id) : onTab(action.tab))}
+          onPublish={onPublish}
+        />
+      ) : (
+        <div className={`movie-state movie-state-${status.tone}`} role="status">
+          <b>{status.title}</b>
+          <span>{status.text}</span>
+        </div>
+      )}
 
       {error && (
         <p className="movie-field-error" role="alert">{error} <button type="button" className="movie-schedule-link" onClick={reload}>Try again</button></p>

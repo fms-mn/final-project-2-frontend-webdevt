@@ -4,6 +4,7 @@ import { api } from '../../api';
 import ConfirmDialog from './ConfirmDialog';
 import Feedback from './Feedback';
 import MovieBookings from './MovieBookings';
+import { CreateSteps, CustomerPreview, RatingChips, ReleaseNote } from './MovieCreateParts';
 import MovieOverview from './MovieOverview';
 import RowMenu from './RowMenu';
 import useMovieSummary from './useMovieSummary';
@@ -81,7 +82,7 @@ function PosterPreview({ url, title, genre, rating, minutes }) {
 
 const TABS = [['overview', 'Overview'], ['details', 'Details'], ['showings', 'Showings'], ['bookings', 'Bookings'], ['remove', 'Remove']];
 
-function MovieEditor({ draft, setDraft, movie, dirty, startTab, onClose, onSave, busy, error, saved, onSchedule, onPublishNow, onOpenShowing, onChanged }) {
+function MovieEditor({ draft, setDraft, movie, dirty, startTab, onClose, onSave, busy, error, saved, onSchedule, onPublishNow, onPublish, onReview, onOpenShowing, onChanged }) {
   const dialog = useRef(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
@@ -116,7 +117,6 @@ function MovieEditor({ draft, setDraft, movie, dirty, startTab, onClose, onSave,
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const released = isReleased(draft.releaseDate);
   const submit = (mode) => (event) => {
     event?.preventDefault?.();
     const found = movieErrors(draft, { futureRelease: mode === 'publish' && isNew });
@@ -160,17 +160,18 @@ function MovieEditor({ draft, setDraft, movie, dirty, startTab, onClose, onSave,
             <button type="button" className="movie-icon-button" onClick={onClose} aria-label="Close"><FiX aria-hidden="true" /></button>
           </div>
           <div className="movie-saved">
+            <div className="movie-saved-steps"><CreateSteps current={saved.status === 'published' ? 3 : 2} /></div>
             <span className="movie-saved-mark" aria-hidden="true">✓</span>
             <h3>{saved.title}</h3>
             {saved.status === 'published'
               ? <p>It is live. Customers will see it as soon as it has a showing, so schedule some next.</p>
               : isReleased(saved.releaseDate)
-                ? <p>It is saved as a draft. It is already released, so schedule at least one showing, then publish it so customers can see it.</p>
-                : <p>It is saved as a draft. It is a coming-soon movie, so you can publish it now, or schedule showings first.</p>}
+                ? <p className="movie-saved-next">Saved as a draft. It is already released, so it needs at least one showing before it can be published. Add showings next.</p>
+                : <p className="movie-saved-next">Saved as a draft. It opens later, so you can add showings now, or review and publish it as Coming soon right away.</p>}
             {error && <p className="movie-field-error" role="alert">{error}</p>}
             <div className="movie-saved-actions">
-              <button type="button" className="movie-button movie-button-primary" onClick={() => onSchedule(saved.id)}>Schedule showings →</button>
-              {saved.status !== 'published' && !isReleased(saved.releaseDate) && <button type="button" className="movie-button movie-button-outline" disabled={busy} onClick={onPublishNow}>{busy ? 'Publishing…' : 'Publish now'}</button>}
+              <button type="button" className="movie-button movie-button-primary" onClick={() => onSchedule(saved.id)}>Add showings →</button>
+              {saved.status !== 'published' && <button type="button" className="movie-button movie-button-outline" disabled={busy} onClick={() => onReview(saved.id)}>Review and publish</button>}
               <button type="button" className="movie-button movie-button-outline" onClick={onClose}>Done</button>
             </div>
           </div>
@@ -179,11 +180,55 @@ function MovieEditor({ draft, setDraft, movie, dirty, startTab, onClose, onSave,
     );
   }
 
+  const detailsFields = (
+    <>
+                <section className="movie-section" aria-labelledby="movie-sec-poster">
+                  <h3 id="movie-sec-poster">Poster</h3>
+                  <div className="movie-poster-row">
+                    <PosterPreview url={draft.posterUrl} title={draft.title} genre={draft.genre} rating={draft.rating} minutes={draft.duration} />
+                    <div className="movie-poster-fields">
+                      {field('posterUrl', <>Poster image link <em>*</em></>, <input type="text" inputMode="url" placeholder="https://example.com/poster.jpg" {...props('posterUrl')} />, 'Find the poster online, right-click it and choose "Copy image address", then paste it here.')}
+                      {draft.title.trim() && <a className="movie-find-link" href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(`${draft.title} movie poster`)}`} target="_blank" rel="noreferrer">Search for a poster of "{draft.title.trim()}" ↗</a>}
+                    </div>
+                  </div>
+                </section>
+
+                <section className="movie-section" aria-labelledby="movie-sec-details">
+                  <h3 id="movie-sec-details">Details</h3>
+                  {field('title', <>Title <em>*</em></>, <input maxLength="160" {...props('title')} />)}
+                  {field('synopsis', <>Description <em>*</em></>, <textarea rows="4" maxLength="500" {...props('synopsis')} />, `${draft.synopsis.length}/500`)}
+                  <GenrePicker value={draft.genre} existing={movie?.genre} onChange={value => edit('genre')({ target: { value } })} error={errors.genre} />
+                  <RatingChips value={draft.rating} options={RATINGS} onChange={(rating) => setDraft((current) => ({ ...current, rating }))} />
+                  <div className="movie-field-pair">
+                    {field('releaseDate', <>Release date <em>*</em></>, <DatePicker name="releaseDate" label="Release date" required value={draft.releaseDate} onChange={value => edit('releaseDate')({ target: { value } })} />)}
+                    {field('duration', <>Length (minutes) <em>*</em></>, <input type="number" min="1" step="1" {...props('duration')} />, Number(draft.duration) > 0 ? `${durationText(draft.duration)}. Used to work out when each showing ends.` : '')}
+                  </div>
+                  {(isNew || draft.status === 'draft') && <ReleaseNote releaseDate={draft.releaseDate} />}
+                  {field('trailerUrl', 'Trailer (optional)', <input type="text" inputMode="url" placeholder="https://www.youtube.com/watch?v=..." {...props('trailerUrl')} />, 'A YouTube link. It plays in the home page banner and when customers hover over the movie.')}
+                  {draft.title.trim() && <a className="movie-find-link" href={`https://www.youtube.com/results?search_query=${encodeURIComponent(`${draft.title} official trailer`)}`} target="_blank" rel="noreferrer">Find the trailer on YouTube ↗</a>}
+                </section>
+
+                {!isNew && (
+                  <section className="movie-section" aria-labelledby="movie-sec-status">
+                    <h3 id="movie-sec-status">Visibility</h3>
+                    <p className="movie-field-help">Publishing a movie, taking it off sale and restoring it are on the <button type="button" className="movie-schedule-link" onClick={() => setTab('overview')}>Overview</button> tab, where you can see what is still missing.</p>
+                    <details className="create-advanced">
+                      <summary>Change the status by hand</summary>
+                    <label>
+                      <span className="movie-field-label">Status</span>
+                      <select value={draft.status} onChange={edit('status')}>{STATUSES.map((status) => <option key={status} value={status}>{status[0].toUpperCase() + status.slice(1)}</option>)}</select>
+                      <span className="movie-field-help">Draft: hidden, but you can already schedule showings for it. Published: customers can see it; a movie that is already released needs at least one upcoming showing first. Archived: hidden and kept for records. A movie with upcoming showings cannot be hidden or have its length changed until they are cancelled.</span>
+                    </label>
+                    </details>
+                  </section>
+                )}
+    </>
+  );
   const showFooter = isNew || tab === 'details';
   return (
     <div className="movie-drawer-layer">
       <button type="button" className="movie-drawer-backdrop" aria-label="Close movie editor" onClick={onClose} />
-      <aside ref={dialog} className={`movie-drawer${isNew ? '' : ' movie-drawer-wide'}`} role="dialog" aria-modal="true" aria-labelledby="movie-drawer-title">
+      <aside ref={dialog} className={`movie-drawer${isNew ? ' movie-drawer-create' : ' movie-drawer-wide'}`} role="dialog" aria-modal="true" aria-labelledby="movie-drawer-title">
         <div className="movie-drawer-head">
           {isNew ? <h2 id="movie-drawer-title">Add movie</h2> : (
             <div className="movie-drawer-title">
@@ -216,52 +261,11 @@ function MovieEditor({ draft, setDraft, movie, dirty, startTab, onClose, onSave,
             {missing > 0 && <p className="movie-field-error" role="alert">Please fix {missing} {missing === 1 ? 'field' : 'fields'} below.</p>}
             {error && <p className="movie-field-error" role="alert">{error}</p>}
 
-            {!isNew && tab === 'overview' && movie && <MovieOverview movie={movie} state={summary} onTab={setTab} onSchedule={onSchedule} />}
+            {!isNew && tab === 'overview' && movie && <MovieOverview movie={movie} state={summary} onTab={setTab} onSchedule={onSchedule} publishing={busy} onPublish={async () => { if (await onPublish(movie)) summary.reload(); }} />}
 
-            {(isNew || tab === 'details') && (
-              <>
-                <section className="movie-section" aria-labelledby="movie-sec-poster">
-                  <h3 id="movie-sec-poster">Poster</h3>
-                  <div className="movie-poster-row">
-                    <PosterPreview url={draft.posterUrl} title={draft.title} genre={draft.genre} rating={draft.rating} minutes={draft.duration} />
-                    <div className="movie-poster-fields">
-                      {field('posterUrl', <>Poster image link <em>*</em></>, <input type="text" inputMode="url" placeholder="https://example.com/poster.jpg" {...props('posterUrl')} />, 'Find the poster online, right-click it and choose "Copy image address", then paste it here.')}
-                      {draft.title.trim() && <a className="movie-find-link" href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(`${draft.title} movie poster`)}`} target="_blank" rel="noreferrer">Search for a poster of "{draft.title.trim()}" ↗</a>}
-                    </div>
-                  </div>
-                </section>
-
-                <section className="movie-section" aria-labelledby="movie-sec-details">
-                  <h3 id="movie-sec-details">Details</h3>
-                  {field('title', <>Title <em>*</em></>, <input maxLength="160" {...props('title')} />)}
-                  {field('synopsis', <>Description <em>*</em></>, <textarea rows="4" maxLength="500" {...props('synopsis')} />, `${draft.synopsis.length}/500`)}
-                  <GenrePicker value={draft.genre} existing={movie?.genre} onChange={value => edit('genre')({ target: { value } })} error={errors.genre} />
-                  <div className="movie-field-pair">
-                    <label>
-                      <span className="movie-field-label">Age rating</span>
-                      <select value={draft.rating} onChange={edit('rating')}>{RATINGS.map((rating) => <option key={rating}>{rating}</option>)}</select>
-                    </label>
-                  </div>
-                  <div className="movie-field-pair">
-                    {field('releaseDate', <>Release date <em>*</em></>, <DatePicker name="releaseDate" label="Release date" required value={draft.releaseDate} onChange={value => edit('releaseDate')({ target: { value } })} />)}
-                    {field('duration', <>Length (minutes) <em>*</em></>, <input type="number" min="1" step="1" {...props('duration')} />)}
-                  </div>
-                  {field('trailerUrl', 'Trailer (optional)', <input type="text" inputMode="url" placeholder="https://www.youtube.com/watch?v=..." {...props('trailerUrl')} />, 'A YouTube link. It plays in the home page banner and when customers hover over the movie.')}
-                  {draft.title.trim() && <a className="movie-find-link" href={`https://www.youtube.com/results?search_query=${encodeURIComponent(`${draft.title} official trailer`)}`} target="_blank" rel="noreferrer">Find the trailer on YouTube ↗</a>}
-                </section>
-
-                {!isNew && (
-                  <section className="movie-section" aria-labelledby="movie-sec-status">
-                    <h3 id="movie-sec-status">Visibility</h3>
-                    <label>
-                      <span className="movie-field-label">Status</span>
-                      <select value={draft.status} onChange={edit('status')}>{STATUSES.map((status) => <option key={status} value={status}>{status[0].toUpperCase() + status.slice(1)}</option>)}</select>
-                      <span className="movie-field-help">Draft: hidden, but you can already schedule showings for it. Published: customers can see it; a movie that is already released needs at least one upcoming showing first. Archived: hidden and kept for records. A movie with upcoming showings cannot be hidden or have its length changed until they are cancelled.</span>
-                    </label>
-                  </section>
-                )}
-              </>
-            )}
+            {(isNew || tab === 'details') && (isNew
+              ? <><CreateSteps current={1} /><div className="movie-create-grid"><div className="movie-create-main">{detailsFields}</div><CustomerPreview draft={draft} /></div></>
+              : detailsFields)}
 
             {!isNew && tab === 'showings' && movie && <MovieShowingsList movie={movie} onOpen={onOpenShowing} onSchedule={onSchedule} />}
             {!isNew && tab === 'bookings' && movie && <MovieBookings movie={movie} state={summary} />}
@@ -272,10 +276,8 @@ function MovieEditor({ draft, setDraft, movie, dirty, startTab, onClose, onSave,
               <button type="button" className="movie-button movie-button-outline" onClick={onClose}>Cancel</button>
               {isNew ? (
                 <>
-                  <button type="submit" className="movie-button movie-button-outline" disabled={busy}>{busy ? 'Saving…' : 'Save as draft'}</button>
-                  {released
-                    ? <button type="button" className="movie-button movie-button-primary" disabled={busy} onClick={submit('schedule')}>{busy ? 'Saving…' : 'Save and schedule showings'}</button>
-                    : <button type="button" className="movie-button movie-button-primary" disabled={busy} onClick={submit('publish')}>{busy ? 'Saving…' : 'Save and publish'}</button>}
+                  <button type="submit" className="movie-button movie-button-outline" disabled={busy}>{busy ? 'Saving…' : 'Save draft'}</button>
+                  <button type="button" className="movie-button movie-button-primary" disabled={busy} onClick={submit('schedule')}>{busy ? 'Saving…' : 'Next: add showings →'}</button>
                 </>
               ) : (
                 <button type="submit" className="movie-button movie-button-primary" disabled={busy}>{busy ? 'Saving…' : 'Save changes'}</button>
@@ -397,6 +399,11 @@ export default function AdminMovieManager({ movies, reload, onSchedule, onOpenSh
     const done = await run(() => api(`/admin/movies/${saved.id}`, { method: 'PATCH', body: { status: 'published' } }), '', 'save');
     if (done) { setSaved({ ...saved, status: 'published' }); reload(); }
   };
+  // From the saved screen: open the new movie's checklist.
+  const reviewSaved = (movieId) => {
+    const created = movies.find((item) => item._id === movieId);
+    if (created) openEditor(created, 'overview'); else discard();
+  };
   const goSchedule = (movieId) => requestLeave(() => onSchedule?.(movieId));
   const openShowing = (showing) => requestLeave(() => onOpenShowing?.(showing));
   const changed = (message) => { setDraft(null); setInitial(null); setSaved(null); setNotice(message); reload(); };
@@ -407,6 +414,11 @@ export default function AdminMovieManager({ movies, reload, onSchedule, onOpenSh
     return done;
   };
   const publishRow = (movie) => setStatusOf(movie, 'published', `"${movie.title}" is published and its showings are on sale.`, `publish:${movie._id}`);
+  // A released draft with nothing to book cannot be published yet: open its checklist instead of failing.
+  const publishFromList = (movie) => {
+    if (isReleased(movie.releaseDate) && (movie.upcomingShowings ?? 0) === 0) { openEditor(movie, 'overview'); return Promise.resolve(false); }
+    return publishRow(movie);
+  };
   const restoreRow = (movie) => setStatusOf(movie, 'draft', `"${movie.title}" is back as a draft. Schedule showings, then publish it.`, `restore:${movie._id}`);
   const archiveRow = (movie) => setStatusOf(movie, 'archived', `"${movie.title}" is archived and hidden from customers.`, `archive:${movie._id}`);
 
@@ -442,7 +454,7 @@ export default function AdminMovieManager({ movies, reload, onSchedule, onOpenSh
       { key: 'edit', label: 'Edit details', hint: 'Title, poster, trailer, length', icon: FiEdit2, onSelect: () => openEditor(movie, 'details') },
       { key: 'bookings', label: 'Bookings and revenue', hint: hasHistory(movie) ? `${pesos(revenueOf(movie))} from ${sales.bookings} ${sales.bookings === 1 ? 'booking' : 'bookings'}` : 'No bookings yet', icon: FiUsers, onSelect: () => openEditor(movie, 'bookings') },
       movie.status !== 'archived' && { key: 'schedule', label: 'Schedule showings', hint: 'Add times in any room', icon: FiCalendar, onSelect: () => onSchedule?.(movie._id) },
-      movie.status === 'draft' && { key: 'publish', label: 'Publish', hint: 'Put it on sale. A released movie needs a showing first.', icon: FiUploadCloud, onSelect: () => publishRow(movie) },
+      movie.status === 'draft' && { key: 'publish', label: 'Publish', hint: 'Put it on sale. A released movie needs a showing first.', icon: FiUploadCloud, onSelect: () => publishFromList(movie) },
       movie.status === 'archived' && { key: 'restore', label: 'Restore as draft', hint: 'Bring it back so you can schedule showings', icon: FiRotateCcw, onSelect: () => restoreRow(movie) },
       (movie.status === 'published' || upcoming > 0) && { key: 'off', label: 'Take off sale…', hint: 'Cancels coming showings, refunds, and archives', icon: FiArchive, divider: true, onSelect: () => askWithdraw(movie) },
       movie.status === 'draft' && upcoming === 0 && { key: 'archive', label: 'Archive', hint: 'Hide it and keep it for the records', icon: FiArchive, divider: true, onSelect: () => archiveRow(movie) },
@@ -531,11 +543,11 @@ export default function AdminMovieManager({ movies, reload, onSchedule, onOpenSh
         </table>
         {shown.length === 0 && <p className="movie-empty">{movies.length ? 'No movies match these filters.' : 'No movies yet. Add your first movie.'}</p>}
         <div className="movie-mobile-list">
-          {shown.map(movie => <MobileMovieCard key={movie._id} movie={movie} onManage={openEditor} onSchedule={onSchedule} onPublish={publishRow} busy={busy} items={menuItems(movie)} />)}
+          {shown.map(movie => <MobileMovieCard key={movie._id} movie={movie} onManage={openEditor} onSchedule={onSchedule} onPublish={publishFromList} busy={busy} items={menuItems(movie)} />)}
         </div>
         <div className="movie-table-footer">Showing {shown.length} of {movies.length} movies</div>
       </div>
-      {draft && <MovieEditor key={`${draft._id || 'new'}`} draft={draft} setDraft={setDraft} movie={movies.find((item) => item._id === draft._id)} dirty={isDirty} startTab={startTab} onOpenShowing={openShowing} onChanged={changed} onClose={closeEditor} onSave={save} busy={busy} error={error} saved={saved} onSchedule={goSchedule} onPublishNow={publishNow} />}
+      {draft && <MovieEditor key={`${draft._id || 'new'}`} draft={draft} setDraft={setDraft} movie={movies.find((item) => item._id === draft._id)} dirty={isDirty} startTab={startTab} onOpenShowing={openShowing} onChanged={changed} onClose={closeEditor} onSave={save} busy={busy} error={error} saved={saved} onSchedule={goSchedule} onPublishNow={publishNow} onPublish={publishRow} onReview={reviewSaved} />}
       {withdrawDialog}
       {deleteDialog}
       {confirming && <ConfirmDialog title="Discard your changes?" tone="danger" variant="discard" cancelLabel="Keep editing" confirmLabel="Discard changes" busy={busy} onClose={keepEditing} onConfirm={confirmDiscard}>
