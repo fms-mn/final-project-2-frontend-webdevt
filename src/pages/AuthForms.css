@@ -27,3 +27,12 @@
 .auth-booking-notice {padding:16px;margin-bottom:20px;border:1px solid var(--border-color);border-radius:12px;background:var(--bg-secondary);color:var(--text-primary)}
 .auth-booking-notice p {margin:0 0 10px;line-height:1.5}
 .auth-booking-notice a {text-decoration:underline;text-underline-offset:3px}
+
+/* Notices, the emailed code box and the small links of the sign-in help pages */
+.auth-notice {margin:0 0 22px;padding:12px 14px;border:1px solid var(--border-color);border-radius:10px;background:var(--bg-secondary);color:var(--text-primary);font-size:14px;line-height:1.5}
+.auth-form-page .auth-card > .auth-notice:last-of-type {margin-bottom:0}
+.auth-form-page .form-group input.auth-code-input {height:60px;text-align:center;font:700 28px/1 'JetBrains Mono Variable',ui-monospace,Consolas,monospace;letter-spacing:.35em;padding-right:14px}
+.auth-link-button {padding:6px 0;border:0;background:none;color:var(--text-primary);font:inherit;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.auth-link-button:disabled {color:var(--text-muted);text-decoration:none;cursor:default}
+.auth-form-page .auth-footer-split {display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px}
+.auth-form-page .auth-card .btn.btn-primary {display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
