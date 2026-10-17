@@ -22,15 +22,22 @@ function HistoryRow({ booking, getDetail, expanded, onToggle, onRetryRefund, ref
   const refundApplicable = cancelled || ['refunded', 'pending', 'failed'].includes(booking.cancellation?.refund?.status);
   const paymentStatus = booking.payment?.status || booking.paymentStatus || booking.cancellation?.paymentStatus;
   const paymentLabels = { paid: 'Paid', refunded: 'Refunded', unpaid: 'Unpaid', failed: 'Failed', awaiting_approval: 'Awaiting approval', not_taken: 'No payment collected' };
+  const test = isTestBooking(booking);
+  const refundRecord = booking.cancellation?.refund;
+  const refundState = refundRecord?.status;
+  const showRefund = ['refunded', 'pending', 'failed'].includes(refundState);
+  const simulatedRefund = refundRecord?.mode === 'simulated';
+  const refundAmount = Number.isInteger(refundRecord?.amount) && refundRecord.amount >= 0 ? refundRecord.amount / 100 : null;
+  const paymentAmount = Number.isInteger(booking.payment?.amount) && booking.payment.amount >= 0 ? booking.payment.amount / 100 : null;
   return <li className="history-record">
     <time className="history-time" dateTime={booking.showtime?.startTime || undefined}>{info.time}</time>
-    <article className="history-card" onClick={event => {
+    <article className={`history-card${expanded ? ' is-expanded' : ''}`} onClick={event => {
       if (!event.target.closest('.history-details, button, a, input, select, textarea')) onToggle();
     }}>
       <div className="history-row">
         <div className="history-main">
         <h4 className="history-movie">{booking.movie?.title || 'Movie no longer in catalog'}</h4>
-        <p className="history-mobile-showtime">{info.time} · {info.room}</p>
+        <p className="history-mobile-showtime">{info.time}<span className="history-mobile-room"> · {info.room}</span></p>
         <div className="history-seats">{booking.seats.map(seat => <span className="history-seat" key={seat}>{seat}</span>)}<small className="history-room">{info.room}</small></div>
         </div>
         <div className="history-side">
@@ -39,12 +46,31 @@ function HistoryRow({ booking, getDetail, expanded, onToggle, onRetryRefund, ref
         </div>
       </div>
       <button type="button" className="history-expand" aria-expanded={expanded} aria-controls={detailsId} aria-label={(expanded ? 'Hide' : 'Show') + ' details for ' + (booking.movie?.title || 'booking') + ', ' + info.date + ', ' + info.code} onClick={onToggle}><span>{expanded ? 'Hide details' : 'Details'}</span><FiChevronDown aria-hidden="true" /></button>
-      {byCinema && <p className="ticket-note is-cancelled" role="note">The cinema cancelled this showing{booking.paymentStatus === 'refunded' ? ', and your payment was refunded in full' : ''}.</p>}
+      {byCinema && <p className="ticket-note is-cancelled" role="note">The cinema cancelled this showing.</p>}
       <div className="history-details" id={detailsId} hidden={!expanded}>
-        <dl className="history-reference-grid"><div><dt>Reference</dt><dd className="ticket-code">{info.code}</dd></div><div><dt>Payment</dt><dd>{paymentLabels[paymentStatus] || 'Unavailable'}</dd></div>{refundApplicable && refund.reference && <div><dt>Refund reference</dt><dd>{refund.reference}</dd></div>}</dl>
-        {refundApplicable ? <PaymentRefundInfo info={booking.cancellation} after={cancelled} compact onRetry={onRetryRefund} loading={refundLoading} error={refundError} /> : <p className="history-payment-note">{isTestBooking(booking) ? 'Test booking. No real money was charged. Not valid for cinema admission.' : 'Payment mode unverified. Not valid for cinema admission.'}</p>}
-        {booking.payment && <dl className="history-payment-extra"><div><dt>{isTestBooking(booking) ? 'Simulated payment amount' : 'Payment amount'}</dt><dd>{money(booking.payment.amount != null ? booking.payment.amount / 100 : null)}</dd></div>{booking.payment.reference && <div><dt>Payment reference</dt><dd>{booking.payment.reference}</dd></div>}</dl>}
-        {refundApplicable && isTestBooking(booking) && <p className="history-ticket-disclaimer">Test booking · Not valid for cinema admission.</p>}
+        <div className="history-receipt-columns">
+          <section className="history-booking" aria-label="Booking">
+            <h5 className="history-receipt-heading">Booking</h5>
+            <dl><div><dt>Reference</dt><dd className="ticket-code">{info.code}</dd></div><div><dt>Payment status</dt><dd><span className={`history-payment-badge${['paid', 'refunded'].includes(paymentStatus) ? ' is-complete' : paymentStatus === 'failed' ? ' is-failed' : ''}`}>{paymentLabels[paymentStatus] || 'Unavailable'}</span></dd></div></dl>
+          </section>
+          <section className="history-activity" aria-label="Payment activity">
+            <h5 className="history-receipt-heading">Payment activity</h5>
+            <ul className="history-transactions">
+              {booking.payment && <li className="history-transaction">
+                <div><strong>{test ? 'Simulated payment' : 'Payment'}</strong><span className="history-transaction-reference">{booking.payment.reference || 'Payment reference unavailable'}</span>{!['paid', 'refunded'].includes(booking.payment.status) && <small>{paymentLabels[booking.payment.status] || 'Payment status unavailable'}</small>}</div>
+                <span className="history-transaction-amount">{money(paymentAmount)}</span>
+              </li>}
+              {showRefund && <li className={`history-transaction history-refund-transaction is-${refundState}`}>
+                <div><strong>{simulatedRefund ? 'Simulated refund' : 'Refund'} <span className="history-transaction-status">{refundState === 'refunded' ? 'Recorded' : refundState === 'pending' ? 'Pending' : 'Failed'}</span></strong><span className="history-transaction-reference">{refundRecord.reference || 'Refund reference unavailable'}</span></div>
+                <span className="history-transaction-amount">{refundState === 'refunded' && refundAmount !== null ? '−' : ''}{money(refundAmount)}</span>
+              </li>}
+            </ul>
+            {!booking.payment && <p className="history-payment-note">No payment transaction available.</p>}
+            {refundApplicable ? <PaymentRefundInfo info={booking.cancellation} after={cancelled} compact onRetry={onRetryRefund} loading={refundLoading} error={refundError} /> : <div className="history-information-panel"><p>The amount shown is the original booking amount. {test ? 'No real money was charged or will be returned.' : 'Payment mode unverified.'}</p></div>}
+            {refundApplicable && (test || simulatedRefund) && (refundLoading || refundError || !refund.message.includes('No real money')) && <p className="history-simulation-note">No real money was charged or will be returned.</p>}
+          </section>
+        </div>
+        <p className="history-ticket-disclaimer">{test ? 'Test booking · Not valid for cinema admission.' : 'Not valid for cinema admission.'}</p>
       </div>
     </article>
   </li>;

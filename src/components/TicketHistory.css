@@ -101,3 +101,79 @@
   .history-sort select {font-size:13px;padding-inline:10px}
 }
 @media(prefers-reduced-motion:reduce) {.history-expand svg {transition:none}}
+
+/* Receipt layout is local to the expanded history card. */
+.history-card.is-expanded {
+  --wallet-card:#fff;--wallet-ink:#30252a;--wallet-muted:#70636a;--wallet-divider:#eee4e8;
+  --wallet-control:#f5eff1;--wallet-soft:#fff0f3;--wallet-seat-border:#f0ccd5;--wallet-refund-ink:#753247;
+  --history-header:color-mix(in srgb,var(--filme-coral-fill) 40%,#200e17);
+  --history-success:#08734f;--history-success-bg:#e5f5ed;
+  padding:0;border:1px solid var(--wallet-divider);border-radius:20px;overflow:hidden;cursor:auto;
+}
+:root[data-theme='dark'] .history-card.is-expanded {
+  --wallet-card:#241e22;--wallet-ink:#f8f0f3;--wallet-muted:#c5b6be;--wallet-divider:#49353f;
+  --wallet-control:#382b32;--wallet-soft:#3b222d;--wallet-seat-border:#754153;--wallet-refund-ink:#f3bfce;
+  --history-success:#89dfb8;--history-success-bg:#203b30;
+}
+.history-card.is-expanded .history-row {padding:26px 64px 26px 26px;gap:22px;background:var(--history-header);color:#fff;align-items:center;cursor:pointer}
+.history-card.is-expanded .history-movie {font-size:22px;line-height:1.25;color:#fff}
+.history-card.is-expanded .history-seat {min-height:23px;padding:2px 8px;border:1px solid #ffffff30;border-radius:6px;background:#ffffff18;color:#fff;font-size:12px}
+.history-card.is-expanded .history-room,.history-card.is-expanded .history-mobile-showtime {color:#f1d9e1}
+.history-card.is-expanded .history-side {max-width:190px;align-items:flex-end;gap:10px}
+.history-card.is-expanded .history-status {order:-1;max-width:190px}
+.history-card.is-expanded .history-badge {background:#fff0f3;color:#8b1839;border-radius:99px;font-size:11px;padding:4px 10px}
+.history-card.is-expanded .history-refund-brief {color:#f1d9e1}
+.history-card.is-expanded .history-amount strong {color:#fff;font-size:27px;overflow-wrap:anywhere;white-space:normal}
+.history-card.is-expanded .history-amount small {color:#f1d9e1;font-size:11px}
+.history-card.is-expanded .history-expand {position:absolute;top:12px;right:10px;width:44px;min-height:44px;margin:0;padding:8px;border:0;border-radius:9px;color:#fff}
+.history-card.is-expanded .history-expand:hover {background:#ffffff15}
+.history-card.is-expanded .history-expand > span {position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.history-card.is-expanded .history-expand:focus-visible {outline-color:#fff;outline-offset:-4px}
+.history-card.is-expanded > .ticket-note {margin:18px 26px 0;background:var(--wallet-soft);color:var(--wallet-refund-ink)}
+.history-card.is-expanded .history-details {margin:0;padding:26px;border:0}
+.history-receipt-columns {display:grid;grid-template-columns:minmax(130px,1fr) minmax(0,2.3fr);gap:28px}
+.history-receipt-columns > section {min-width:0}
+.history-receipt-heading {margin:0 0 20px;color:var(--wallet-muted);font:500 10px/1.5 'JetBrains Mono Variable',monospace;letter-spacing:.1em;text-transform:uppercase}
+.history-details .history-booking dl {display:grid;grid-template-columns:minmax(0,1fr);gap:20px;margin:0}
+.history-details dt {font-size:11px}
+.history-details .history-booking dd {font-size:13px}
+.history-details .ticket-code,.history-transaction-reference {font-family:'JetBrains Mono Variable',monospace}
+.history-payment-badge {display:inline-flex;max-width:100%;padding:4px 9px;border-radius:99px;background:var(--wallet-control);color:var(--wallet-muted);font-size:11px;line-height:1.4}
+.history-payment-badge.is-complete {background:var(--history-success-bg);color:var(--history-success)}
+.history-payment-badge.is-failed {background:var(--wallet-soft);color:var(--wallet-accent)}
+.history-transactions {margin:0;padding:0;list-style:none}
+.history-transaction {display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;padding:0 0 18px;border-bottom:1px solid var(--wallet-divider)}
+.history-transaction + .history-transaction {padding-top:18px}
+.history-transaction > div {min-width:0}
+.history-transaction strong {display:block;font-size:13px;line-height:1.5;font-weight:600}
+.history-transaction-reference {display:block;margin-top:5px;font-size:11px;line-height:1.6;color:var(--wallet-muted);overflow-wrap:anywhere}
+.history-transaction small {display:block;margin-top:4px;color:var(--wallet-muted);font-size:11px}
+.history-transaction-amount {text-align:right;font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.history-transaction-status {display:inline-block;margin-left:4px;font-size:10px;font-weight:500;color:var(--wallet-muted)}
+.history-refund-transaction.is-refunded :is(.history-transaction-amount,.history-transaction-status) {color:var(--history-success)}
+.history-refund-transaction.is-failed .history-transaction-status {color:var(--wallet-accent)}
+.history-details .history-activity .payment-refund-info,.history-information-panel {margin-top:14px;padding:12px 14px;border:1px solid var(--wallet-seat-border);border-radius:12px;font-size:12px;line-height:1.7;background:var(--wallet-soft);color:var(--wallet-refund-ink)}
+.history-information-panel p {margin:0}
+.history-simulation-note {margin:10px 0 0;font-size:12px;line-height:1.6;color:var(--wallet-muted)}
+.history-card.is-expanded .history-ticket-disclaimer {margin:24px 0 0;color:var(--wallet-muted);font-size:11px}
+@media(max-width:700px) {
+  .history-receipt-columns {grid-template-columns:minmax(0,1fr);gap:26px}
+  .history-details .history-booking dl {grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+  .history-receipt-heading {margin-bottom:14px}
+}
+@media(max-width:540px) {
+  .history-card.is-expanded .history-row {grid-template-columns:minmax(0,1fr);padding:22px 20px;gap:20px}
+  .history-card.is-expanded .history-main {padding-right:38px}
+  .history-card.is-expanded .history-movie {font-size:21px}
+  .history-card.is-expanded .history-side {flex-direction:row-reverse;align-items:center;justify-content:space-between;max-width:none;gap:14px}
+  .history-card.is-expanded .history-status {order:0;text-align:left;max-width:50%}
+  .history-card.is-expanded .history-amount strong {font-size:25px}
+  .history-card.is-expanded .history-details {padding:22px 20px}
+  .history-card.is-expanded .history-room {display:inline;font-size:12px}
+  .history-card.is-expanded .history-mobile-showtime {font-size:12px}
+  .history-card.is-expanded .history-mobile-room {display:none}
+  .history-card.is-expanded > .ticket-note {margin-inline:20px}
+  .history-transaction {gap:10px}
+  .history-transaction-amount {font-size:13px}
+  .history-details .history-booking dl {grid-template-columns:minmax(0,1fr)}
+}
