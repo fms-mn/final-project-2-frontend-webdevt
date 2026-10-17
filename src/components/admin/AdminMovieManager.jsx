@@ -81,7 +81,7 @@ function PosterPreview({ url, title, genre, rating, minutes }) {
 
 const TABS = [['overview', 'Overview'], ['details', 'Details'], ['showings', 'Showings'], ['bookings', 'Bookings'], ['remove', 'Remove']];
 
-function MovieEditor({ draft, setDraft, movie, dirty, startTab, onClose, onSave, busy, error, saved, onSchedule, onPublishNow, onOpenShowing, onChanged }) {
+function MovieEditor({ draft, setDraft, movie, dirty, startTab, onClose, onSave, busy, error, saved, onSchedule, onPublishNow, onOpenShowing, onChanged, onDeleted }) {
   const dialog = useRef(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
@@ -265,7 +265,7 @@ function MovieEditor({ draft, setDraft, movie, dirty, startTab, onClose, onSave,
 
             {!isNew && tab === 'showings' && movie && <MovieShowingsList movie={movie} onOpen={onOpenShowing} onSchedule={onSchedule} />}
             {!isNew && tab === 'bookings' && movie && <MovieBookings movie={movie} state={summary} />}
-            {!isNew && tab === 'remove' && movie && <MovieRemove movie={movie} onChanged={onChanged} />}
+            {!isNew && tab === 'remove' && movie && <MovieRemove movie={movie} onChanged={onChanged} onDeleted={onDeleted} />}
           </div>
           {showFooter && (
             <div className="movie-editor-actions">
@@ -351,6 +351,7 @@ export default function AdminMovieManager({ movies, reload, onSchedule, onOpenSh
   const [startTab, setStartTab] = useState('overview');
   const [saved, setSaved] = useState(null); // { id, title, status }: the movie just added, while its next steps show
   const [dialog, setDialog] = useState(null); // { kind: 'withdraw' | 'delete', movie, plan, loading }
+  const [deletedMovie, setDeletedMovie] = useState(null);
   const genres = useMemo(() => [...new Set(movies.flatMap(movie => splitGenres(movie.genre)))].sort(), [movies]);
   const shown = useMemo(() => movies
     .filter((movie) => movie.title.toLowerCase().includes(query.trim().toLowerCase()))
@@ -400,6 +401,7 @@ export default function AdminMovieManager({ movies, reload, onSchedule, onOpenSh
   const goSchedule = (movieId) => requestLeave(() => onSchedule?.(movieId));
   const openShowing = (showing) => requestLeave(() => onOpenShowing?.(showing));
   const changed = (message) => { setDraft(null); setInitial(null); setSaved(null); setNotice(message); reload(); };
+  const movieDeleted = (title) => { setDraft(null); setInitial(null); setSaved(null); setDialog(null); clear(); setDeletedMovie(title); reload(); };
 
   const setStatusOf = async (movie, next, message, id) => {
     const done = await run(() => api(`/admin/movies/${movie._id}`, { method: 'PATCH', body: { status: next } }), message, id);
@@ -430,8 +432,8 @@ export default function AdminMovieManager({ movies, reload, onSchedule, onOpenSh
   const askDelete = (movie) => { clear(); setDialog({ kind: 'delete', movie }); };
   const confirmDelete = async () => {
     const { movie } = dialog;
-    const done = await run(() => api(`/movies/${movie._id}`, { method: 'DELETE' }), `"${movie.title}" was deleted.`, `remove:${movie._id}`);
-    if (done) { setDialog(null); reload(); }
+    const done = await run(() => api(`/movies/${movie._id}`, { method: 'DELETE' }), '', `remove:${movie._id}`);
+    if (done) movieDeleted(movie.title);
   };
 
   const menuItems = (movie) => {
@@ -535,9 +537,12 @@ export default function AdminMovieManager({ movies, reload, onSchedule, onOpenSh
         </div>
         <div className="movie-table-footer">Showing {shown.length} of {movies.length} movies</div>
       </div>
-      {draft && <MovieEditor key={`${draft._id || 'new'}`} draft={draft} setDraft={setDraft} movie={movies.find((item) => item._id === draft._id)} dirty={isDirty} startTab={startTab} onOpenShowing={openShowing} onChanged={changed} onClose={closeEditor} onSave={save} busy={busy} error={error} saved={saved} onSchedule={goSchedule} onPublishNow={publishNow} />}
+      {draft && <MovieEditor key={`${draft._id || 'new'}`} draft={draft} setDraft={setDraft} movie={movies.find((item) => item._id === draft._id)} dirty={isDirty} startTab={startTab} onOpenShowing={openShowing} onChanged={changed} onDeleted={movieDeleted} onClose={closeEditor} onSave={save} busy={busy} error={error} saved={saved} onSchedule={goSchedule} onPublishNow={publishNow} />}
       {withdrawDialog}
       {deleteDialog}
+      {deletedMovie !== null && <ConfirmDialog title="Movie deleted" tone="info" cancelLabel="OK" onClose={() => setDeletedMovie(null)}>
+        <p>&quot;{deletedMovie}&quot; was deleted.</p>
+      </ConfirmDialog>}
       {confirming && <ConfirmDialog title="Discard your changes?" tone="danger" variant="discard" cancelLabel="Keep editing" confirmLabel="Discard changes" busy={busy} onClose={keepEditing} onConfirm={confirmDiscard}>
         <p>You have unsaved movie changes. Leaving now will discard them.</p>
       </ConfirmDialog>}
