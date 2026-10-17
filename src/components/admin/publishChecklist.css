@@ -1,0 +1,38 @@
+/* The publish checklist and the preview of what customers will see. */
+.publish-card { display: grid; gap: 16px; padding: 16px; border: 1.5px solid var(--a-line); border-radius: 14px; background: var(--a-paper); color: var(--a-ink); }
+.publish-main { display: grid; gap: 12px; min-width: 0; }
+.publish-head { display: grid; gap: 8px; }
+.publish-head h3 { margin: 0; font: 800 18px/1.25 'Instrument Sans Variable', sans-serif; }
+.publish-progress { height: 8px; overflow: hidden; border-radius: 99px; background: var(--a-ground); }
+.publish-progress i { display: block; height: 100%; border-radius: 99px; background: var(--a-ok); transition: width .25s; }
+.publish-checks { margin: 0; padding: 0; list-style: none; display: grid; }
+.publish-check { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--a-line-soft); }
+.publish-check:last-child { border-bottom: 0; }
+.publish-check b { font-size: 14px; }
+.publish-check p { margin: 2px 0 0; color: var(--a-soft); font-size: 13px; line-height: 1.4; }
+.publish-check-icon { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; font-size: 15px; background: var(--a-ground); color: var(--a-muted); }
+.publish-check.ok .publish-check-icon { background: var(--a-ok-bg); color: var(--a-ok); }
+.publish-check.blocked .publish-check-icon { background: color-mix(in srgb, var(--a-down) 14%, var(--a-paper)); color: var(--a-down); }
+.publish-check-action { white-space: nowrap; }
+.publish-banner { margin: 0; padding: 11px 14px; border-radius: 10px; font-size: 14px; line-height: 1.45; }
+.publish-banner.ok { background: var(--a-ok-bg); color: var(--a-ok); }
+.publish-banner.bad { background: color-mix(in srgb, var(--a-down) 12%, var(--a-paper)); color: var(--a-down); }
+.publish-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 14px; }
+.publish-foot > span { flex: 1 1 200px; color: var(--a-soft); font-size: 13px; }
+.publish-foot .movie-button { display: inline-flex; align-items: center; gap: 8px; }
+.publish-foot .movie-button:disabled { cursor: not-allowed; }
+
+.publish-outcome { display: grid; gap: 10px; align-content: start; min-width: 0; padding: 14px; border: 1px solid var(--a-line-soft); border-radius: 12px; background: var(--a-ground); }
+.publish-outcome-label { color: var(--a-muted); font: 700 11px 'JetBrains Mono Variable', monospace; letter-spacing: .1em; text-transform: uppercase; }
+.publish-outcome-card { display: grid; gap: 4px; padding: 12px; border-radius: 10px; background: var(--a-paper); border: 1px solid var(--a-line-soft); }
+.publish-outcome-card small { color: var(--a-soft); font-size: 12.5px; }
+.publish-outcome-tag { justify-self: start; padding: 4px 10px; border-radius: 99px; font: 700 11px 'JetBrains Mono Variable', monospace; letter-spacing: .08em; text-transform: uppercase; background: var(--a-ground); color: var(--a-muted); }
+.publish-outcome-tag.soon { background: var(--a-warn-bg); color: var(--a-warn-text); }
+.publish-outcome-tag.live { background: var(--a-ok-bg); color: var(--a-ok); }
+.publish-outcome-tag.none { background: color-mix(in srgb, var(--a-down) 12%, var(--a-paper)); color: var(--a-down); }
+.publish-where { margin: 0; padding: 0; list-style: none; display: grid; }
+.publish-where li { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--a-line-soft); font-size: 13px; }
+.publish-where li:last-child { border-bottom: 0; }
+.publish-where .yes { color: var(--a-ok); font-weight: 700; text-align: right; }
+.publish-where .no { color: var(--a-muted); text-align: right; }
+@media (max-width: 520px) { .publish-check { grid-template-columns: 28px minmax(0, 1fr); } .publish-check-action { grid-column: 2; justify-self: start; } }
