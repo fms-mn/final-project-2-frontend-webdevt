@@ -12,6 +12,8 @@ import { RANGES, rangeFor } from '../../utils/schedule';
 import { COMMON_TIMES, TIME_OPTIONS, clock12, defaultStart, endsText, quickDays } from '../../utils/timeSlots';
 import Drawer from './Drawer';
 import Feedback from './Feedback';
+import PlanReview from './PlanReview';
+import { fixedKey, planCounts, slotKey, slotsToSave } from '../../utils/planReview';
 
 const MAX_DAYS = 31;
 // Monday first, as people read a week. The number is what the server expects (Sunday = 0).
@@ -22,7 +24,7 @@ const dayLabel = (day) => new Date(`${day}T12:00:00+08:00`).toLocaleDateString('
 // Schedule many showings, or copy one day to other days. The admin taps a movie, a room, some days
 // and some times; the screen works out the rest and checks it against the schedule as they go, so
 // "Schedule 27 showings" is a button they press once they have seen what will happen.
-export default function AdminBulk({ movies, rooms, onDone, open, mode, onModeChange, onClose, defaultDay, preset }) {
+export default function AdminBulk({ movies, rooms, onDone, open, mode, onModeChange, onClose, defaultDay, preset, gapMinutes = 15 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   // Drafts can be scheduled too (customers see the showings once the movie is published); archived ones cannot.
@@ -46,6 +48,9 @@ export default function AdminBulk({ movies, rooms, onDone, open, mode, onModeCha
   const [copyCustom, setCopyCustom] = useState({ startDate: shiftDay(today(), 1), endDate: shiftDay(today(), 7) });
   const [preview, setPreview] = useState(null); // { ok, result } | { problem }
   const [checking, setChecking] = useState(false);
+  const [decisions, setDecisions] = useState({}); // what the admin chose for each clash: { time | room | skip }
+  const [collisions, setCollisions] = useState(() => new Map()); // fixes that no longer fit, with the reason
+  const [refresh, setRefresh] = useState(0);
   const ticket = useRef(0);
   const saving = useRef(false);
 
@@ -97,7 +102,7 @@ export default function AdminBulk({ movies, rooms, onDone, open, mode, onModeCha
     const timer = setTimeout(async () => {
       try {
         const result = await api(request.path, { method: 'POST', body: { ...request.body, skipConflicts: true, dryRun: true } });
-        if (ticket.current === mine) setPreview({ result });
+        if (ticket.current === mine) { setPreview({ result }); setDecisions({}); setCollisions(new Map()); }
       } catch (err) {
         if (ticket.current === mine) setPreview({ problem: reasons(err) });
       } finally {
@@ -105,32 +110,53 @@ export default function AdminBulk({ movies, rooms, onDone, open, mode, onModeCha
       }
     }, 400);
     return () => { clearTimeout(timer); ticket.current += 1; };
-  }, [open, request]);
+  }, [open, request, refresh]);
+
+  // Two fixes can land on the same time. Check the plan as it now stands and flag any fix that no longer fits.
+  const planResult = preview?.result;
+  useEffect(() => {
+    if (!open || !planResult) return undefined;
+    const fixes = (planResult.skipped || []).filter((item) => item.kind === 'clash' && decisions[slotKey(item)] && decisions[slotKey(item)].type !== 'skip');
+    if (fixes.length === 0) { setCollisions((current) => (current.size ? new Map() : current)); return undefined; }
+    let current = true;
+    const timer = setTimeout(async () => {
+      try {
+        const check = await api('/showtimes/slots', { method: 'POST', body: { slots: slotsToSave(planResult, decisions), skipConflicts: true, dryRun: true } });
+        if (!current) return;
+        const reasonsByKey = new Map(check.skipped.map((item) => [slotKey(item), item.reason]));
+        const next = new Map();
+        for (const item of fixes) {
+          const key = fixedKey(item, decisions[slotKey(item)]);
+          if (reasonsByKey.has(key)) next.set(key, `This fix no longer fits: ${reasonsByKey.get(key)}. Choose another fix.`);
+        }
+        setCollisions(next);
+      } catch { /* the final save checks again */ }
+    }, 300);
+    return () => { current = false; clearTimeout(timer); };
+  }, [open, planResult, decisions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!open) return null;
 
   const result = preview?.result;
-  const skipped = result?.skippedCount || 0;
-  const count = result?.createdCount || 0;
+
+  const counts = result ? planCounts(result, decisions, collisions) : { ready: 0, open: 0, fixed: 0, skipped: 0, total: 0 };
+  const plural = (n, word) => `${n} ${n === 1 ? word : word === 'clash' ? 'clashes' : `${word}s`}`;
 
   const schedule = async () => {
-    if (saving.current || checking || !result || count === 0) return;
+    if (saving.current || checking || !result || counts.open > 0 || counts.total === 0) return;
     const dates = mode === 'many' ? manyDates : copyDates;
     const invalidDate = (mode === 'copy' && dateProblem(copyFrom, { required: true })) || dateProblem(dates.startDate, { min: today(), required: true }) || dateProblem(dates.endDate, { min: dates.startDate, required: true });
     if (invalidDate) { setError(invalidDate); return; }
-    if (mode === 'many' && daysBetween(dates.startDate, dates.endDate).some(day => (!request.body.weekdays || request.body.weekdays.includes(new Date(`${day}T12:00:00+08:00`).getUTCDay())) && times.some(time => Date.parse(`${day}T${time}:00+08:00`) <= Date.now()))) { setError('A selected showtime has already passed. Choose later times or another day.'); return; }
     saving.current = true;
     setError('');
     setBusy(true);
     try {
-      const done = await api(request.path, { method: 'POST', body: { ...request.body, skipConflicts: skipped > 0, dryRun: false } });
-      if (!done.created.length) {
-        setError(['No showings were scheduled.', ...done.skipped.map(item => `${item.label}: ${item.reason}`)].join(' '));
-        return;
-      }
-      onDone(`${done.created.length} showing${done.created.length === 1 ? '' : 's'} scheduled${done.skippedCount ? `, ${done.skippedCount} skipped` : ''}`, mode === 'many' ? chosenMovie?._id : null, mode === 'many' && span === 'one' ? oneDay : null, done);
+      // Save exactly what was reviewed: the ready showings plus the fixes, all or nothing.
+      const done = await api('/showtimes/slots', { method: 'POST', body: { slots: slotsToSave(result, decisions), skipConflicts: false, dryRun: false } });
+      onDone(`${plural(done.created.length, 'showing')} scheduled${counts.skipped ? `, ${counts.skipped} left out` : ''}`, mode === 'many' ? chosenMovie?._id : null, mode === 'many' && span === 'one' ? oneDay : null, done);
     } catch (err) {
-      setError(reasons(err));
+      setError(`${reasons(err)} The schedule may have changed while you were deciding, so it is being checked again.`);
+      setRefresh((value) => value + 1);
     } finally {
       saving.current = false;
       setBusy(false);
@@ -162,8 +188,10 @@ export default function AdminBulk({ movies, rooms, onDone, open, mode, onModeCha
   );
 
   return (
-    <Drawer title={mode === 'copy' ? 'Copy a day' : span === 'one' ? 'Add showings' : 'Schedule showings'} onClose={() => { if (!saving.current) onClose(); }} wide>
+    <Drawer title={mode === 'copy' ? 'Copy a day' : span === 'one' ? 'Add showings' : 'Schedule showings'} onClose={() => { if (!saving.current) onClose(); }} className="admin-drawer-planner">
       <fieldset className="bulk-save-fields" disabled={busy} aria-busy={busy}>
+      <div className="planner-grid">
+      <div className="planner-inputs">
       <div className="when-chips bulk-mode" role="group" aria-label="What to do">
         <button type="button" className={`when-chip${mode === 'many' ? ' active' : ''}`} aria-pressed={mode === 'many'} onClick={() => onModeChange('many')}>New showings</button>
         <button type="button" className={`when-chip${mode === 'copy' ? ' active' : ''}`} aria-pressed={mode === 'copy'} onClick={() => onModeChange('copy')}>Copy a day</button>
@@ -261,31 +289,33 @@ export default function AdminBulk({ movies, rooms, onDone, open, mode, onModeCha
         </div>
       )}
 
+      </div>
+      <div className="planner-review">
+        {preview?.problem
+          ? <p className="bulk-problem" role="alert">{preview.problem}</p>
+          : !result
+            ? <div className="planner-review-empty">{checking ? 'Checking the schedule…' : 'Choose a movie, a room, days and times. The plan appears here with anything that clashes.'}</div>
+            : <PlanReview result={result} decisions={decisions} setDecisions={setDecisions} collisions={collisions} gapMinutes={gapMinutes} rooms={rooms} movies={movies} />}
+      </div>
+      </div>
+
       <div className="bulk-footer">
         <div className="bulk-result" aria-live="polite">
-          {preview?.problem && <p className="bulk-problem">{preview.problem}</p>}
-          {checking && !preview?.problem && <p className="bulk-hint">Checking the schedule…</p>}
-          {!checking && result && (
-            <>
-              <p className="bulk-count">
-                <b>{count}</b> showing{count === 1 ? '' : 's'} will be scheduled
-                {mode === 'many' && chosenMovie && chosenRoom && count > 0 ? <> for <b>{chosenMovie.title}</b> in {chosenRoom.name}, {span === 'one' ? `on ${dayLabel(oneDay)}` : weekdaySummary}, at {pesos(Math.round(Number(price) * 100))} a seat</> : null}.
-              </p>
-              {count === 0 && skipped > 0 && <p className="bulk-problem">Every one of these times clashes with something already scheduled (or has passed). Pick other times or days{mode === 'many' ? ', or another room' : ''}.</p>}
-              {skipped > 0 && (
-                <details className="bulk-skipped">
-                  <summary>{skipped} time{skipped === 1 ? '' : 's'} will be skipped (a clash or a time that has passed)</summary>
-                  <ul>
-                    {result.skipped.slice(0, 12).map((item) => <li key={item.startTime}><b>{item.label}</b>: {item.reason}</li>)}
-                    {skipped > 12 && <li>and {skipped - 12} more</li>}
-                  </ul>
-                </details>
-              )}
-            </>
+          {checking && <p className="bulk-hint">Checking the schedule…</p>}
+          {!checking && result && !preview?.problem && (
+            counts.open > 0
+              ? <p className="planner-status">{plural(counts.open, 'clash')} still {counts.open === 1 ? 'needs' : 'need'} a decision.</p>
+              : counts.total === 0
+                ? <p className="bulk-problem">Nothing can be scheduled with these choices. Pick other times or days{mode === 'many' ? ', or another room' : ''}.</p>
+                : <p className="planner-status">
+                  <b>{counts.total}</b> showing{counts.total === 1 ? '' : 's'} will be scheduled
+                  {mode === 'many' && chosenMovie && chosenRoom ? <> for <b>{chosenMovie.title}</b>{counts.fixed === 0 ? <> in {chosenRoom.name}, {span === 'one' ? `on ${dayLabel(oneDay)}` : weekdaySummary}</> : null}, at {pesos(Math.round(Number(price) * 100))} a seat</> : null}
+                  {counts.fixed > 0 ? `, ${counts.fixed} of them fixed` : ''}{counts.skipped > 0 ? `, ${counts.skipped} left out` : ''}.
+                </p>
           )}
         </div>
-        <button type="button" className="btn btn-primary" disabled={busy || checking || !result || count === 0} aria-busy={busy} onClick={schedule}>
-          <ActionPending pending={busy}>{busy ? 'Scheduling…' : count > 0 ? `${mode === 'copy' ? 'Copy' : 'Schedule'} ${count} showing${count === 1 ? '' : 's'}` : 'Nothing to schedule yet'}</ActionPending>
+        <button type="button" className="btn btn-primary" disabled={busy || checking || !result || counts.open > 0 || counts.total === 0} aria-busy={busy} onClick={schedule}>
+          <ActionPending pending={busy}>{busy ? 'Scheduling…' : checking ? 'Checking…' : counts.open > 0 ? `Decide ${plural(counts.open, 'clash')} first` : counts.total > 0 ? `${mode === 'copy' ? 'Copy' : 'Schedule'} ${plural(counts.total, 'showing')}` : 'Nothing to schedule yet'}</ActionPending>
         </button>
       </div>
       </fieldset>

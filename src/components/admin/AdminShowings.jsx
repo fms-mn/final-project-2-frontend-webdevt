@@ -561,6 +561,7 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, onSch
         mode={bulk.mode}
         preset={bulk.preset}
         defaultDay={date}
+        gapMinutes={gapMinutes}
         onModeChange={(mode) => setBulk((current) => ({ ...current, mode }))}
         onClose={() => setBulk((current) => ({ ...current, open: false }))}
         onDone={(message, movieId, day, result) => { setBulk((current) => ({ ...current, open: false })); setScheduleResult(result); setNotice(message); if (day) setDate(day); afterChange(); }}
