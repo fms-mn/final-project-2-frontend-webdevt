@@ -3,8 +3,9 @@ import { useEffect, useRef } from 'react';
 
 // A panel that slides in from the right over the page: closes with Esc or a click outside,
 // keeps the keyboard inside while open, and gives focus back when it closes.
+// `bare` leaves the body to the caller, which brings its own scrolling area and button bar.
 // It reuses the look of the movie editor (see adminMovies.css).
-export default function Drawer({ title, onClose, children, wide = false, className = '' }) {
+export default function Drawer({ title, onClose, children, wide = false, bare = false, className = '' }) {
   const panel = useRef(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
@@ -37,7 +38,7 @@ export default function Drawer({ title, onClose, children, wide = false, classNa
           <h2 id="admin-drawer-title">{title}</h2>
           <button type="button" className="movie-icon-button" onClick={onClose} aria-label="Close">×</button>
         </div>
-        <div className="movie-editor-scroll admin-drawer-body">{children}</div>
+        {bare ? <div className="movie-editor-form">{children}</div> : <div className="movie-editor-scroll admin-drawer-body">{children}</div>}
       </aside>
     </div>
   );

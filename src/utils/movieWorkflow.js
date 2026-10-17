@@ -12,7 +12,7 @@ export function movieWorkflow(movie, currentDay = today()) {
   if (movie.status === 'draft') {
     if (bookable > 0) return { tone: 'warn', title: 'Ready to publish', text: `${bookable} visible showing${bookable === 1 ? '' : 's'} ready. Publish once to make the movie and these showings available to customers.`, action: 'publish', label: 'Publish movie' };
     if (hidden > 0) return { tone: 'warn', title: 'Showings hidden', text: `${hidden} showing${hidden === 1 ? ' is' : 's are'} hidden. Make a showing visible before putting tickets on sale.`, action: 'showings', label: 'Review showings' };
-    return { tone: 'warn', title: 'Draft · hidden', text: coming ? 'Add showings and publish in one step, or publish a coming-soon announcement from Details.' : 'Add showings and publish in one step. Until then, customers cannot see this movie.', action: 'schedule', label: 'Add showings & publish' };
+    return { tone: 'warn', title: 'Draft · not live', text: coming ? 'Pick showings and go live in one step, or announce it as Coming soon first.' : 'Pick showings and go live in one step. Until then, customers cannot see this movie.', action: 'schedule', label: 'Continue setup' };
   }
   if (bookable > 0) return { tone: 'ok', title: coming ? 'Advance tickets on sale' : 'Tickets on sale', text: `${bookable} showing${bookable === 1 ? '' : 's'} available to customers.${hidden ? ` ${hidden} more hidden.` : ''}`, action: 'schedule', label: 'Add more showings' };
   if (hidden > 0) return { tone: 'warn', title: 'Published · showings hidden', text: 'The movie page is visible, but its showings are hidden. Make them visible to sell tickets.', action: 'showings', label: 'Review showings' };

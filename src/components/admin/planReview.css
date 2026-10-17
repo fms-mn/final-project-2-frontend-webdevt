@@ -76,3 +76,12 @@
   .plan-summary { grid-template-columns: 1fr 1fr; }
   .plan-row { grid-template-columns: 70px minmax(0, 1fr); }
 }
+
+.plan-clear-line { margin: 0; padding: 12px 14px; border-radius: 12px; background: var(--a-ok-bg); color: var(--a-ok); font-size: 14px; line-height: 1.45; }
+.plan-clear-line b { font-size: 16px; }
+.plan-clear-details { padding: 10px 14px; border: 1px dashed var(--a-line); border-radius: 12px; background: var(--a-ground); }
+.plan-clear-details summary { cursor: pointer; font-weight: 700; font-size: 13px; }
+.plan-clear-details .plan-day { margin-top: 10px; }
+.plan-changes { display: grid; gap: 10px; margin-top: 10px; }
+.plan-open-count { color: var(--a-down); }
+.plan-compact .plan-clear-line:has(.plan-open-count) { background: color-mix(in srgb, var(--a-down) 10%, var(--a-paper)); color: var(--a-ink); }

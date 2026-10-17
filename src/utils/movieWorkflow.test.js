@@ -6,6 +6,7 @@ const day = '2026-10-17';
 const movie = { status: 'draft', releaseDate: '2026-10-01', upcomingShowings: 0 };
 test('drafts have a clear next step, including hidden-only schedules', () => {
   assert.equal(movieWorkflow(movie, day).action, 'schedule');
+  assert.equal(movieWorkflow(movie, day).label, 'Continue setup');
   assert.equal(movieWorkflow({ ...movie, upcomingShowings: 2 }, day).action, 'publish');
   assert.equal(movieWorkflow({ ...movie, hiddenShowings: 2 }, day).action, 'showings');
 });

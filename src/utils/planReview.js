@@ -97,6 +97,24 @@ export function applyNextFree(result, decisions = {}, { minutesOf = () => 90, ga
   return next;
 }
 
+// "Fix all automatically": for each clash still waiting, keep the room when a free time is within half
+// an hour of the one asked for, otherwise keep the time and use a free room, otherwise take the
+// next free time even if it is later. One that nothing fits stays undecided for the admin.
+export function autoResolve(result, decisions = {}, { minutesOf = () => 90, gapMinutes = 15 } = {}) {
+  const next = { ...decisions };
+  const waiting = clashesOf(result).filter((item) => !next[slotKey(item)]).sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+  for (const item of waiting) {
+    const minutes = minutesOf(item.movie);
+    const taken = occupied(result, next, minutesOf);
+    const time = pickTime(item, taken, { minutes, gapMinutes });
+    const rooms = pickRooms(item, taken, { minutes, gapMinutes });
+    const shift = time ? new Date(time) - new Date(item.startTime) : Infinity;
+    if (time && (shift <= 30 * 60000 || rooms.length === 0)) next[slotKey(item)] = { type: 'time', start: time };
+    else if (rooms.length) next[slotKey(item)] = { type: 'room', room: String(rooms[0]._id) };
+  }
+  return next;
+}
+
 // Skips every clash still waiting, including fixes that collided and need another answer.
 export function skipAllClashes(result, decisions = {}, collisions = new Set()) {
   const next = { ...decisions };
