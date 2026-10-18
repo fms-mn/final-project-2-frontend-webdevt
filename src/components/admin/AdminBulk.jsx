@@ -19,6 +19,7 @@ const MAX_DAYS = 31;
 // Monday first, as people read a week. The number is what the server expects (Sunday = 0).
 const WEEKDAYS = [['Mon', 1], ['Tue', 2], ['Wed', 3], ['Thu', 4], ['Fri', 5], ['Sat', 6], ['Sun', 0]];
 const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
+const durationText = (minutes) => (minutes ? `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m` : 'an unknown length');
 const dayLabel = (day) => new Date(`${day}T12:00:00+08:00`).toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', weekday: 'short', day: 'numeric', month: 'short' });
 
 // Schedule many showings, or copy one day to other days. The admin taps a movie, a room, some days
@@ -53,6 +54,7 @@ export default function AdminBulk({ movies, rooms, onDone, open, mode, onModeCha
   const [decisions, setDecisions] = useState({}); // what the admin chose for each clash: { time | room | skip }
   const [collisions, setCollisions] = useState(() => new Map()); // fixes that no longer fit, with the reason
   const [refresh, setRefresh] = useState(0);
+  const [openStep, setOpenStep] = useState(null); // the one step being edited; the others show a one-line summary
   const ticket = useRef(0);
   const saving = useRef(false);
 
@@ -182,6 +184,8 @@ export default function AdminBulk({ movies, rooms, onDone, open, mode, onModeCha
   const weekdaySummary = weekdays.length === 7 ? 'every day' : weekdays.length === 0 ? 'no days' : WEEKDAYS.filter(([, value]) => weekdays.includes(value)).map(([name]) => name).join(', ');
   const extraTimes = times.filter((clock) => !COMMON_TIMES.includes(clock));
   const minutes = chosenMovie?.duration;
+  const chosenDays = span === 'many' && manyDates.startDate && manyDates.endDate && manyDates.endDate >= manyDates.startDate
+    ? daysBetween(manyDates.startDate, manyDates.endDate).filter((day) => weekdays.includes(new Date(`${day}T12:00:00+08:00`).getUTCDay())).length : 0;
 
   const rangePicker = (current, setCurrent, dates, customDates, setCustomDates) => (
     <>
@@ -201,6 +205,35 @@ export default function AdminBulk({ movies, rooms, onDone, open, mode, onModeCha
     </>
   );
 
+  const cents = Math.round(Number(price) * 100);
+  const daysSummary = span === 'one'
+    ? dayLabel(oneDay)
+    : manyDates.startDate && manyDates.endDate && manyDates.endDate >= manyDates.startDate
+      ? `${dayLabel(manyDates.startDate)} to ${dayLabel(manyDates.endDate)} · ${weekdays.length === 7 ? 'every day' : weekdays.length === 0 ? 'no days picked' : `${weekdaySummary} only`} · ${plural(chosenDays, 'day')}`
+      : 'Choose the days';
+  const priceSummary = price === '' || !Number.isFinite(cents) ? 'Enter a price'
+    : `${pesos(cents)} a seat · ${hidden ? 'hidden from customers' : chosenMovie?.status === 'draft' ? (publishMovie ? 'publishes the movie' : 'movie stays a draft') : 'on sale'}`;
+
+  const copySummary = copyDates.startDate && copyDates.endDate && copyDates.endDate >= copyDates.startDate
+    ? `${dayLabel(copyDates.startDate)} to ${dayLabel(copyDates.endDate)} · ${plural(daysBetween(copyDates.startDate, copyDates.endDate).filter((day) => day !== copyFrom).length, 'day')}${hidden ? ' · copies hidden' : ''}`
+    : 'Choose the days';
+
+  // One row per choice: its title, the choice in one line, and Change. Only the open row shows its controls.
+  const stepRow = (key, number, title, summary, body) => {
+    const isOpen = openStep === key;
+    return (
+      <section className={`bulk-step${isOpen ? ' is-open' : ''}`} key={key}>
+        <button type="button" className="bulk-step-head" aria-expanded={isOpen} onClick={() => setOpenStep(isOpen ? null : key)}>
+          <span className="bulk-step-num" aria-hidden="true">{number}</span>
+          <span className="bulk-step-title">{title}</span>
+          <span className="bulk-step-act">{isOpen ? 'Done' : 'Change'}</span>
+          <span className="bulk-step-summary">{summary}</span>
+        </button>
+        {isOpen && <div className="bulk-step-body">{body}<button type="button" className="btn btn-secondary btn-small bulk-step-done" onClick={() => setOpenStep(null)}>Done</button></div>}
+      </section>
+    );
+  };
+
   return (
     <Drawer title={mode === 'copy' ? 'Copy a day' : span === 'one' ? 'Add showings' : 'Schedule showings'} onClose={() => { if (!saving.current) onClose(); }} className="admin-drawer-planner">
       <fieldset className="bulk-save-fields" disabled={busy} aria-busy={busy}>
@@ -208,7 +241,7 @@ export default function AdminBulk({ movies, rooms, onDone, open, mode, onModeCha
       <div className="planner-inputs">
       {onBack && <button type="button" className="bulk-link" onClick={onBack}>← Back to movie details</button>}
       {lockedMovie && <div className="movie-flow-intro"><ol className="movie-flow-steps" aria-label="Create movie progress"><li><b>✓</b> Details saved</li><li aria-current="step"><b>2</b> Showings & publish</li></ol><p>Choose showtimes, review conflicts, then publish the movie and tickets together. All times are in Manila.</p></div>}
-      {!lockedMovie && <div className="when-chips bulk-mode" role="group" aria-label="What to do">
+      {!lockedMovie && <div className="when-chips bulk-mode bulk-segment" role="group" aria-label="What to do">
         <button type="button" className={`when-chip${mode === 'many' ? ' active' : ''}`} aria-pressed={mode === 'many'} onClick={() => onModeChange('many')}>New showings</button>
         <button type="button" className={`when-chip${mode === 'copy' ? ' active' : ''}`} aria-pressed={mode === 'copy'} onClick={() => onModeChange('copy')}>Copy a day</button>
       </div>}
@@ -216,97 +249,116 @@ export default function AdminBulk({ movies, rooms, onDone, open, mode, onModeCha
       {roomError && <button type="button" className="btn btn-secondary" onClick={onRetryRooms}>Retry loading rooms</button>}
 
       {mode === 'many' ? (
+        <>
+        {!lockedMovie && <p className="bulk-lead">Everything below is already filled in. Check it, change only what is wrong, then save. Times are Manila time.</p>}
         <div className="bulk-steps">
-          <section className="bulk-step">
-            <h3><span>1</span> Movie and room</h3>
-            <label>Movie
-              <select disabled={lockedMovie} value={chosenMovie?._id || ''} onChange={(event) => setMovie(event.target.value)}>
-                {published.map((item) => <option key={item._id} value={item._id}>{item.title} ({item.duration} min){item.status === 'draft' ? ' · draft' : ''}</option>)}
-              </select>
-            </label>
-            <label>Room
-              <select value={chosenRoom?._id || ''} onChange={(event) => setRoom(event.target.value)}>
-                {active.map((item) => <option key={item._id} value={item._id}>{item.name} · {item.rows * item.seatsPerRow} seats</option>)}
-              </select>
-            </label>
-          </section>
-
           {!active.length && <p className="bulk-problem">No active rooms. Your movie is saved.{onManageRooms && <button type="button" className="bulk-link" onClick={onManageRooms}>Set up a room →</button>}</p>}
-          <section className="bulk-step">
-            <h3><span>2</span> {span === 'one' ? 'Which day' : 'Which days'}</h3>
-            <div className="when-chips" role="group" aria-label="One day or several">
-              <button type="button" className={`when-chip small${span === 'one' ? ' active' : ''}`} aria-pressed={span === 'one'} onClick={() => setSpan('one')}>Just one day</button>
-              <button type="button" className={`when-chip small${span === 'many' ? ' active' : ''}`} aria-pressed={span === 'many'} onClick={() => setSpan('many')}>Several days</button>
-            </div>
-            {span === 'one' ? (
-              <>
-                <div className="when-chips" role="group" aria-label="Day">
-                  {quickDays(today()).map((item) => (
-                    <button key={item.day} type="button" className={`when-chip${oneDay === item.day ? ' active' : ''}`} aria-pressed={oneDay === item.day} onClick={() => setOneDay(item.day)}>{item.label}</button>
-                  ))}
-                </div>
-                <label className="when-other">Another day
-                  <DatePicker label="Showing day" required min={today()} value={oneDay} onChange={setOneDay} />
-                </label>
-                {oneDay && <p className="bulk-hint">{dayLabel(oneDay)}</p>}
-              </>
-            ) : (
-              <>
-                {rangePicker(range, setRange, manyDates, custom, setCustom)}
-                <div className="when-chips" role="group" aria-label="Days of the week">
-                  {WEEKDAYS.map(([name, value]) => (
-                    <button key={name} type="button" className={`when-chip small${weekdays.includes(value) ? ' active' : ''}`} aria-pressed={weekdays.includes(value)} onClick={() => toggleWeekday(value)}>{name}</button>
-                  ))}
-                  <button type="button" className="bulk-link" onClick={() => setWeekdays(ALL_DAYS)}>Every day</button>
-                  <button type="button" className="bulk-link" onClick={() => setWeekdays([1, 2, 3, 4, 5])}>Weekdays</button>
-                  <button type="button" className="bulk-link" onClick={() => setWeekdays([6, 0])}>Weekends</button>
-                </div>
-              </>
-            )}
-          </section>
+          {stepRow('movie', 1, 'Movie and room', chosenMovie && chosenRoom ? `${chosenMovie.title} · ${chosenRoom.name}` : 'Nothing to choose from yet', (
+            <>
+              <label>Movie
+                <select disabled={lockedMovie} value={chosenMovie?._id || ''} onChange={(event) => setMovie(event.target.value)}>
+                  {published.map((item) => <option key={item._id} value={item._id}>{item.title} ({item.duration} min){item.status === 'draft' ? ' · draft' : ''}</option>)}
+                </select>
+              </label>
+              <label>Room
+                <select value={chosenRoom?._id || ''} onChange={(event) => setRoom(event.target.value)}>
+                  {active.map((item) => <option key={item._id} value={item._id}>{item.name} · {item.rows * item.seatsPerRow} seats</option>)}
+                </select>
+              </label>
+              {chosenMovie && chosenRoom && <p className="bulk-hint">{chosenMovie.title} runs {durationText(minutes)}. {chosenRoom.name} has {chosenRoom.rows * chosenRoom.seatsPerRow} seats.</p>}
+            </>
+          ))}
 
-          <section className="bulk-step">
-            <h3><span>3</span> Start times <small className="bulk-pick-many">tap as many as you like</small></h3>
-            {timeProblem && <p className="when-problem" role="alert">{timeProblem}</p>}
-            <div className="when-chips" role="group" aria-label="Start times">
-              {[...COMMON_TIMES, ...extraTimes].map((clock) => (
-                <button key={clock} type="button" className={`when-chip${times.includes(clock) ? ' active' : ''}`} aria-pressed={times.includes(clock)} onClick={() => toggleTime(clock)}>{clock12(clock)}</button>
-              ))}
-            </div>
-            <div className="when-chips"><button type="button" className="bulk-link" onClick={() => setTimes((current) => [...new Set([...current, ...COMMON_TIMES])].sort())}>Select all usual times</button><button type="button" className="bulk-link" onClick={() => setTimes([])}>Clear</button></div>
-            <label className="when-other">Add another time
-              <select value="" onChange={(event) => event.target.value && toggleTime(event.target.value)}>
-                <option value="">Choose…</option>
-                {TIME_OPTIONS.filter((option) => !times.includes(option.value)).map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-              </select>
-            </label>
-            {times.length > 0 && minutes && (
-              <ul className="bulk-times">
-                {times.map((clock) => <li key={clock}><b>{clock12(clock)}</b> <span>{endsText(clock, minutes)}</span></li>)}
-              </ul>
-            )}
-          </section>
+          {stepRow('days', 2, span === 'one' ? 'Day' : 'Days', daysSummary, (
+            <>
+              <div className="when-chips bulk-segment" role="group" aria-label="One day or several">
+                <button type="button" className={`when-chip small${span === 'one' ? ' active' : ''}`} aria-pressed={span === 'one'} onClick={() => setSpan('one')}>Just one day</button>
+                <button type="button" className={`when-chip small${span === 'many' ? ' active' : ''}`} aria-pressed={span === 'many'} onClick={() => setSpan('many')}>Several days</button>
+              </div>
+              {span === 'one' ? (
+                <>
+                  <div className="when-chips" role="group" aria-label="Day">
+                    {quickDays(today()).map((item) => (
+                      <button key={item.day} type="button" className={`when-chip${oneDay === item.day ? ' active' : ''}`} aria-pressed={oneDay === item.day} onClick={() => setOneDay(item.day)}>{item.label}</button>
+                    ))}
+                  </div>
+                  <label className="when-other">Another day
+                    <DatePicker label="Showing day" required min={today()} value={oneDay} onChange={setOneDay} />
+                  </label>
+                </>
+              ) : (
+                <>
+                  <p className="bulk-caption">Which stretch of days?</p>
+                  {rangePicker(range, setRange, manyDates, custom, setCustom)}
+                  <p className="bulk-caption">Which days of the week? <small>Untick a day to skip it.</small></p>
+                  <div className="bulk-weekdays" role="group" aria-label="Days of the week">
+                    {WEEKDAYS.map(([name, value]) => (
+                      <button key={name} type="button" className={`when-chip small${weekdays.includes(value) ? ' active' : ''}`} aria-pressed={weekdays.includes(value)} onClick={() => toggleWeekday(value)}>{name}</button>
+                    ))}
+                  </div>
+                  <div className="bulk-presets"><span>Quick pick</span>
+                    <button type="button" className="bulk-link" onClick={() => setWeekdays(ALL_DAYS)}>Every day</button>
+                    <button type="button" className="bulk-link" onClick={() => setWeekdays([1, 2, 3, 4, 5])}>Weekdays</button>
+                    <button type="button" className="bulk-link" onClick={() => setWeekdays([6, 0])}>Weekends</button>
+                  </div>
+                </>
+              )}
+            </>
+          ))}
 
-          <section className="bulk-step">
-            <h3><span>4</span> Price & visibility</h3>
-            <label>Price per seat (₱)<input type="number" min="0" step="0.01" value={price} onChange={(event) => setPrice(event.target.value)} /></label>
-            {chosenMovie?.status === 'draft' && <label className="admin-check"><input type="checkbox" checked={publishMovie && !hidden} onChange={(event) => { setPublishMovie(event.target.checked); if (event.target.checked) setHidden(false); }} /> Publish the movie and put these tickets on sale together</label>}
-            <details className="bulk-advanced"><summary>Advanced: keep these showings hidden</summary><label className="admin-check"><input type="checkbox" checked={hidden} onChange={(event) => { setHidden(event.target.checked); if (event.target.checked) setPublishMovie(false); }} /> Hide these showings from customers</label></details>
-            <p className="bulk-hint">{chosenMovie?.status === 'draft' && (!publishMovie || hidden) ? 'Save schedule only: the movie stays a draft, hidden from customers.' : hidden ? 'These showings cannot be booked until you make them visible.' : 'Customers can book these showings as soon as you finish.'}</p>
-          </section>
+          {stepRow('times', 3, 'Start times', times.length ? times.map(clock12).join(', ') : 'None chosen yet', (
+            <>
+              <p className="bulk-caption">Tap every start time you want each day.</p>
+              {timeProblem && <p className="when-problem" role="alert">{timeProblem}</p>}
+              <div className="when-chips" role="group" aria-label="Start times">
+                {[...COMMON_TIMES, ...extraTimes].map((clock) => (
+                  <button key={clock} type="button" className={`when-chip${times.includes(clock) ? ' active' : ''}`} aria-pressed={times.includes(clock)} onClick={() => toggleTime(clock)}>{clock12(clock)}</button>
+                ))}
+              </div>
+              <div className="bulk-time-tools">
+                <select aria-label="Add another time" value="" onChange={(event) => event.target.value && toggleTime(event.target.value)}>
+                  <option value="">+ Add another time…</option>
+                  {TIME_OPTIONS.filter((option) => !times.includes(option.value)).map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </select>
+                <button type="button" className="bulk-link" onClick={() => setTimes((current) => [...new Set([...current, ...COMMON_TIMES])].sort())}>Select all usual times</button>
+                <button type="button" className="bulk-link" onClick={() => setTimes([])}>Clear</button>
+              </div>
+              {times.length > 0 && minutes && (
+                <details className="bulk-ends">
+                  <summary>When each showing ends</summary>
+                  <ul className="bulk-times">
+                    {times.map((clock) => <li key={clock}><b>{clock12(clock)}</b> <span>{endsText(clock, minutes)}</span></li>)}
+                  </ul>
+                </details>
+              )}
+            </>
+          ))}
+
+          {stepRow('price', 4, 'Price and visibility', priceSummary, (
+            <>
+              <label>Price per seat<span className="bulk-money"><i aria-hidden="true">₱</i><input type="number" min="0" step="0.01" value={price} onChange={(event) => setPrice(event.target.value)} /></span></label>
+              {chosenMovie?.status === 'draft' && <label className="admin-check"><input type="checkbox" checked={publishMovie && !hidden} onChange={(event) => { setPublishMovie(event.target.checked); if (event.target.checked) setHidden(false); }} /> Publish the movie and put these tickets on sale together</label>}
+              <details className="bulk-advanced"><summary>Advanced: keep these showings hidden</summary><label className="admin-check"><input type="checkbox" checked={hidden} onChange={(event) => { setHidden(event.target.checked); if (event.target.checked) setPublishMovie(false); }} /> Hide these showings from customers</label></details>
+              <p className="bulk-hint">{chosenMovie?.status === 'draft' && (!publishMovie || hidden) ? 'Save schedule only: the movie stays a draft, hidden from customers.' : hidden ? 'These showings cannot be booked until you make them visible.' : 'Customers can book these showings as soon as you finish.'}</p>
+            </>
+          ))}
         </div>
+        </>
       ) : (
+        <>
+        <p className="bulk-lead">Pick a day, then the days to copy its showings to. Copied showings keep their movie, room and time.</p>
         <div className="bulk-steps">
-          <section className="bulk-step">
-            <h3><span>1</span> Which day to copy</h3>
+          {stepRow('from', 1, 'Day to copy', copyFrom ? dayLabel(copyFrom) : 'Choose a day', (
             <label>Copy the showings of<DatePicker label="Copy source day" required value={copyFrom} onChange={setCopyFrom} /></label>
-          </section>
-          <section className="bulk-step">
-            <h3><span>2</span> Copy it to</h3>
-            {rangePicker(copyRange, setCopyRange, copyDates, copyCustom, setCopyCustom)}
-            <label className="admin-check"><input type="checkbox" checked={hidden} onChange={(event) => setHidden(event.target.checked)} /> Keep the copies hidden from customers until I publish them</label>
-          </section>
+          ))}
+          {stepRow('to', 2, 'Copy it to', copySummary, (
+            <>
+              {rangePicker(copyRange, setCopyRange, copyDates, copyCustom, setCopyCustom)}
+              <label className="admin-check"><input type="checkbox" checked={hidden} onChange={(event) => setHidden(event.target.checked)} /> Keep the copies hidden from customers until I publish them</label>
+            </>
+          ))}
         </div>
+        </>
       )}
 
       </div>

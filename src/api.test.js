@@ -67,7 +67,10 @@ test('server errors become ApiError with the server message, status and field er
   });
 
   respond(500, undefined);
-  await assert.rejects(api('/movies'), (error) => error.status === 500 && /500/.test(error.message));
+  await assert.rejects(api('/movies'), (error) => error.status === 500 && /on our side/.test(error.message));
+
+  respond(418, undefined);
+  await assert.rejects(api('/movies'), (error) => error.status === 418 && /418/.test(error.message));
 });
 
 test('an unreachable server gives a friendly message with status 0', async () => {

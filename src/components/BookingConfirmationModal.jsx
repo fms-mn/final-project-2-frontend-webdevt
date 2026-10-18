@@ -14,6 +14,10 @@ import PaymentPanel, { PaymentSimulationNotice } from './PaymentPanel';
 export default function BookingConfirmationModal({ draft, booking, pending, error, payment, onConfirm, onClose, onViewBookings, returnFocusRef }) {
   const dialogRef = useRef(null);
   const headingRef = useRef(null);
+  // Closing mid-payment would release the held seats while the payment is still being processed.
+  const locked = Boolean(pending || payment?.pending);
+  const lockedRef = useRef(locked);
+  lockedRef.current = locked;
   const feedbackTimer = useRef(null);
   const [copyFeedback, setCopyFeedback] = useState('');
   const [celebrationKey, setCelebrationKey] = useState(null);
@@ -39,7 +43,7 @@ export default function BookingConfirmationModal({ draft, booking, pending, erro
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') {
         event.preventDefault();
-        if (!dialogRef.current?.querySelector('.confirmation-submit:disabled')) onClose();
+        if (!lockedRef.current) onClose();
       }
       if (event.key === 'Tab') {
         const buttons = [...dialogRef.current.querySelectorAll('button:not(:disabled)')];
@@ -99,7 +103,7 @@ export default function BookingConfirmationModal({ draft, booking, pending, erro
             <span className="confirmation-success-circle"><svg viewBox="0 0 48 48" fill="none"><path d="M11 24.5 20 33 37 15" stroke="currentColor" strokeWidth="5.5" strokeLinecap="round" strokeLinejoin="round" /></svg></span>
             {celebrationKey === bookingKey && <span className="confirmation-confetti">{Array.from({ length: 8 }, (_, index) => <i key={index} />)}</span>}
           </span> : <span className="booking-eyebrow">Final step</span>}
-          <button type="button" className="confirmation-close" aria-label={booking ? 'Close ticket' : 'Close confirmation'} onClick={onClose} disabled={pending}>×</button>
+          <button type="button" className="confirmation-close" aria-label={booking ? 'Close ticket' : 'Close confirmation'} onClick={onClose} disabled={locked}>×</button>
           <h2 id="booking-modal-title" ref={headingRef} tabIndex={-1}>{booking ? simulated ? booking.payment ? 'Test payment successful' : 'Test booking saved' : 'Booking saved' : paying ? paymentVerified ? 'Simulate your payment' : 'Payment unavailable' : simulated ? 'Confirm test booking' : 'Confirm your booking'}</h2>
           <p id="booking-modal-reference" className="booking-modal-reference">{simulated ? booking ? 'No real money was charged. This test booking is saved in My tickets and is not valid for cinema admission.' : 'This is a test booking. No real money will be charged, and the ticket is not valid for cinema admission.' : booking ? 'Payment mode could not be verified. This booking is not valid for cinema admission.' : paying ? 'Payment mode could not be verified. Payment is unavailable.' : 'Review your seats and total before confirming.'}</p>
         </header>

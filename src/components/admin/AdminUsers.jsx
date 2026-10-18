@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { api } from '../../api';
 import ActionPending from '../ActionPending';
+import ConfirmDialog from './ConfirmDialog';
 import Feedback from './Feedback';
 import useAdminAction from './useAdminAction';
 
 export default function AdminUsers({ users, reload }) {
-  const { busy, busyAction, error, notice, run } = useAdminAction();
+  const { busy, busyAction, error, notice, clear, run } = useAdminAction();
+  const [removing, setRemoving] = useState(null);
   const [query, setQuery] = useState('');
   const [group, setGroup] = useState('all');
   const needle = query.trim().toLowerCase();
@@ -25,9 +27,25 @@ export default function AdminUsers({ users, reload }) {
     if (done) reload();
   };
 
+  const remove = async () => {
+    const user = removing;
+    const done = await run(
+      () => api(`/users/${user._id}`, { method: 'DELETE' }),
+      `${user.name}'s account was removed and they were emailed`, `remove:${user._id}`,
+    );
+    if (done) { setRemoving(null); reload(); }
+  };
+
   return (
     <>
-      <Feedback error={error} notice={notice} />
+      {removing && (
+        <ConfirmDialog tone="danger" title={`Remove ${removing.name}'s account?`} confirmLabel="Remove account" cancelLabel="Keep account"
+          busy={busy} error={error} onClose={() => { setRemoving(null); clear(); }} onConfirm={remove}>
+          <p><strong>{removing.email}</strong> will no longer be able to sign in. This cannot be undone.</p>
+          <p>We will email them to say their account was removed. Their past bookings stay in your records. If they still have upcoming tickets, cancel those first, or disable the account instead.</p>
+        </ConfirmDialog>
+      )}
+      <Feedback error={removing ? '' : error} notice={notice} />
       <div className="admin-panel admin-toolbar">
         <label className="admin-search">Search accounts<input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Name or email" /></label>
         <span className="admin-count">{shown.length} of {users.length}</span>
@@ -46,9 +64,12 @@ export default function AdminUsers({ users, reload }) {
               <small>{user.email} · {user.role} · {user.isActive ? 'active' : 'disabled'} · joined {new Date(user.createdAt).toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', day: 'numeric', month: 'short', year: 'numeric' })}</small>
             </div>
             {user.role === 'user' && (
-              <button type="button" className="btn btn-secondary btn-small" disabled={busy} aria-busy={busyAction === `user:${user._id}`} onClick={() => setActive(user, !user.isActive)}>
-                <ActionPending pending={busyAction === `user:${user._id}`}>{busyAction === `user:${user._id}` ? 'Updating...' : user.isActive ? 'Disable' : 'Enable'}</ActionPending>
-              </button>
+              <div className="admin-actions">
+                <button type="button" className="btn btn-secondary btn-small" disabled={busy} aria-busy={busyAction === `user:${user._id}`} onClick={() => setActive(user, !user.isActive)}>
+                  <ActionPending pending={busyAction === `user:${user._id}`}>{busyAction === `user:${user._id}` ? 'Updating...' : user.isActive ? 'Disable' : 'Enable'}</ActionPending>
+                </button>
+                <button type="button" className="btn btn-danger btn-small" disabled={busy} aria-label={`Remove ${user.name}'s account`} onClick={() => { clear(); setRemoving(user); }}>Remove</button>
+              </div>
             )}
           </div>
         ))}

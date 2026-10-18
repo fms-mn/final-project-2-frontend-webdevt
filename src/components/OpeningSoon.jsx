@@ -32,7 +32,7 @@ function OpeningCard({ movie, currentDay }) {
 
 export default function OpeningSoon({ movies, currentDay, loading = false, error = '', onRetry }) {
   return <section className="opening-section" aria-labelledby="opening-heading"><div className="opening-section-inner">
-    <div className="opening-heading"><span className="opening-eyebrow">Mark your calendar</span><h2 id="opening-heading">Opening soon</h2></div>
+    <div className="opening-heading"><span className="opening-eyebrow">Mark your calendar</span><h2 id="opening-heading">Coming soon</h2></div>
     {loading ? <div className="loading" role="status" aria-label="Loading upcoming releases"><div className="spinner" aria-hidden="true" /></div>
       : error ? <div className="opening-error" role="alert"><p>{error}</p><button type="button" className="btn btn-primary" onClick={onRetry}>Try again</button></div>
       : movies.length ? <div className="opening-grid">{movies.map(movie => <OpeningCard movie={movie} currentDay={currentDay} key={movie._id} />)}</div>

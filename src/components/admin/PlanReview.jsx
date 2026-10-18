@@ -32,6 +32,9 @@ export default function PlanReview({ result, decisions, setDecisions, collisions
   const taken = occupied(result, decisions, (id) => movieOf(id)?.duration || 90);
   const hasFix = clashes.some((item) => !decisions[slotKey(item)] && (item.fixes?.times?.length || item.fixes?.nextFree || item.fixes?.rooms?.length));
   const hasOpen = counts.open > 0;
+  const createdDays = result.created.map((item) => manilaDay(item.startTime)).sort();
+  const firstDay = createdDays[0];
+  const lastDay = createdDays.at(-1);
 
   const bulk = (
     <div className="plan-bulk">
@@ -96,12 +99,19 @@ export default function PlanReview({ result, decisions, setDecisions, collisions
 
   return (
     <div className="plan-review">
-      <div className="plan-summary" aria-live="polite">
-        <div className="plan-box ready"><b>{counts.ready}</b><span>ready, no clash</span></div>
-        <div className={`plan-box ${counts.open > 0 ? 'open' : 'quiet'}`}><b>{counts.open}</b><span>need a decision</span></div>
-        <div className="plan-box quiet"><b>{counts.fixed}</b><span>fixed</span></div>
-        <div className="plan-box quiet"><b>{counts.skipped}</b><span>left out</span></div>
-      </div>
+      {counts.open === 0 && counts.fixed === 0 && counts.skipped === 0 ? (
+        <div className="plan-allclear" role="status" aria-live="polite">
+          <span className="plan-allclear-mark" aria-hidden="true">✓</span>
+          <div><b>{plural(counts.ready, 'showing')} ready</b><span>No clashes with anything already scheduled.{firstDay && lastDay ? ` ${firstDay === lastDay ? dayLabel(firstDay) : `${dayLabel(firstDay)} to ${dayLabel(lastDay)}`}.` : ''}</span></div>
+        </div>
+      ) : (
+        <div className="plan-summary" aria-live="polite">
+          <div className="plan-box ready"><b>{counts.ready}</b><span>ready, no clash</span></div>
+          <div className={`plan-box ${counts.open > 0 ? 'open' : 'quiet'}`}><b>{counts.open}</b><span>need a decision</span></div>
+          <div className="plan-box quiet"><b>{counts.fixed}</b><span>fixed</span></div>
+          <div className="plan-box quiet"><b>{counts.skipped}</b><span>left out</span></div>
+        </div>
+      )}
 
       <PlanDay result={result} decisions={decisions} collisions={collisions} rooms={rooms} movies={movies} />
 
@@ -236,7 +246,7 @@ function PlanDay({ result, decisions, collisions, rooms, movies }) {
   const place = (minute) => ((minute - from) / (to - from)) * 100;
   const usedRooms = rooms.filter((room) => bars.some((bar) => String(bar.room) === room._id));
   const marks = [];
-  for (let hour = Math.ceil(from / 120) * 2; hour * 60 <= to; hour += 2) marks.push(hour * 60);
+  for (let hour = Math.ceil(from / 120) * 2; hour * 60 < to; hour += 2) marks.push(hour * 60);
 
   return (
     <section className="plan-day" aria-label="The plan on the room timeline">

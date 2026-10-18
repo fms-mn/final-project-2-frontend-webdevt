@@ -69,8 +69,7 @@
 .planner-status { margin: 0; font-size: 14px; line-height: 1.45; }
 .planner-status b { font-size: 16px; }
 @media (min-width: 900px) {
-  .planner-grid { grid-template-columns: minmax(280px, 340px) minmax(0, 1fr); }
-  .planner-inputs { position: sticky; top: 0; max-height: calc(100vh - 220px); overflow-y: auto; padding-right: 4px; }
+  .planner-grid { grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); }
 }
 @media (max-width: 520px) {
   .plan-summary { grid-template-columns: 1fr 1fr; }
@@ -85,3 +84,9 @@
 .plan-changes { display: grid; gap: 10px; margin-top: 10px; }
 .plan-open-count { color: var(--a-down); }
 .plan-compact .plan-clear-line:has(.plan-open-count) { background: color-mix(in srgb, var(--a-down) 10%, var(--a-paper)); color: var(--a-ink); }
+
+/* Nothing to decide: one calm line instead of four counters */
+.plan-allclear { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--a-ok); border-radius: 12px; background: var(--a-ok-bg); color: var(--a-ok); }
+.plan-allclear-mark { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--a-ok); color: var(--a-paper); font-weight: 800; }
+.plan-allclear b { display: block; font: 800 16px/1.2 'Instrument Sans Variable', sans-serif; }
+.plan-allclear span:not(.plan-allclear-mark) { display: block; margin-top: 2px; font-size: 13px; line-height: 1.4; }

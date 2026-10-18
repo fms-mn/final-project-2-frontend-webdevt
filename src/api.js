@@ -22,6 +22,16 @@ export class ApiError extends Error {
   }
 }
 
+// Used only when the server sent no message of its own.
+function fallbackMessage(status) {
+  if (status === 401) return 'Please sign in to continue.';
+  if (status === 403) return 'You do not have permission to do that.';
+  if (status === 404) return 'We could not find what you were looking for.';
+  if (status === 429) return 'Too many attempts. Please wait a moment and try again.';
+  if (status >= 500) return 'Something went wrong on our side. Please try again in a moment.';
+  return `Something went wrong (${status}). Please try again.`;
+}
+
 export function forgetSession() {
   csrfToken = null;
 }
@@ -81,7 +91,7 @@ export async function api(path, { method = 'GET', body, signal } = {}) {
       csrfToken = null;
       window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
     }
-    throw new ApiError(data?.message || `Something went wrong (${response.status})`, {
+    throw new ApiError(data?.message || fallbackMessage(response.status), {
       status: response.status,
       errors: data?.errors,
     });
