@@ -13,6 +13,7 @@ import { COMMON_TIMES, TIME_OPTIONS, clock12, defaultStart, endsText, quickDays 
 import Drawer from './Drawer';
 import Feedback from './Feedback';
 import PlanReview from './PlanReview';
+import CopyDay from './CopyDay';
 import { fixedKey, planCounts, slotKey, slotsToSave } from '../../utils/planReview';
 
 const MAX_DAYS = 31;
@@ -25,7 +26,11 @@ const dayLabel = (day) => new Date(`${day}T12:00:00+08:00`).toLocaleDateString('
 // Schedule many showings, or copy one day to other days. The admin taps a movie, a room, some days
 // and some times; the screen works out the rest and checks it against the schedule as they go, so
 // "Schedule 27 showings" is a button they press once they have seen what will happen.
-export default function AdminBulk({ movies, rooms, onDone, open, mode, onModeChange, onClose, defaultDay, preset, gapMinutes = 15, lockedMovie = false, roomError, onRetryRooms, onBack, onManageRooms }) {
+export default function AdminBulk(props) {
+  return props.mode === 'copy' ? <CopyDay {...props} /> : <ShowingPlanner {...props} />;
+}
+
+function ShowingPlanner({ movies, rooms, onDone, open, mode, onModeChange, onClose, defaultDay, preset, gapMinutes = 15, lockedMovie = false, roomError, onRetryRooms, onBack, onManageRooms }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   // Drafts can be scheduled too (customers see the showings once the movie is published); archived ones cannot.

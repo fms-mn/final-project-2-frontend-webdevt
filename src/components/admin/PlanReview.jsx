@@ -198,7 +198,7 @@ function ClashCard({ item, decision, collision, gapMinutes, taken, roomName, mov
 
 // One day of the plan on the room timeline: showings already saved (grey), ready ones in the
 // movie's colour, clashes in red, fixed ones in green.
-function PlanDay({ result, decisions, collisions, rooms, movies }) {
+export function PlanDay({ result, decisions, collisions, rooms, movies, copy = false }) {
   const days = useMemo(() => {
     const found = new Map();
     const note = (item, field) => {
@@ -255,7 +255,7 @@ function PlanDay({ result, decisions, collisions, rooms, movies }) {
         <label>
           <span className="visually-hidden">Day to preview</span>
           <select value={day} onChange={(event) => setChosen(event.target.value)}>
-            {days.map(([value, entry]) => <option key={value} value={value}>{dayLabel(value)} · {entry.ready} ready{entry.clash ? `, ${plural(entry.clash, 'clash')}` : ''}</option>)}
+            {days.map(([value, entry]) => <option key={value} value={value}>{dayLabel(value)} · {entry.ready} ready{entry.clash ? `, ${plural(entry.clash, copy ? 'conflict' : 'clash')}` : ''}</option>)}
           </select>
         </label>
       </div>
@@ -276,7 +276,7 @@ function PlanDay({ result, decisions, collisions, rooms, movies }) {
           ))}
         </div>
       </div>
-      <div className="plan-legend"><span className="existing">Already scheduled</span><span className="ready">Ready</span><span className="fixed">Fixed</span><span className="clash">Clash</span></div>
+      <div className="plan-legend"><span className="existing">Already scheduled</span><span className="ready">Ready</span><span className="fixed">{copy ? 'Resolved' : 'Fixed'}</span><span className="clash">{copy ? 'Conflict' : 'Clash'}</span></div>
     </section>
   );
 }
