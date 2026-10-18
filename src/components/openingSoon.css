@@ -199,3 +199,7 @@
   .opening-section .opening-calendar-hint { max-width: 26ch; text-align: left; }
   .opening-section .opening-countdown { letter-spacing: .08em; }
 }
+
+/* A reminder that is switched on reads as "done", not as another call to action */
+.opening-section .opening-remind.is-on { background: transparent; color: var(--opening-button); border-color: var(--opening-button); }
+.opening-section .opening-remind:disabled { cursor: not-allowed; opacity: .65; }

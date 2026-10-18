@@ -1,4 +1,4 @@
-import { manilaDay, shiftDay, today } from './manila.js';
+import { manilaDay, today } from './manila.js';
 
 export function openingDate(movie) {
   const value = movie?.releaseDate;
@@ -17,17 +17,4 @@ export function openingDate(movie) {
 export function daysUntilOpening(day, currentDay = today()) {
   const stamp = value => Date.parse(`${value}T00:00:00Z`);
   return Math.max(0, Math.round((stamp(day) - stamp(currentDay)) / 86400000));
-}
-
-export function googleCalendarLink(movie, day, origin) {
-  const start = day.replaceAll('-', '');
-  const end = shiftDay(day, 1).replaceAll('-', '');
-  const movieUrl = new URL(`/movie/${encodeURIComponent(movie._id)}`, origin).href;
-  const params = new URLSearchParams({
-    action: 'TEMPLATE',
-    text: `${movie.title} releases today.`,
-    dates: `${start}/${end}`,
-    details: `Release reminder for ${movie.title} at FILME.\nMovie details: ${movieUrl}\nRelease dates may change. Check FILME for updates.`,
-  });
-  return `https://calendar.google.com/calendar/render?${params}`;
 }
