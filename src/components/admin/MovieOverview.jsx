@@ -1,37 +1,25 @@
 import { FiCalendar, FiClock, FiUsers } from 'react-icons/fi';
 import { pesos } from '../../utils/adminTools';
-import { displayTime, shortDate } from '../../utils/manila';
+import { movieWorkflow } from '../../utils/movieWorkflow';
 import PublishChecklist from './PublishChecklist';
-
-// The first tab of a movie's panel: is it on sale, how much has it earned, how are its showings doing.
-function stateOf(movie, summary) {
-  const upcoming = summary?.showings.upcoming ?? movie.upcomingShowings ?? 0;
-  if (movie.status === 'archived') return { tone: 'muted', title: 'Archived', text: 'Hidden from customers and kept for the records. Set it back to Draft in Details to schedule showings.' };
-  if (movie.status === 'draft') {
-    return { tone: 'warn', title: 'Draft: hidden from customers', text: upcoming > 0 ? `${upcoming} ${upcoming === 1 ? 'showing is' : 'showings are'} scheduled. Publish the movie to put them on sale.` : 'Schedule showings, then publish it so customers can see it.' };
-  }
-  if (upcoming > 0 && summary?.nextShowing) {
-    return { tone: 'ok', title: 'On sale', text: `Next showing: ${shortDate(summary.nextShowing)} at ${displayTime(summary.nextShowing)}.` };
-  }
-  return { tone: 'warn', title: 'Published, but nothing to book', text: 'Customers see "No showings". Schedule some, or archive the movie.' };
-}
 
 function Stat({ label, value, hint }) {
   return <div className="movie-stat"><span>{label}</span><strong>{value}</strong>{hint && <small>{hint}</small>}</div>;
 }
 
-export default function MovieOverview({ movie, state, onTab, onSchedule, onPublish, publishing }) {
+export default function MovieOverview({ movie, state, onTab, onSchedule, onPublish, publishing, onRestore }) {
   const { summary, error, loading, reload } = state;
-  const status = stateOf(movie, summary);
+  const status = movieWorkflow(movie);
   const sales = summary?.sales;
   const everBooked = sales && (sales.bookings > 0 || sales.cancelled > 0);
 
   return (
     <div className="movie-overview">
+      {movie.status === 'draft' && movie.hiddenShowings > 0 && <p className="movie-field-help">{status.text} <button type="button" className="movie-schedule-link" onClick={() => onTab('showings')}>Review showings →</button></p>}
       {movie.status === 'draft' ? (
         <PublishChecklist
           movie={movie}
-          bookable={summary ? Math.max(0, summary.showings.upcoming - summary.showings.hidden) : null}
+          bookable={movie.upcomingShowings ?? 0}
           busy={publishing}
           onAction={(action) => (action.schedule ? onSchedule(movie._id) : onTab(action.tab))}
           onPublish={onPublish}
@@ -40,6 +28,8 @@ export default function MovieOverview({ movie, state, onTab, onSchedule, onPubli
         <div className={`movie-state movie-state-${status.tone}`} role="status">
           <b>{status.title}</b>
           <span>{status.text}</span>
+          <button type="button" className="movie-button movie-button-primary" disabled={publishing} onClick={() => status.action === 'restore' ? onRestore() : status.action === 'showings' ? onTab('showings') : onSchedule(movie._id)}>{status.label} →</button>
+          {movie.status === 'published' && <a className="movie-schedule-link" href={`/movie/${movie._id}`} target="_blank" rel="noreferrer">View customer page ↗</a>}
         </div>
       )}
 

@@ -3,7 +3,7 @@ import { apiAll } from '../../api';
 import { displayTime, manilaDay, minutesOfDay, shortDate } from '../../utils/manila';
 import { movieColor } from '../../utils/schedule';
 import {
-  applyNextFree, clashWindow, describeClash, fixedKey, fixedSlot, occupied, pickRooms, pickTime, planCounts, skipAllClashes, slotKey,
+  autoResolve, clashWindow, describeClash, fixedKey, fixedSlot, occupied, pickRooms, pickTime, planCounts, skipAllClashes, slotKey,
 } from '../../utils/planReview';
 import './planReview.css';
 
@@ -16,7 +16,7 @@ const dayLabel = (day) => shortDate(`${day}T12:00:00+08:00`);
 
 // The checked plan, as the admin reads it: what is ready, what clashes and how to fix each clash,
 // and a picture of one day on the room timeline. It never saves anything; the planner does.
-export default function PlanReview({ result, decisions, setDecisions, collisions, gapMinutes, rooms, movies }) {
+export default function PlanReview({ result, decisions, setDecisions, collisions, gapMinutes, rooms, movies, compact = false }) {
   const counts = planCounts(result, decisions, collisions);
   const clashes = result.skipped.filter((item) => item.kind === 'clash');
   const passed = result.skipped.filter((item) => item.kind === 'past');
@@ -30,17 +30,88 @@ export default function PlanReview({ result, decisions, setDecisions, collisions
     return next;
   });
   const taken = occupied(result, decisions, (id) => movieOf(id)?.duration || 90);
-  const hasFreeTime = clashes.some((item) => !decisions[slotKey(item)] && (item.fixes?.times?.length || item.fixes?.nextFree));
+  const hasFix = clashes.some((item) => !decisions[slotKey(item)] && (item.fixes?.times?.length || item.fixes?.nextFree || item.fixes?.rooms?.length));
   const hasOpen = counts.open > 0;
+  const createdDays = result.created.map((item) => manilaDay(item.startTime)).sort();
+  const firstDay = createdDays[0];
+  const lastDay = createdDays.at(-1);
+
+  const bulk = (
+    <div className="plan-bulk">
+      <button type="button" className="btn btn-primary btn-small" disabled={!hasFix} onClick={() => setDecisions((current) => autoResolve(result, current, { minutesOf: (id) => movieOf(id)?.duration || 90, gapMinutes }))}>Fix all automatically</button>
+      <button type="button" className="btn btn-secondary btn-small" disabled={!hasOpen} onClick={() => setDecisions((current) => skipAllClashes(result, current, new Set(collisions.keys())))}>Skip all clashes</button>
+    </div>
+  );
+  const isOpen = (item) => { const decision = decisions[slotKey(item)]; return !decision || (decision.type !== 'skip' && collisions.has(fixedKey(item, decision))); };
+  const card = (item) => (
+    <ClashCard
+      key={slotKey(item)}
+      item={item}
+      decision={decisions[slotKey(item)]}
+      collision={decisions[slotKey(item)] ? collisions.get(fixedKey(item, decisions[slotKey(item)])) : ''}
+      gapMinutes={gapMinutes}
+      taken={taken}
+      roomName={roomName}
+      movie={movieOf(item.movie)}
+      onDecide={(decision) => decide(item, decision)}
+    />
+  );
+  const cards = clashes.map(card);
+  const leftOut = (passed.length > 0 || blocked.length > 0) && (
+    <details className="plan-leftout" open={blocked.length > 0}>
+      <summary>{plural(passed.length + blocked.length, 'time')} left out, nothing to decide</summary>
+      <ul>
+        {passed.length > 0 && <li><b>Already passed ({passed.length}):</b> {passed.slice(0, 6).map((item) => item.label).join(', ')}{passed.length > 6 ? ` and ${passed.length - 6} more` : ''}</li>}
+        {blocked.map((item) => <li key={slotKey(item)}><b>{item.label}:</b> {item.reason}</li>)}
+      </ul>
+    </details>
+  );
+
+  // The short version for the setup panel: one line, then only what needs a decision.
+  if (compact) {
+    return (
+      <div className="plan-review plan-compact">
+        <p className="plan-clear-line" role="status">
+          <b>{plural(counts.total, 'showing')}</b> ready
+          {counts.fixed > 0 && <>, <b>{counts.fixed}</b> moved to a free time or room so nothing clashes</>}
+          {counts.open > 0 && <>, <b className="plan-open-count">{counts.open}</b> still need{counts.open === 1 ? 's' : ''} a decision</>}.
+        </p>
+        {counts.open > 0 && (
+          <section className="plan-clashes" aria-label="Clashes to settle">
+            <div className="plan-clashes-head"><h3>{plural(counts.open, 'clash')} to settle</h3>{bulk}</div>
+            {clashes.filter(isOpen).map(card)}
+          </section>
+        )}
+        {clashes.some((item) => !isOpen(item)) && (
+          <details className="plan-clear-details">
+            <summary>Review the {plural(clashes.filter((item) => !isOpen(item)).length, 'change')}</summary>
+            <div className="plan-changes">{clashes.filter((item) => !isOpen(item)).map(card)}</div>
+          </details>
+        )}
+        {leftOut}
+        <details className="plan-clear-details">
+          <summary>See the schedule day by day</summary>
+          <PlanDay result={result} decisions={decisions} collisions={collisions} rooms={rooms} movies={movies} />
+        </details>
+      </div>
+    );
+  }
 
   return (
     <div className="plan-review">
-      <div className="plan-summary" aria-live="polite">
-        <div className="plan-box ready"><b>{counts.ready}</b><span>ready, no clash</span></div>
-        <div className={`plan-box ${counts.open > 0 ? 'open' : 'quiet'}`}><b>{counts.open}</b><span>need a decision</span></div>
-        <div className="plan-box quiet"><b>{counts.fixed}</b><span>fixed</span></div>
-        <div className="plan-box quiet"><b>{counts.skipped}</b><span>left out</span></div>
-      </div>
+      {counts.open === 0 && counts.fixed === 0 && counts.skipped === 0 ? (
+        <div className="plan-allclear" role="status" aria-live="polite">
+          <span className="plan-allclear-mark" aria-hidden="true">✓</span>
+          <div><b>{plural(counts.ready, 'showing')} ready</b><span>No clashes with anything already scheduled.{firstDay && lastDay ? ` ${firstDay === lastDay ? dayLabel(firstDay) : `${dayLabel(firstDay)} to ${dayLabel(lastDay)}`}.` : ''}</span></div>
+        </div>
+      ) : (
+        <div className="plan-summary" aria-live="polite">
+          <div className="plan-box ready"><b>{counts.ready}</b><span>ready, no clash</span></div>
+          <div className={`plan-box ${counts.open > 0 ? 'open' : 'quiet'}`}><b>{counts.open}</b><span>need a decision</span></div>
+          <div className="plan-box quiet"><b>{counts.fixed}</b><span>fixed</span></div>
+          <div className="plan-box quiet"><b>{counts.skipped}</b><span>left out</span></div>
+        </div>
+      )}
 
       <PlanDay result={result} decisions={decisions} collisions={collisions} rooms={rooms} movies={movies} />
 
@@ -48,36 +119,13 @@ export default function PlanReview({ result, decisions, setDecisions, collisions
         <section className="plan-clashes" aria-label="Clashes to settle">
           <div className="plan-clashes-head">
             <h3>{counts.open > 0 ? `${plural(counts.open, 'clash')} to settle` : 'All clashes settled'}</h3>
-            <div className="plan-bulk">
-              <button type="button" className="btn btn-secondary btn-small" disabled={!hasFreeTime} onClick={() => setDecisions((current) => applyNextFree(result, current, { minutesOf: (id) => movieOf(id)?.duration || 90, gapMinutes }))}>Use next free time for all</button>
-              <button type="button" className="btn btn-secondary btn-small" disabled={!hasOpen} onClick={() => setDecisions((current) => skipAllClashes(result, current, new Set(collisions.keys())))}>Skip all clashes</button>
-            </div>
+            {bulk}
           </div>
-          {clashes.map((item) => (
-            <ClashCard
-              key={slotKey(item)}
-              item={item}
-              decision={decisions[slotKey(item)]}
-              collision={decisions[slotKey(item)] ? collisions.get(fixedKey(item, decisions[slotKey(item)])) : ''}
-              gapMinutes={gapMinutes}
-              taken={taken}
-              roomName={roomName}
-              movie={movieOf(item.movie)}
-              onDecide={(decision) => decide(item, decision)}
-            />
-          ))}
+          {cards}
         </section>
       )}
 
-      {(passed.length > 0 || blocked.length > 0) && (
-        <details className="plan-leftout">
-          <summary>{plural(passed.length + blocked.length, 'time')} left out, nothing to decide</summary>
-          <ul>
-            {passed.length > 0 && <li><b>Already passed ({passed.length}):</b> {passed.slice(0, 6).map((item) => item.label).join(', ')}{passed.length > 6 ? ` and ${passed.length - 6} more` : ''}</li>}
-            {blocked.map((item) => <li key={slotKey(item)}><b>{item.label}:</b> {item.reason}</li>)}
-          </ul>
-        </details>
-      )}
+      {leftOut}
     </div>
   );
 }
@@ -198,7 +246,7 @@ function PlanDay({ result, decisions, collisions, rooms, movies }) {
   const place = (minute) => ((minute - from) / (to - from)) * 100;
   const usedRooms = rooms.filter((room) => bars.some((bar) => String(bar.room) === room._id));
   const marks = [];
-  for (let hour = Math.ceil(from / 120) * 2; hour * 60 <= to; hour += 2) marks.push(hour * 60);
+  for (let hour = Math.ceil(from / 120) * 2; hour * 60 < to; hour += 2) marks.push(hour * 60);
 
   return (
     <section className="plan-day" aria-label="The plan on the room timeline">

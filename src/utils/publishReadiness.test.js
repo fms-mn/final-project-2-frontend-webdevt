@@ -17,7 +17,7 @@ test('the release note says what the date means for publishing', () => {
 test('the outcome matches what the server decides', () => {
   const soon = predictOutcome({ releaseDate: '2026-10-24', bookable: 0 }, TODAY);
   assert.equal(soon.label, 'Coming soon');
-  assert.deepEqual(soon.where.map(([name, yes]) => [name, yes]), [['Home · Opening soon', true], ['Movies · Coming soon', true], ['Booking', false]]);
+  assert.deepEqual(soon.where.map(([name, yes]) => [name, yes]), [['Home · Coming soon', true], ['Movies · Coming soon', true], ['Booking', false]]);
   assert.equal(predictOutcome({ releaseDate: '2026-10-24', bookable: 2 }, TODAY).where.at(-1)[1], true, 'advance tickets');
   assert.equal(predictOutcome({ releaseDate: '2026-10-14', bookable: 3 }, TODAY).label, 'Now showing');
   assert.equal(predictOutcome({ releaseDate: '2026-10-14', bookable: 0 }, TODAY).label, 'No showings');

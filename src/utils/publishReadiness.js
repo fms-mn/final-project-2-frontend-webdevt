@@ -36,7 +36,7 @@ export function predictOutcome({ releaseDate, bookable = 0 }, current = manilaTo
     return {
       label: 'Coming soon', tone: 'soon', line: `Opens ${dayName(dayOf(releaseDate))}`,
       where: [
-        ['Home · Opening soon', true, `with a ${note.daysAhead} day countdown`],
+        ['Home · Coming soon', true, `with a ${note.daysAhead} day countdown`],
         ['Movies · Coming soon', true, ''],
         ['Booking', bookable > 0, bookable > 0 ? 'advance tickets' : 'until you add showings'],
       ],

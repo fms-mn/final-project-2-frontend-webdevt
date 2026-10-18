@@ -4,7 +4,7 @@ import { splitGenres } from '../../utils/genres';
 import { predictOutcome, releaseNote } from '../../utils/publishReadiness';
 import './movieCreate.css';
 
-const STEPS = [['Details', 'Title, poster, dates'], ['Showings', 'When and where'], ['Publish', 'Go live']];
+const STEPS = [['Movie details', 'Title, poster, dates'], ['Showings & publish', 'Choose times and go live']];
 
 // Where a new movie is in its journey: details, showings, publish. `current` is 1 to 3; earlier
 // steps show a check.

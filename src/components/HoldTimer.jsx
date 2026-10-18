@@ -27,6 +27,7 @@ export default function HoldTimer({ expiresAt, onExpire }) {
     <div className={`hold-timer${left <= 60 ? ' is-low' : ''}`} role="timer" aria-label="Time left to pay">
       <span className="hold-timer-text">Seats held for <b>{formatCountdown(left)}</b></span>
       <span className="hold-timer-bar" aria-hidden="true"><i style={{ width: `${Math.min(100, (left / total.current) * 100)}%` }} /></span>
+      <span className="hold-timer-announce" role="status" aria-live="polite">{left > 0 && left <= 60 ? 'Less than a minute left to pay. Your seats will be released when time runs out.' : ''}</span>
     </div>
   );
 }

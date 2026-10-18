@@ -7,10 +7,9 @@
 
 /* ---- the list ---- */
 .movie-table-2 th:nth-child(2) { width:auto; }
-.movie-table-2 th:nth-child(3) { width:104px; }
-.movie-table-2 th:nth-child(4) { width:24%; }
-.movie-table-2 th:nth-child(5) { width:150px; }
-.movie-table-2 th:nth-child(6),.movie-table-2 th:last-child { width:156px; }
+.movie-table-2 th:nth-child(3) { width:30%; }
+.movie-table-2 th:nth-child(4) { width:150px; }
+.movie-table-2 th:nth-child(5),.movie-table-2 th:last-child { width:156px; }
 .movie-table-2 td small { white-space:normal; }
 .movie-count b { color:var(--m-ink); font-weight:800; }
 .movie-sales { display:grid; gap:2px; }
@@ -192,3 +191,16 @@
 .admin-email-list li { display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px 16px; padding:9px 0; border-bottom:1px solid var(--a-line-soft); font-size:14px; }
 .admin-email-list li:last-child { border-bottom:0; }
 .admin-email-list span { color:var(--a-muted); }
+
+/* A consistent path from details to tickets, in the list and both drawer steps. */
+.movie-flow-intro { padding: 14px 16px; margin-bottom: 14px; border: 1px solid var(--a-line-soft); border-radius: 12px; background: var(--a-ground); color: var(--a-ink); }
+.movie-flow-intro p { margin: 6px 0 0; color: var(--a-soft); font-size: 13px; line-height: 1.5; }
+.movie-flow-steps { display: flex; flex-wrap: wrap; gap: 12px 20px; list-style: none; margin: 0; padding: 0; font-size: 13px; }
+.movie-flow-steps li { display: flex; align-items: center; gap: 7px; color: var(--a-muted); }
+.movie-flow-steps li[aria-current] { color: var(--a-ink); font-weight: 800; }
+.movie-flow-steps b { display: grid; place-items: center; width: 24px; height: 24px; border: 1px solid var(--a-line); border-radius: 50%; }
+.movie-flow-steps li[aria-current] b { background: var(--a-ink); color: var(--a-ink-on); }
+.movie-state .movie-button { align-self: flex-start; margin-top: 8px; }
+.movie-announcement p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--a-soft); }
+.movie-table .movie-showings { line-height: 1.5; overflow-wrap: anywhere; }
+.movie-table .movie-showings small { line-height: 1.45; }

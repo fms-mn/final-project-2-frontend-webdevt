@@ -11,7 +11,7 @@ export const SECTIONS = [
     { id: 'bookings', label: 'Bookings', title: 'Bookings', subtitle: 'Review ticket bookings, payments and their current status.', icon: icon(<><path d="M3 9a2 2 0 0 0 0 6v3a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-3a2 2 0 0 1 0-6V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z" /><path d="M14 5v14" strokeDasharray="2 3" /></>) },
   ] },
   { group: 'Catalog', items: [
-    { id: 'movies', label: 'Movies', title: 'Movies', subtitle: "Add titles, publish them, and see which ones still need showings.", icon: icon(<><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4" /></>) },
+    { id: 'movies', label: 'Movies', title: 'Movies', subtitle: "Create a movie, add showings, and publish tickets in one flow.", icon: icon(<><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4" /></>) },
     { id: 'showings', label: 'Showings', title: 'Showings', subtitle: 'Plan showtimes and manage the screening schedule.', icon: icon(<><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 11h18" /></>) },
     { id: 'rooms', label: 'Rooms', title: 'Rooms', subtitle: 'Manage cinema rooms and seating layouts.', icon: icon(<><path d="M5 11V7a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v4" /><path d="M3 15a2 2 0 0 1 2-2 2 2 0 0 1 2 2v1h10v-1a2 2 0 1 1 4 0v4H3z" /></>) },
   ] },

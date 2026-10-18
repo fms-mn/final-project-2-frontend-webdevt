@@ -19,6 +19,7 @@ function OpeningCard({ movie, currentDay }) {
     <div className="opening-card-body">
       <div className="opening-date-line"><span className="opening-date-pill">{date ? date.toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', month: 'short', day: 'numeric' }).toUpperCase() : 'TBA'}</span><span className="opening-countdown">{daysLeft === null ? 'DATE TO BE ANNOUNCED' : daysLeft === 0 ? 'OPENS TODAY' : `IN ${daysLeft} ${daysLeft === 1 ? 'DAY' : 'DAYS'}`}</span></div>
       <Link className="opening-title" to={`/movie/${movie._id}`} state={{ browsingPage: 'home' }}>{movie.title}</Link>
+      {(movie.upcomingShowings ?? 0) > 0 && <Link className="opening-more-details" to={`/movie/${movie._id}`} state={{ browsingPage: 'home' }}>Book advance tickets →</Link>}
       <Link className="opening-more-details" to={'/movie/' + movie._id + '?details=1'} state={{ browsingPage: 'home' }} aria-label={`More details about ${movie.title}`}>More details</Link>
       <p className="opening-details">{[...movie.genre, movie.rating, movie.duration && `${movie.duration} min`].filter(Boolean).join(' · ')}</p>
     </div>
@@ -31,7 +32,7 @@ function OpeningCard({ movie, currentDay }) {
 
 export default function OpeningSoon({ movies, currentDay, loading = false, error = '', onRetry }) {
   return <section className="opening-section" aria-labelledby="opening-heading"><div className="opening-section-inner">
-    <div className="opening-heading"><span className="opening-eyebrow">Mark your calendar</span><h2 id="opening-heading">Opening soon</h2></div>
+    <div className="opening-heading"><span className="opening-eyebrow">Mark your calendar</span><h2 id="opening-heading">Coming soon</h2></div>
     {loading ? <div className="loading" role="status" aria-label="Loading upcoming releases"><div className="spinner" aria-hidden="true" /></div>
       : error ? <div className="opening-error" role="alert"><p>{error}</p><button type="button" className="btn btn-primary" onClick={onRetry}>Try again</button></div>
       : movies.length ? <div className="opening-grid">{movies.map(movie => <OpeningCard movie={movie} currentDay={currentDay} key={movie._id} />)}</div>

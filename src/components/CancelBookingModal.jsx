@@ -11,6 +11,8 @@ export default function CancelBookingModal({ booking, pending = false, error, re
   const dialogRef = useRef(null);
   const keepButtonRef = useRef(null);
   const [failedPoster, setFailedPoster] = useState(null);
+  const pendingRef = useRef(pending);
+  pendingRef.current = pending;
 
   useEffect(() => {
     const previousFocus = document.activeElement;
@@ -21,7 +23,7 @@ export default function CancelBookingModal({ booking, pending = false, error, re
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') {
         event.preventDefault();
-        onKeep();
+        if (!pendingRef.current) onKeep();
       }
       if (event.key === 'Tab') {
         const buttons = [...dialogRef.current.querySelectorAll('button:not(:disabled)')];

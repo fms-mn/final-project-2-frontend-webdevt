@@ -53,9 +53,9 @@ export default function MovieShowingsList({ movie, onOpen, onSchedule, refreshKe
           <b>No upcoming showings</b>
           <span>
             {movie.status === 'published'
-              ? 'Customers see "No showings". Schedule some to put it on sale.'
+              ? movie.showStatus === 'coming_soon' ? 'The coming-soon announcement is live. Add showings to sell advance tickets.' : 'There are no tickets available. Add showings to sell tickets again.'
               : movie.status === 'draft'
-                ? 'Schedule some, then publish the movie so customers can see them.'
+                ? 'Add showings and publish the movie together.'
                 : 'This movie is archived. Set it back to Draft to schedule showings.'}
           </span>
         </div>
@@ -71,7 +71,7 @@ export default function MovieShowingsList({ movie, onOpen, onSchedule, refreshKe
               <>
                 <span className="movie-showing-when"><b>{shortDate(row.startTime)}</b> {displayTime(row.startTime)}</span>
                 <span className="movie-showing-meta">{row.auditorium?.name} · {pesos(row.ticketPrice)} · {sold} of {row.totalSeats} sold</span>
-                {view === 'upcoming' && !row.published && <span className="admin-status hidden-tag">hidden</span>}
+                {view === 'upcoming' && (!row.published || movie.status === 'draft') && <span className="admin-status hidden-tag">{movie.status === 'draft' ? 'movie is a draft' : 'hidden'}</span>}
                 {view === 'upcoming' && <span className="movie-showing-open" aria-hidden="true">Fix →</span>}
               </>
             );

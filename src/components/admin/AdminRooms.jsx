@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../../api';
 import ActionPending from '../ActionPending';
 import { describeError } from '../../utils/adminTools';
+import ConfirmDialog from './ConfirmDialog';
 import Feedback from './Feedback';
 import { SeatPreview } from './SeatGrid';
 import RoomBlockedSeats from './RoomBlockedSeats';
@@ -13,10 +14,11 @@ export default function AdminRooms() {
   const { busy, busyAction, error, notice, setError, clear, run } = useAdminAction();
   const [rooms, setRooms] = useState([]);
   const [draft, setDraft] = useState(blankRoom);
-  const [confirmRemove, setConfirmRemove] = useState('');
+  const [removing, setRemoving] = useState(null);
   const [revision, setRevision] = useState(0);
   const [blockedDirty, setBlockedDirty] = useState(false);
   const [blockingBusy, setBlockingBusy] = useState(false);
+  const [discardAction, setDiscardAction] = useState(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -27,18 +29,24 @@ export default function AdminRooms() {
   }, [revision, setError]);
 
   const edit = (field) => (event) => setDraft({ ...draft, [field]: event.target.value });
-  const mayLeaveBlocked = () => !blockedDirty || window.confirm('Discard unsaved blocked-seat changes for this auditorium?');
+  // Runs `action` now, or after the admin agrees to drop unsaved blocked-seat changes.
+  const afterDiscardCheck = (action) => { if (blockedDirty) setDiscardAction(() => action); else action(); };
   const chooseRoom = room => {
     if (room && room._id === draft._id) return;
-    if (busy || blockingBusy || !mayLeaveBlocked()) return;
-    setDraft(room ? { _id: room._id, name: room.name, rows: room.rows, seatsPerRow: room.seatsPerRow, isActive: room.isActive } : blankRoom);
-    setBlockedDirty(false);
-    clear();
+    if (busy || blockingBusy) return;
+    afterDiscardCheck(() => {
+      setDraft(room ? { _id: room._id, name: room.name, rows: room.rows, seatsPerRow: room.seatsPerRow, isActive: room.isActive } : blankRoom);
+      setBlockedDirty(false);
+      clear();
+    });
   };
 
-  const save = async (event) => {
+  const save = (event) => {
     event.preventDefault();
-    if (busy || blockingBusy || !mayLeaveBlocked()) return;
+    if (busy || blockingBusy) return;
+    afterDiscardCheck(saveRoom);
+  };
+  const saveRoom = async () => {
     const body = { name: draft.name, rows: Number(draft.rows), seatsPerRow: Number(draft.seatsPerRow), isActive: draft.isActive };
     const done = await run(
       () => api(draft._id ? `/auditoriums/${draft._id}` : '/auditoriums', { method: draft._id ? 'PATCH' : 'POST', body }),
@@ -47,18 +55,34 @@ export default function AdminRooms() {
     if (done) { setDraft(blankRoom); setRevision((value) => value + 1); }
   };
 
-  const remove = async (room) => {
-    if (busy || blockingBusy || (room._id === draft._id && !mayLeaveBlocked())) return;
-    if (confirmRemove !== room._id) { setConfirmRemove(room._id); return; }
-    setConfirmRemove('');
-    if (await run(() => api(`/auditoriums/${room._id}`, { method: 'DELETE' }), 'Room deleted', `remove:${room._id}`)) { if (room._id === draft._id) { setDraft(blankRoom); setBlockedDirty(false); } setRevision((value) => value + 1); }
+  const remove = (room) => {
+    if (busy || blockingBusy) return;
+    const ask = () => { clear(); setRemoving(room); };
+    if (room._id === draft._id) afterDiscardCheck(ask); else ask();
+  };
+  const removeRoom = async () => {
+    const room = removing;
+    if (await run(() => api(`/auditoriums/${room._id}`, { method: 'DELETE' }), `${room.name} was deleted`, `remove:${room._id}`)) {
+      setRemoving(null);
+      if (room._id === draft._id) { setDraft(blankRoom); setBlockedDirty(false); }
+      setRevision((value) => value + 1);
+    }
   };
 
   return (
     <div className="admin-grid-two">
+      {removing && <ConfirmDialog tone="danger" title={`Delete ${removing.name}?`} confirmLabel="Delete auditorium" cancelLabel="Keep auditorium"
+        busy={busy} error={error} onClose={() => { setRemoving(null); clear(); }} onConfirm={removeRoom}>
+        <p><strong>{removing.name}</strong> ({removing.rows}×{removing.seatsPerRow}, {removing.rows * removing.seatsPerRow} seats) will be removed. This cannot be undone.</p>
+        <p>A room that showings are using can’t be deleted. Deactivate it instead, so it stops being scheduled but keeps its history.</p>
+      </ConfirmDialog>}
+      {discardAction && <ConfirmDialog tone="danger" title="Discard blocked-seat changes?" confirmLabel="Discard changes" cancelLabel="Keep editing"
+        onClose={() => setDiscardAction(null)} onConfirm={() => { const action = discardAction; setDiscardAction(null); action(); }}>
+        <p>You have unsaved blocked-seat changes for this auditorium. Continuing will lose them.</p>
+      </ConfirmDialog>}
       <form className="admin-panel admin-form room-editor-form" onSubmit={save}>
         <h2>{draft._id ? 'Edit room' : 'Add room'}</h2>
-        <Feedback error={error} notice={notice} />
+        <Feedback error={removing ? '' : error} notice={notice} />
         <label>Name<input required value={draft.name} onChange={edit('name')} /></label>
         <label>Rows (A to Z)<input required type="number" min="1" max="26" value={draft.rows} onChange={edit('rows')} /></label>
         <label>Seats per row<input required type="number" min="1" max="50" value={draft.seatsPerRow} onChange={edit('seatsPerRow')} /></label>
@@ -88,9 +112,7 @@ export default function AdminRooms() {
             </div>
             <div className="admin-actions">
               <button type="button" className="btn btn-secondary btn-small" disabled={busy || blockingBusy} onClick={() => chooseRoom(room)}>Edit</button>
-              <button type="button" className="btn btn-danger btn-small" disabled={busy || blockingBusy} aria-busy={busyAction === `remove:${room._id}`} onClick={() => remove(room)}>
-                <ActionPending pending={busyAction === `remove:${room._id}`}>{busyAction === `remove:${room._id}` ? 'Deleting...' : confirmRemove === room._id ? 'Confirm delete' : 'Delete'}</ActionPending>
-              </button>
+              <button type="button" className="btn btn-danger btn-small" disabled={busy || blockingBusy} aria-label={`Delete ${room.name}`} onClick={() => remove(room)}>Delete</button>
             </div>
           </div>
         ))}

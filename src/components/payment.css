@@ -76,3 +76,5 @@
 
 /* The receipt line at the bottom of the confirmed ticket. */
 .confirmation-paid { margin-top: 12px; font: 600 11px/1.5 'JetBrains Mono Variable', monospace; letter-spacing: .04em; color: #fff; overflow-wrap: anywhere; }
+
+.hold-timer-announce { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

@@ -27,7 +27,7 @@ export default function MovieCard({ movie, showShowtimes = false, previewOnHover
 
   return (
     <article ref={cardRef} className={`movie-card${refined ? ' movie-card-refined' : ''}${preview.visible ? ' is-previewing' : ''}`} {...(refined ? {} : { ...preview.handlers, onClickCapture: event => { if (!event.target.closest('.movie-genres-toggle')) preview.handlers.onClickCapture(event); } })}>
-      <Link className="movie-card-navigation" to={`/movie/${movie._id}`} state={{ browsingPage: 'movies' }} aria-label={`${movie.title}: ${isShowing ? 'Choose a showing' : notShowing ? 'No showings right now' : 'View details'}`} />
+      <Link className="movie-card-navigation" to={`/movie/${movie._id}`} state={{ browsingPage: 'movies' }} aria-label={`${movie.title}: ${isShowing || presale ? 'Choose a showing' : notShowing ? 'No showings right now' : 'View details'}`} />
       <div className="movie-card-poster" {...(refined ? preview.handlers : {})}>
         <Link className="movie-card-poster-link" to={`/movie/${movie._id}`} state={{ browsingPage: 'movies' }} tabIndex={-1} aria-hidden="true">
         {refined && (!movie.posterUrl || failedPoster === movie.posterUrl) ? (
@@ -41,7 +41,7 @@ export default function MovieCard({ movie, showShowtimes = false, previewOnHover
         {refined && <span className="movie-poster-rating">{movie.rating}</span>}
         {!refined && <div className="movie-card-overlay">
           <span className="btn btn-primary btn-small">
-            {isShowing ? 'Book Now' : 'View Details'}
+            {presale ? 'Book advance tickets' : isShowing ? 'Book Now' : 'View Details'}
           </span>
         </div>}
         </Link>
@@ -57,7 +57,7 @@ export default function MovieCard({ movie, showShowtimes = false, previewOnHover
         ) : refined ? (
           <div className="movie-coming-action">
             {notShowing ? <small>No showings right now</small> : releaseLabel && <small>In cinemas {releaseLabel}{presale ? ' · Tickets on sale' : ''}</small>}
-            <Link className="movie-card-price" to={`/movie/${movie._id}`} state={{ browsingPage: 'movies' }}>View details <FiArrowRight aria-hidden="true" /></Link>
+            <Link className="movie-card-price" to={`/movie/${movie._id}`} state={{ browsingPage: 'movies' }}>{presale ? 'Book advance tickets' : 'View details'} <FiArrowRight aria-hidden="true" /></Link>
           </div>
         ) : notShowing ? (
           <div className="movie-card-release">No showings right now</div>

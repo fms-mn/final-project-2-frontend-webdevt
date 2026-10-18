@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { manilaClock, shortDate } from '../../utils/manila';
 import './scheduleSuccess.css';
 
-export default function ScheduleSuccess({ result, movies, rooms, onClose, onAnother, onView }) {
+export default function ScheduleSuccess({ result, movies, rooms, onClose, onAnother, onView, viewLabel = 'View schedule' }) {
   const dialog = useRef(null);
   const firstAction = useRef(null);
   const titleId = useId();
@@ -34,6 +34,7 @@ export default function ScheduleSuccess({ result, movies, rooms, onClose, onAnot
     <span className="schedule-success-check" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" /><path d="m9 16 5 5 9-11" /></svg></span>
     <h2 id={titleId}>{count === 1 ? 'Showing scheduled' : `${count} showings scheduled`}</h2>
     <p id={descriptionId}>{count === 1 ? 'Your showing was saved successfully.' : 'Your showings were saved successfully.'}{skipped.length > 0 && ` ${skipped.length} ${skipped.length === 1 ? 'showing was' : 'showings were'} skipped and not saved.`}</p>
+    {result.visibilityMessage && <p role="status">{result.visibilityMessage}</p>}
     <div className="schedule-success-summary" tabIndex={0} role="region" aria-label="Scheduling results">
       <ul className="schedule-success-saved" aria-label="Saved showings">{result.created.map(showing => <li key={showing._id}>
         <span><strong>{movieTitle(showing)}</strong><span> · {shortDate(showing.startTime)} · {manilaClock(showing.startTime)}</span></span>
@@ -43,7 +44,8 @@ export default function ScheduleSuccess({ result, movies, rooms, onClose, onAnot
     </div>
     <div className="schedule-success-actions">
       <button ref={firstAction} type="button" className="schedule-success-another" onClick={onAnother}>Schedule another</button>
-      <button type="button" className="schedule-success-view" onClick={onView}>View schedule</button>
+      {(result.moviePublished || result.created.some((showing) => showing.published && movies.find((movie) => movie._id === showing.movie)?.status === 'published')) && <a className="movie-button movie-button-outline" href={`/movie/${result.created[0].movie}`} target="_blank" rel="noreferrer">View customer page ↗</a>}
+      <button type="button" className="schedule-success-view" onClick={onView}>{viewLabel}</button>
     </div>
   </dialog>, document.body);
 }
