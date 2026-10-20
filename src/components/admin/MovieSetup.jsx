@@ -8,7 +8,7 @@ import { displayTime, manilaDay, shiftDay, shortDate, today } from '../../utils/
 import { autoResolve, fixedKey, planCounts, slotKey, slotsToSave } from '../../utils/planReview';
 import { predictOutcome } from '../../utils/publishReadiness';
 import {
-  DAY_CHOICES, defaultRoomId, defaultStartDay, defaultTimes, describeSetup, recallSetup, rememberSetup,
+  DAY_CHOICES, MAX_DAYS, MAX_SLOTS, defaultRoomId, defaultStartDay, defaultTimes, describeRange, describeSetup, recallSetup, rememberSetup, validDayCount,
 } from '../../utils/setupDefaults';
 import { COMMON_TIMES, TIME_OPTIONS, clock12, endsText } from '../../utils/timeSlots';
 import Drawer from './Drawer';
@@ -22,8 +22,9 @@ const releaseDayOf = (value) => (validDay(value) ? value : manilaDay(value));
 
 // Step 2 of adding a movie: showings and publishing, in the same panel as the details. It starts from
 // sensible choices (the biggest room, the first week from opening day, the usual times, last
-// time's price), says in one sentence what it will create, and only shows the controls when asked.
-// A clash is explained and can be fixed in one click. The last button does everything: it saves
+// time's price), says in one sentence what it will create, and shows every choice in its own
+// labelled block, with a problem written next to the field it belongs to. A clash is explained
+// and can be fixed in one click. The last button does everything: it saves
 // the showings and, when chosen, publishes the movie in the same step.
 export default function MovieSetup({ movie, rooms, gapMinutes = 15, roomError, onRetryRooms, onManageRooms, onBack, onFinished, onLater }) {
   const prefs = useMemo(() => recallSetup(), []);
@@ -33,12 +34,15 @@ export default function MovieSetup({ movie, rooms, gapMinutes = 15, roomError, o
   const isDraft = movie.status !== 'published';
 
   const [roomChoice, setRoomChoice] = useState('');
-  const [days, setDays] = useState(prefs.days || 7);
+  // A preset length, or "Custom": a number typed (or stepped) between 1 and MAX_DAYS.
+  const firstDays = prefs.days || 7;
+  const [days, setDays] = useState(firstDays);
+  const [custom, setCustom] = useState(() => !DAY_CHOICES.some(([count]) => count === firstDays));
+  const [customText, setCustomText] = useState(String(firstDays));
   const [startDay, setStartDay] = useState(() => defaultStartDay(opensOn, today()));
   const [times, setTimes] = useState(() => (prefs.times?.length ? prefs.times : defaultTimes(movie.duration, gapMinutes)));
   const [price, setPrice] = useState(prefs.price || '400');
   const [publish, setPublish] = useState('now'); // 'now' | 'draft'
-  const [editing, setEditing] = useState(false);
   const [preview, setPreview] = useState(null);
   const [checking, setChecking] = useState(false);
   const [decisions, setDecisions] = useState({});
@@ -53,23 +57,30 @@ export default function MovieSetup({ movie, rooms, gapMinutes = 15, roomError, o
   const room = active.find((item) => item._id === roomId);
   const movies = useMemo(() => [{ _id: movie._id, title: movie.title, duration: Number(movie.duration) || 90 }], [movie._id, movie.title, movie.duration]);
   const publishWithShowings = isDraft && publish === 'now';
+  const dayCount = custom ? Number(customText) : days;
+  const firstDay = comingSoon ? opensOn : today(); // nothing can start before the opening day or before today
 
-  // What would be sent, or why nothing can be sent yet.
+  // What would be sent, or why nothing can be sent yet. A problem names the field it belongs to
+  // (`field`) so it can be shown next to it, and `action` is what the save button says meanwhile.
   const request = useMemo(() => {
     if (!roomId) return { problem: '' };
-    if (times.length === 0) return { problem: 'Pick at least one start time.' };
+    if (!validDayCount(dayCount)) return { problem: `Enter a number of days from 1 to ${MAX_DAYS}.`, field: 'days', action: 'Set the number of days' };
+    const invalid = dateProblem(startDay, { min: firstDay, required: true });
+    if (invalid) return { problem: invalid, field: 'date', action: 'Choose a start date' };
+    if (times.length === 0) return { problem: 'Pick at least one start time.', field: 'times', action: 'Choose a start time' };
+    if (dayCount * times.length > MAX_SLOTS) {
+      return { problem: `That is ${dayCount * times.length} showings, and ${MAX_SLOTS} is the most in one go. Choose fewer days or fewer times.`, field: 'times', action: 'Choose fewer days or times' };
+    }
     const cents = Math.round(Number(price) * 100);
-    if (price === '' || !Number.isFinite(cents) || cents < 0) return { problem: 'Enter the price per seat.' };
-    const invalid = dateProblem(startDay, { min: today(), required: true });
-    if (invalid) return { problem: invalid };
+    if (price === '' || !Number.isFinite(cents) || cents < 0) return { problem: 'Enter the price per seat.', field: 'price', action: 'Enter the ticket price' };
     return {
       path: '/showtimes/bulk',
       body: {
-        movie: movie._id, auditorium: roomId, startDate: startDay, endDate: shiftDay(startDay, days - 1), times,
+        movie: movie._id, auditorium: roomId, startDate: startDay, endDate: shiftDay(startDay, dayCount - 1), times,
         ticketPrice: cents, published: true, publishMovie: publishWithShowings,
       },
     };
-  }, [roomId, times, price, startDay, days, movie._id, publishWithShowings]);
+  }, [roomId, times, price, startDay, dayCount, firstDay, movie._id, publishWithShowings]);
 
   // Check the plan against the schedule a moment after the admin stops changing things.
   useEffect(() => {
@@ -130,7 +141,7 @@ export default function MovieSetup({ movie, rooms, gapMinutes = 15, roomError, o
     try {
       const done = await api('/showtimes/slots', { method: 'POST', body: { slots: slotsToSave(result, decisions), publishMovie: request.body.publishMovie, skipConflicts: false, dryRun: false } });
       if (!done.created.length) { setError('No showings were saved. Review the schedule again.'); setRefresh((value) => value + 1); return; }
-      rememberSetup({ room: roomId, times, price: String(price), days });
+      rememberSetup({ room: roomId, times, price: String(price), days: dayCount });
       onFinished({ showings: done.created, published: Boolean(done.moviePublished) || movie.status === 'published', announcement: false });
     } catch (err) {
       setError(`${reasons(err)} The schedule may have changed while you were deciding, so it is being checked again.`);
@@ -158,15 +169,27 @@ export default function MovieSetup({ movie, rooms, gapMinutes = 15, roomError, o
     }
   };
 
+  const chooseDays = (count) => { setCustom(false); setDays(count); setCustomText(String(count)); };
+  const chooseCustom = () => { setCustom(true); setCustomText(String(validDayCount(dayCount) ? dayCount : days)); };
+  const typeDays = (text) => setCustomText(text.replace(/\D/g, '').slice(0, 2));
+  const stepDays = (change) => setCustomText(String(Math.min(MAX_DAYS, Math.max(1, (validDayCount(dayCount) ? dayCount : 1) + change))));
+  const usualTimes = useMemo(() => defaultTimes(movie.duration, gapMinutes), [movie.duration, gapMinutes]);
+  const sameTimes = (a, b) => a.length === b.length && a.every((clock, index) => clock === b[index]);
   const toggleTime = (clock) => setTimes((current) => (current.includes(clock) ? current.filter((item) => item !== clock) : [...current, clock].sort()));
   const extraTimes = times.filter((clock) => !COMMON_TIMES.includes(clock));
-  const sentence = describeSetup({ roomName: room?.name, days, startDay, times, price });
+  const sentence = describeSetup({ roomName: room?.name, days: dayCount, startDay, times, price });
+  const rangeText = describeRange(startDay, dayCount);
+  const plan = validDayCount(dayCount) && times.length
+    ? `${plural(dayCount, 'day')} × ${plural(times.length, 'start time')} = up to ${plural(dayCount * times.length, 'showing')}`
+    : '';
+  const fieldProblem = (field) => (request.field === field ? request.problem : '');
   const publishLine = comingSoon
     ? 'Customers see it as Coming soon and can book these showings as advance tickets.'
     : 'Customers can see the movie and book these showings as soon as you save.';
 
   const primaryLabel = busy ? 'Saving…'
-    : checking ? 'Checking…'
+    : request.action ? request.action
+      : checking ? 'Checking…'
       : counts.open > 0 ? `Fix ${plural(counts.open, 'clash')} first`
         : counts.total === 0 ? 'Nothing to save yet'
           : `${publishWithShowings ? 'Publish movie & save' : 'Save'} ${plural(counts.total, 'showing')}`;
@@ -194,55 +217,84 @@ export default function MovieSetup({ movie, rooms, gapMinutes = 15, roomError, o
 
           {active.length > 0 && (
             <>
-              <section className="setup-plan-card" aria-labelledby="setup-plan-title">
+              <section className="setup-plan-card" aria-labelledby="setup-plan-title" aria-live="polite">
                 <div className="setup-plan-text">
                   <h3 id="setup-plan-title">Showings for {movie.title}</h3>
                   <p className="setup-sentence">{sentence}</p>
-                  <p className="setup-hint">We picked the usual times for a {movie.duration}-minute movie{comingSoon ? ', starting on its opening day' : ''}. Change anything you like.</p>
+                  {plan && <p className="setup-total">{plan}</p>}
                 </div>
-                <button type="button" className="movie-button movie-button-outline setup-change" aria-expanded={editing} aria-controls="setup-controls" onClick={() => setEditing((value) => !value)}>{editing ? 'Hide options' : 'Change'}</button>
               </section>
 
-              {editing && (
-                <section id="setup-controls" className="setup-controls" aria-label="Change the showings">
-                  {active.length > 1 && (
-                    <label>Room
-                      <select value={roomId} onChange={(event) => setRoomChoice(event.target.value)}>
-                        {active.map((item) => <option key={item._id} value={item._id}>{item.name} · {item.rows * item.seatsPerRow} seats</option>)}
-                      </select>
-                    </label>
+              <p className="setup-hint setup-intro">Filled in with the usual times for a {movie.duration}-minute movie{comingSoon ? ', starting on its opening day' : ''}. Change anything below.</p>
+
+              <section id="setup-controls" className="setup-controls" aria-label="Showing details">
+                {active.length > 1 && (
+                  <div className="setup-block">
+                    <label className="setup-block-title" htmlFor="setup-room">Room</label>
+                    <select id="setup-room" value={roomId} onChange={(event) => setRoomChoice(event.target.value)}>
+                      {active.map((item) => <option key={item._id} value={item._id}>{item.name} · {item.rows * item.seatsPerRow} seats</option>)}
+                    </select>
+                  </div>
+                )}
+
+                <div className="setup-block">
+                  <span className="setup-block-title" id="setup-days-label">How many days?</span>
+                  <div className="when-chips" role="group" aria-labelledby="setup-days-label">
+                    {DAY_CHOICES.map(([count, label]) => <button key={count} type="button" className={`when-chip${!custom && days === count ? ' active' : ''}`} aria-pressed={!custom && days === count} onClick={() => chooseDays(count)}>{label}</button>)}
+                    <button type="button" className={`when-chip${custom ? ' active' : ''}`} aria-pressed={custom} onClick={chooseCustom}>Custom</button>
+                  </div>
+                  {custom && (
+                    <div className="setup-stepper">
+                      <button type="button" className="setup-step" aria-label="One day fewer" disabled={!validDayCount(dayCount) || dayCount <= 1} onClick={() => stepDays(-1)}>−</button>
+                      <input type="text" inputMode="numeric" aria-label="Number of days" aria-invalid={Boolean(fieldProblem('days'))} value={customText} onChange={(event) => typeDays(event.target.value)} />
+                      <button type="button" className="setup-step" aria-label="One day more" disabled={validDayCount(dayCount) && dayCount >= MAX_DAYS} onClick={() => stepDays(1)}>+</button>
+                      <span className="setup-help">days · up to {MAX_DAYS} at a time</span>
+                    </div>
                   )}
-                  <div className="setup-field">
-                    <span className="movie-field-label">How many days</span>
-                    <div className="when-chips" role="group" aria-label="How many days">
-                      {DAY_CHOICES.map(([count, label]) => <button key={count} type="button" className={`when-chip${days === count ? ' active' : ''}`} aria-pressed={days === count} onClick={() => setDays(count)}>{label}</button>)}
-                    </div>
-                    <label className="when-other">Starting
-                      <DatePicker label="First day of showings" required min={today()} value={startDay} onChange={setStartDay} />
-                    </label>
-                  </div>
-                  <div className="setup-field">
-                    <span className="movie-field-label">Start times <small>tap as many as you like</small></span>
-                    <div className="when-chips" role="group" aria-label="Start times">
-                      {[...COMMON_TIMES, ...extraTimes].map((clock) => <button key={clock} type="button" className={`when-chip${times.includes(clock) ? ' active' : ''}`} aria-pressed={times.includes(clock)} onClick={() => toggleTime(clock)}>{clock12(clock)}</button>)}
-                    </div>
-                    <label className="when-other">Add another time
-                      <select value="" onChange={(event) => event.target.value && toggleTime(event.target.value)}>
-                        <option value="">Choose…</option>
-                        {TIME_OPTIONS.filter((option) => !times.includes(option.value)).map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                      </select>
-                    </label>
-                    {times.length > 0 && <p className="setup-hint">{times.map((clock) => `${clock12(clock)} ${endsText(clock, movie.duration)}`).join(' · ')}</p>}
-                  </div>
-                  <label>Price per seat (₱)
-                    <input type="number" min="0" step="0.01" inputMode="decimal" value={price} onChange={(event) => setPrice(event.target.value)} />
+                  {fieldProblem('days') && <p className="bulk-problem field-problem" role="alert">{fieldProblem('days')}</p>}
+                  <label className="when-other">{comingSoon ? 'Starting (opens ' + shortDate(opensOn) + ')' : 'Starting on'}
+                    <DatePicker label="First day of showings" required min={firstDay} value={startDay} onChange={setStartDay} />
                   </label>
-                </section>
-              )}
+                  {rangeText && <p className="setup-range"><span aria-hidden="true">📅</span> {rangeText}</p>}
+                </div>
+
+                <div className="setup-block">
+                  <div className="setup-block-head">
+                    <span className="setup-block-title">Start times</span>
+                    <span className={`setup-count${times.length ? '' : ' none'}`}>{times.length ? `${times.length} selected` : 'None selected'}</span>
+                    <span className="setup-quick">
+                      {!sameTimes([...times].sort(), usualTimes) && <button type="button" className="movie-schedule-link" onClick={() => setTimes(usualTimes)}>Usual times</button>}
+                      {times.length > 0 && <button type="button" className="movie-schedule-link" onClick={() => setTimes([])}>Clear</button>}
+                    </span>
+                  </div>
+                  <p className="setup-help">Tap every time a show should start. Each one is created on every day above.</p>
+                  <div className="when-chips" role="group" aria-label="Start times">
+                    {[...COMMON_TIMES, ...extraTimes].map((clock) => <button key={clock} type="button" className={`when-chip${times.includes(clock) ? ' active' : ''}`} aria-pressed={times.includes(clock)} onClick={() => toggleTime(clock)}>{clock12(clock)}</button>)}
+                  </div>
+                  <label className="when-other">Add another time
+                    <select value="" onChange={(event) => event.target.value && toggleTime(event.target.value)}>
+                      <option value="">Choose…</option>
+                      {TIME_OPTIONS.filter((option) => !times.includes(option.value)).map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                    </select>
+                  </label>
+                  {fieldProblem('times') && <p className="bulk-problem field-problem" role="alert">{fieldProblem('times')}</p>}
+                  {times.length > 0 && <p className="setup-hint">{times.map((clock) => `${clock12(clock)} ${endsText(clock, movie.duration).replace(/^Ends/, 'ends')}`).join(' · ')}</p>}
+                </div>
+
+                <div className="setup-block">
+                  <label className="setup-block-title" htmlFor="setup-price">Ticket price per seat</label>
+                  <div className="setup-price">
+                    <span aria-hidden="true">₱</span>
+                    <input id="setup-price" type="number" min="0" step="0.01" inputMode="decimal" aria-invalid={Boolean(fieldProblem('price'))} value={price} onChange={(event) => setPrice(event.target.value)} />
+                  </div>
+                  {fieldProblem('price') && <p className="bulk-problem field-problem" role="alert">{fieldProblem('price')}</p>}
+                </div>
+              </section>
 
               <section className="setup-review" aria-live="polite">
-                {preview?.problem
+                {preview?.problem && !preview.request?.field
                   ? <p className="bulk-problem" role="alert">{preview.problem}</p>
+                  : preview?.problem ? null
                   : !result
                     ? <p className="setup-checking">{checking ? 'Checking the schedule…' : ''}</p>
                     : <PlanReview compact result={result} decisions={decisions} setDecisions={setDecisions} collisions={collisions} gapMinutes={gapMinutes} rooms={rooms} movies={movies} />}
