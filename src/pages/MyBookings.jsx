@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
-import { canCancelDemoBooking, cancelDemoBooking, demoCancellationInfo, getDemoBookingReference, getDemoBookings } from '../data/demoBookings';
+import { canCancelDemoBooking, cancelDemoBooking, demoCancellationInfo, getDemoBookingReference } from '../data/demoBookings';
 import { displayTime, manilaDay, shortDate, today } from '../utils/manila';
 import { listAuditoriums } from '../data/demoSchedule';
 import CancelBookingModal from '../components/CancelBookingModal';
@@ -11,7 +11,8 @@ import { isTestBooking, paymentLine } from '../utils/payment';
 import './MyBookings.css';
 import { refundSummary } from '../utils/refund';
 import TicketHistory from '../components/TicketHistory';
-import { bookingWhen, loadCustomerBookings } from '../utils/ticketHistory';
+import { bookingWhen } from '../utils/ticketHistory';
+import useBookingPage from '../hooks/useBookingPage';
 
 function detail(booking) {
   const when = bookingWhen(booking);
@@ -39,10 +40,6 @@ function Ticket({ booking, onCancel }) {
 export default function MyBookings() {
   const { user } = useAuth();
   const isDemo = user?.isDemo || String(user?.id || '').startsWith('demo');
-  const [liveBookings, setLiveBookings] = useState([]);
-  const loadedAccount = useRef('');
-  const [loading, setLoading] = useState(!isDemo);
-  const [error, setError] = useState('');
   const [feedback, setFeedback] = useState(null);
   const [cancelling, setCancelling] = useState(false);
   const cancelLocked = useRef(false);
@@ -52,16 +49,12 @@ export default function MyBookings() {
   const [refundPreview, setRefundPreview] = useState({ loading: true, info: null, error: '' });
   const [refundAttempt, setRefundAttempt] = useState(0);
   const [refundRefresh, setRefundRefresh] = useState({ id: '', loading: false, error: '' });
-  useEffect(() => {
-    if (isDemo) return;
-    const controller = new AbortController();
-    setLiveBookings([]); setLoading(true); setError('');
-    loadCustomerBookings(api, controller.signal).then(result => { if (controller.signal.aborted) return; loadedAccount.current = user.id; setLiveBookings(result); setLoading(false); }).catch(err => { if (err.name !== 'AbortError') { setError(err.message); setLoading(false); } });
-    return () => controller.abort();
-  }, [isDemo, user?.id, revision]);
-  const bookings = isDemo ? getDemoBookings(user?.id) : loadedAccount.current === user?.id ? liveBookings : [];
-  const upcoming = bookings.filter(b => b.status === 'confirmed' && detail(b).when > new Date()).sort((a,b) => detail(a).when - detail(b).when);
-  const history = bookings.filter(b => b.status !== 'confirmed' || detail(b).when <= new Date()).sort((a,b) => detail(b).when - detail(a).when);
+  const upcomingPage = useBookingPage({ accountId: user?.id, isDemo, scope: 'upcoming', order: 'oldest', revision });
+  const upcoming = upcomingPage.records;
+  const { loading, error } = upcomingPage;
+  const account = useRef(user?.id);
+  account.current = user?.id;
+  useEffect(() => { setToCancel(null); setFeedback(null); setRefundRefresh({ id: '', loading: false, error: '' }); }, [user?.id]);
   const close = useCallback(() => { if (!cancelLocked.current) setToCancel(null); }, []);
   const dismissSuccess = useCallback(() => setFeedback(null), []);
   const openCancellation = booking => {
@@ -70,7 +63,7 @@ export default function MyBookings() {
     setToCancel(booking);
   };
   const acceptCancellation = useCallback(result => {
-    setLiveBookings(current => current.map(booking => booking._id === result._id ? result : booking));
+    setRevision(value => value + 1);
     setFeedback({ id: result._id, reference: detail(result).code, refund: refundSummary(result.cancellation, true) });
     setToCancel(null);
   }, []);
@@ -92,32 +85,38 @@ export default function MyBookings() {
     return () => controller.abort();
   }, [toCancel, isDemo, refundAttempt, acceptCancellation]);
   const retryHistoryRefund = async booking => {
+    const owner = user.id;
     setRefundRefresh({ id: booking._id, loading: true, error: '' });
     try {
       const result = await api(`/bookings/${booking._id}`);
       if (result._id !== booking._id) throw new Error('The selected booking could not be verified.');
-      setLiveBookings(current => current.map(item => item._id === result._id ? result : item));
-      setRefundRefresh({ id: booking._id, loading: false, error: '' });
-    } catch (err) { setRefundRefresh({ id: booking._id, loading: false, error: err.message }); }
+      if (account.current !== owner) return;
+      setRefundRefresh({ id: booking._id, booking: result, loading: false, error: '' });
+    } catch (err) { if (account.current === owner) setRefundRefresh({ id: booking._id, loading: false, error: err.message }); }
   };
   const confirm = async () => {
     if (!toCancel || cancelLocked.current || refundPreview.loading || refundPreview.error || refundPreview.info?.eligible !== true) return;
     cancelLocked.current = true;
     setCancelling(true);
     setCancelError('');
+    const owner = user.id;
     try {
       const result = isDemo ? cancelDemoBooking(toCancel._id, user.id) : await api(`/bookings/${toCancel._id}/cancel`, { method: 'PATCH' });
+      if (account.current !== owner) return;
       if (!['cancelled', 'expired'].includes(result?.status)) throw new Error('Cancellation could not be confirmed. Refresh booking information to check its status.');
       acceptCancellation(isDemo ? { ...result, cancellation: demoCancellationInfo(result) } : result);
     } catch (err) {
+      if (account.current !== owner) return;
       setCancelError(err.message);
       if (!isDemo) {
         try {
           const current = await api(`/bookings/${toCancel._id}`);
+          if (account.current !== owner) return;
           if (current._id !== toCancel._id) throw new Error('The selected booking could not be verified.');
           if (['cancelled', 'expired'].includes(current.status)) acceptCancellation(current);
           else setRefundPreview({ loading: false, info: current.cancellation, error: '' });
         } catch {
+          if (account.current !== owner) return;
           setRefundPreview({ loading: false, info: null, error: 'Cancellation status could not be checked. Refresh before trying to cancel again.' });
         }
       }
@@ -127,10 +126,8 @@ export default function MyBookings() {
   return <div className="bookings-page wallet-timeline-page customer-page fade-in"><header className="wallet-heading customer-page-heading"><div><span className="eyebrow">Your bookings</span><h1>My tickets</h1><p>View upcoming screenings and manage your booking history.</p></div>{!loading && !error && upcoming.length > 0 && <Link to="/movies" className="btn btn-primary">Browse movies</Link>}</header>
     {isDemo && <p className="demo-note">Simulated bookings saved in this browser. These are not admission tickets.</p>}
     {feedback && <CancellationSuccess key={feedback.id} reference={feedback.reference} refund={feedback.refund} onDismiss={dismissSuccess} />}
-    {loading && <div className="loading"><div className="spinner"/></div>}
-    {error && <div className="error-message" role="alert">{error}<button className="btn btn-secondary btn-small" onClick={() => setRevision(v => v+1)}>Try again</button></div>}
-    {!loading && !error && <div className={'wallet-content-grid' + (upcoming.length ? ' has-upcoming' : '')}><section className="wallet-section wallet-upcoming-section"><h2 className="eyebrow">Upcoming{upcoming.length > 0 && <> · {upcoming.length} {upcoming.length === 1 ? 'booking' : 'bookings'}</>}</h2>{upcoming.length ? <div className="wallet-upcoming">{upcoming.map(b => <Ticket key={b._id} booking={b} onCancel={isDemo ? canCancelDemoBooking(b) ? openCancellation : undefined : openCancellation}/>)}</div> : <div className="bookings-empty"><h3>No upcoming tickets</h3><p>Choose a film and reserve your next seats.</p><Link className="btn btn-primary" to="/movies">Browse movies</Link></div>}<p className="wallet-footnote">Cancelled tickets stay here so you can always see what happened. For refunded bookings, the price shown is the original booking amount.</p></section>
-    <TicketHistory key={user.id} bookings={isDemo ? history.map(booking => ({ ...booking, cancellation: demoCancellationInfo(booking) })) : history} getDetail={detail} onRetryRefund={isDemo ? undefined : retryHistoryRefund} refundRefresh={refundRefresh}/></div>}
+    {<div className={'wallet-content-grid' + (upcoming.length ? ' has-upcoming' : '')}><section className="wallet-section wallet-upcoming-section"><h2 className="eyebrow">Upcoming{upcomingPage.total > 0 && <> · {upcomingPage.total} {upcomingPage.total === 1 ? 'booking' : 'bookings'}</>}</h2>{loading && <div className="loading"><div className="spinner"/></div>}{error && <div className="error-message" role="alert">{error}<button type="button" className="btn btn-secondary btn-small" onClick={upcomingPage.retry}>Try again</button></div>}{!loading && !error && (upcoming.length ? <div className="wallet-upcoming">{upcoming.map(b => <Ticket key={b._id} booking={b} onCancel={isDemo ? canCancelDemoBooking(b) ? openCancellation : undefined : openCancellation}/>)}</div> : <div className="bookings-empty"><h3>No upcoming tickets</h3><p>Choose a film and reserve your next seats.</p><Link className="btn btn-primary" to="/movies">Browse movies</Link></div>)}{upcomingPage.moreError && <p className="error-message" role="alert">{upcomingPage.moreError}</p>}{upcomingPage.hasMore && <button type="button" className="btn btn-secondary" disabled={upcomingPage.loadingMore} onClick={upcomingPage.loadMore}>{upcomingPage.loadingMore ? 'Loading…' : upcomingPage.moreError ? 'Retry upcoming tickets' : 'Load more upcoming tickets'}</button>}<p className="wallet-footnote">Cancelled tickets stay here so you can always see what happened. For refunded bookings, the price shown is the original booking amount.</p></section>
+    <TicketHistory key={user?.id} accountId={user?.id} isDemo={isDemo} revision={revision} getDetail={detail} onRetryRefund={isDemo ? undefined : retryHistoryRefund} refundRefresh={refundRefresh}/></div>}
     {toCancel && <CancelBookingModal booking={{ ...toCancel, showDate: toCancel.showDate || manilaDay(detail(toCancel).when), showTime: toCancel.showTime || detail(toCancel).when.toLocaleTimeString('en-GB', { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', hour12: false }) }} pending={cancelling} error={cancelError} refundInfo={refundPreview.info} refundLoading={refundPreview.loading} refundError={refundPreview.error} onRetryRefund={() => setRefundAttempt(value => value + 1)} onKeep={close} onCancel={confirm}/>}
   </div>;
 }
