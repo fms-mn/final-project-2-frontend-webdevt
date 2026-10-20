@@ -19,22 +19,25 @@ test('movie-title and reference search is applied before the five-row slice', ()
   assert.equal(selectHistory(many, { query: 'flm-11' })[0]._id, 'row-11');
   assert.equal(selectHistory(many, { query: 'missing' }).length, 0);
 });
-test('all existing API pages are loaded before filtering History', async () => {
-  const calls = [];
-  const first = Array.from({ length: 200 }, (_, i) => ({ ...records[0], _id: `row-${i}`, bookingCode: `FLM-${i}` }));
-  const signal = new AbortController().signal;
+test('each History request loads one five-record backend page with search/filter/sort', async () => {
+  const calls = [], signal = new AbortController().signal;
+  const rows = Array.from({ length: 5 }, (_, i) => ({ ...records[0], _id: 'row-' + i }));
   const result = await loadCustomerBookings(async (path, options) => {
     calls.push(path); assert.equal(options.signal, signal);
-    return calls.length === 1 ? first : [records[1]];
-  }, signal);
-  assert.equal(result.length, 201);
-  assert.deepEqual(calls, ['/bookings/my?limit=200&page=1', '/bookings/my?limit=200&page=2']);
-  assert.equal(selectHistory(result, { query: 'flm-cancel' }).length, 1, 'second-page records remain searchable');
+    return { records: rows, total: 120, overallTotal: 150, page: 2, hasMore: true, nextPage: 3 };
+  }, { scope: 'history', page: 2, filter: 'cancelled', query: 'Target film', order: 'oldest', signal });
+  assert.equal(result.records.length, 5);
+  assert.deepEqual(calls, ['/bookings/my?scope=history&limit=5&page=2&filter=cancelled&search=Target+film&order=oldest']);
 });
-test('invalid or repeated API pages fail visibly instead of using a partial list', async () => {
-  await assert.rejects(loadCustomerBookings(async () => ({})), /unavailable/);
-  const page = Array.from({ length: 200 }, (_, i) => ({ _id: `row-${i}` }));
-  await assert.rejects(loadCustomerBookings(async () => page), /could not be verified/);
+
+test('invalid pagination metadata fails visibly and Upcoming is requested independently', async () => {
+  const options = { scope: 'history' };
+  await assert.rejects(loadCustomerBookings(async () => ({}), options), /unavailable/);
+  await assert.rejects(loadCustomerBookings(async () => ({ records: [], total: 100, overallTotal: 100, page: 1, hasMore: true, nextPage: 1 }), options), /unavailable/);
+  await loadCustomerBookings(async path => {
+    assert.ok(path.includes('scope=upcoming&limit=50&page=1'));
+    return { records: [], total: 0, overallTotal: 0, page: 1, hasMore: false, nextPage: null };
+  }, { scope: 'upcoming' });
 });
 
 test('date groups retain sort order and merge when Load more splits the same Manila day', () => {
@@ -43,6 +46,7 @@ test('date groups retain sort order and merge when Load more splits the same Man
   const initial = groupHistory(selected, 5);
   assert.deepEqual(initial.map(group => group.day), ['2026-10-14', '2026-10-11']);
   assert.equal(initial[1].total, 7);
+  assert.equal(groupHistory(selected.slice(0, 5), 5, { '2026-10-11': 7 })[1].total, 7);
   assert.equal(initial[1].bookings.length, 4);
   const more = groupHistory(selected, 10);
   assert.equal(more.length, 2);
