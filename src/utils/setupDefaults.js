@@ -6,8 +6,12 @@ import { COMMON_TIMES, clock12 } from './timeSlots.js';
 
 const KEY = 'filme.setupPrefs';
 
-// How many days of showings to create, counted from the first day.
-export const DAY_CHOICES = [[1, 'Opening day only'], [3, 'First 3 days'], [7, 'First week'], [14, 'First 2 weeks']];
+// How many days of showings to create, counted from the first day. "Custom" lets the admin type any
+// number up to MAX_DAYS; the server accepts at most MAX_DAYS days and MAX_SLOTS showings in one save.
+export const DAY_CHOICES = [[1, '1 day'], [3, '3 days'], [7, '1 week'], [14, '2 weeks']];
+export const MAX_DAYS = 31;
+export const MAX_SLOTS = 200;
+export const validDayCount = (value) => Number.isInteger(value) && value >= 1 && value <= MAX_DAYS;
 
 const seatsOf = (room) => (room.rows || 0) * (room.seatsPerRow || 0);
 
@@ -50,12 +54,20 @@ export function listTimes(times = []) {
 
 const dayLabel = (day) => new Date(`${day}T12:00:00+08:00`).toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', weekday: 'short', month: 'short', day: 'numeric' });
 
+// "Wed, Dec 16 – Tue, Dec 22 · 7 days": the first and last day, so a count is never a guess.
+export function describeRange(startDay, days) {
+  if (!validDayCount(days) || !/^\d{4}-\d{2}-\d{2}$/.test(String(startDay))) return '';
+  const length = `${days} ${days === 1 ? 'day' : 'days'}`;
+  return days === 1 ? `${dayLabel(startDay)} · ${length}` : `${dayLabel(startDay)} – ${dayLabel(shiftDay(startDay, days - 1))} · ${length}`;
+}
+
 // One plain sentence about what is about to be created.
 export function describeSetup({ roomName, days, startDay, times, price }) {
-  const when = days === 1 ? `on ${dayLabel(startDay)}` : `for ${days} days from ${dayLabel(startDay)}`;
+  const when = !validDayCount(days) ? `from ${dayLabel(startDay)}` : days === 1 ? `on ${dayLabel(startDay)}` : `for ${days} days from ${dayLabel(startDay)}`;
   const where = roomName ? `In ${roomName}` : 'No room';
   const money = Number.isFinite(Number(price)) && price !== '' ? `₱${Number(price).toLocaleString('en-PH', { minimumFractionDigits: Number(price) % 1 ? 2 : 0 })} a seat` : 'price not set';
-  return `${where}, ${when}, at ${listTimes(times) || 'no times'}, ${money}.`;
+  if (!times || times.length === 0) return `${where}, ${when}: choose at least one start time, ${money}.`;
+  return `${where}, ${when}, at ${listTimes(times)}, ${money}.`;
 }
 
 export function recallSetup() {
@@ -65,7 +77,7 @@ export function recallSetup() {
       room: typeof saved.room === 'string' ? saved.room : '',
       times: Array.isArray(saved.times) && saved.times.every((time) => /^\d{2}:\d{2}$/.test(time)) ? saved.times : null,
       price: typeof saved.price === 'string' && saved.price !== '' ? saved.price : '',
-      days: DAY_CHOICES.some(([count]) => count === saved.days) ? saved.days : null,
+      days: validDayCount(saved.days) ? saved.days : null,
     };
   } catch {
     return { room: '', times: null, price: '', days: null };
