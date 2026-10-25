@@ -7,7 +7,7 @@ import useAdminAction from './useAdminAction';
 
 // The two cinema-wide scheduling rules: the gap between shows and when online booking closes.
 export default function AdminRules({ standalone = false }) {
-  const { busy, busyAction, error, notice, setError, run } = useAdminAction();
+  const { busy, busyAction, error, notice, setNotice, setError, run } = useAdminAction();
   const [rules, setRules] = useState(null);
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export default function AdminRules({ standalone = false }) {
   return (
     <Wrapper className={`admin-panel${standalone ? '' : ' admin-details'}`} aria-label="Scheduling rules">
       {standalone ? <h2>Scheduling rules</h2> : <summary><h2>Scheduling rules</h2></summary>}
-      <Feedback error={error} notice={notice} />
+      <Feedback error={error} notice={notice} noticeTitle="Scheduling rules saved" onDismissNotice={() => setNotice('')} />
       {rules && (
         <form className="admin-form admin-rules-form" onSubmit={save}>
           <label>Gap between shows (minutes)<input type="number" min="0" max="240" step="1" required value={rules.turnaroundMinutes} onChange={edit('turnaroundMinutes')} /></label>

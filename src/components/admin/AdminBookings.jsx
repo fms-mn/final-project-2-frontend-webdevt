@@ -12,7 +12,7 @@ const PAGE = 100;
 const STATUS_CHIPS = [['all', 'All'], ['confirmed', 'Confirmed'], ['pending', 'Awaiting payment'], ['cancelled', 'Cancelled'], ['expired', 'Expired']];
 
 export default function AdminBookings() {
-  const { busy, busyAction, error, notice, setError, run } = useAdminAction();
+  const { busy, busyAction, error, notice, setNotice, setError, run } = useAdminAction();
   const [rows, setRows] = useState([]);
   const [page, setPage] = useState(1);
   const [more, setMore] = useState(false);
@@ -80,7 +80,7 @@ export default function AdminBookings() {
 
   return (
     <>
-      <Feedback error={error} notice={notice} />
+      <Feedback error={error} notice={notice} noticeTitle="Booking cancelled" onDismissNotice={() => setNotice('')} />
       <div className="admin-panel admin-filters">
         <label>Search<input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Code, customer, movie or seat" /></label>
         <label>Movie

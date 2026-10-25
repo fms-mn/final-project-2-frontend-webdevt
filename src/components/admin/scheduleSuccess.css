@@ -44,6 +44,10 @@
 .showing-action-success-details { display: grid; gap: 4px; width: 100%; padding: 16px; box-sizing: border-box; border-radius: 14px; background: var(--a-disabled); color: var(--a-soft); overflow-wrap: anywhere; }
 .showing-action-success-details strong { color: var(--a-ink); font-size: 16px; }
 .schedule-success-actions.showing-action-success-actions { grid-template-columns: minmax(0, 1fr); }
+.admin-action-notice > p { overflow-wrap: anywhere; white-space: pre-line; }
+.admin-action-notice-error .schedule-success-check { background: var(--a-ground); color: var(--a-down); }
+.admin-action-notice-info .schedule-success-check { background: var(--a-ground); color: var(--a-ink); }
+.admin-action-notice .schedule-success-check svg { width: 30px; height: 30px; }
 .schedule-success :focus-visible { outline: 3px solid var(--a-coral); outline-offset: 3px; }
 @keyframes schedule-success-fade { from { opacity: 0; } to { opacity: 1; } }
 @media (min-width: 381px) and (max-width: 430px) {

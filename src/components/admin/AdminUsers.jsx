@@ -6,7 +6,7 @@ import Feedback from './Feedback';
 import useAdminAction from './useAdminAction';
 
 export default function AdminUsers({ users, reload }) {
-  const { busy, busyAction, error, notice, clear, run } = useAdminAction();
+  const { busy, busyAction, error, notice, setNotice, clear, run } = useAdminAction();
   const [removing, setRemoving] = useState(null);
   const [query, setQuery] = useState('');
   const [group, setGroup] = useState('all');
@@ -45,7 +45,7 @@ export default function AdminUsers({ users, reload }) {
           <p>We will email them to say their account was removed. Their past bookings stay in your records. If they still have upcoming tickets, cancel those first, or disable the account instead.</p>
         </ConfirmDialog>
       )}
-      <Feedback error={removing ? '' : error} notice={notice} />
+      <Feedback error={removing ? '' : error} notice={removing ? '' : notice} noticeTitle="Account updated" onDismissNotice={() => setNotice('')} />
       <div className="admin-panel admin-toolbar">
         <label className="admin-search">Search accounts<input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Name or email" /></label>
         <span className="admin-count">{shown.length} of {users.length}</span>

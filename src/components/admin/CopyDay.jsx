@@ -183,7 +183,7 @@ export default function CopyDay({ open, movies, rooms, defaultDay, gapMinutes = 
       </div>
       <ol className="copy-progress" aria-label="Copy progress">{['Choose dates', 'Review', 'Resolve and copy'].map((label, i) => <li key={label} aria-current={step === i + 1 ? 'step' : undefined}>{i + 1}. {label}</li>)}</ol>
       <h3 ref={heading} tabIndex={-1}>{step === 1 ? 'Choose dates' : step === 2 ? 'Review copies' : 'Resolve conflicts and copy'}</h3>
-      <Feedback error={error || roomError} notice={notice} />
+      <Feedback error={error || roomError} notice={notice} noticeTitle="Preview updated" onDismissNotice={() => setNotice('')} />
       {roomError && <button type="button" className="btn btn-secondary" onClick={onRetryRooms}>Retry loading rooms</button>}
       {step === 1 ? <>
         <p className="bulk-hint">Copies retain their movie, auditorium and time unless you change them while resolving conflicts. All times are in Manila.</p>

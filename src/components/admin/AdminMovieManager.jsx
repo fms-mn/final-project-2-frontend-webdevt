@@ -357,7 +357,7 @@ export default function AdminMovieManager({ movies, reload, onOpenShowing, addRe
       result = await (_id
         ? api(`/admin/movies/${_id}`, { method: 'PATCH', body })
         : api('/admin/movies', { method: 'POST', body }));
-    }, _id ? 'Movie updated' : '', 'save');
+    }, _id && mode !== 'schedule' ? 'Movie updated' : '', 'save');
     if (!done) return;
     reload();
     setDraft(null); setInitial(null);
@@ -472,7 +472,7 @@ export default function AdminMovieManager({ movies, reload, onOpenShowing, addRe
 
   return (
     <section className="movie-manager" aria-label="Movie management">
-      <Feedback error={draft || dialog ? '' : error} notice={notice} />
+      <Feedback error={draft || dialog ? '' : error} notice={dialog || wizard || deletedMovie !== null ? '' : notice} noticeTitle="Movie updated" onDismissNotice={() => setNotice('')} />
       <dl className="movie-mobile-stats" aria-label="Totals for listed movies">
         <div><dt>{query.trim() || genre !== 'all' || status !== 'all' ? 'Matching movies' : 'Movies'}</dt><dd>{shown.length.toLocaleString('en-PH')}</dd></div>
         <div><dt>Revenue</dt><dd className={pesos(totalRevenue).length > 10 ? 'movie-stat-large-amount' : undefined}>{pesos(totalRevenue)}</dd></div>

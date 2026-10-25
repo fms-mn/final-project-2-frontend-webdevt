@@ -9,7 +9,7 @@ export default function AdminGenres() {
   const [genres, setGenres] = useState(null);
   const [name, setName] = useState('');
   const [attempt, setAttempt] = useState(0);
-  const { busy, error, notice, setError, run } = useAdminAction();
+  const { busy, error, notice, setNotice, setError, run } = useAdminAction();
   useEffect(() => {
     const controller = new AbortController();
     api('/admin/settings', { signal: controller.signal })
@@ -33,7 +33,7 @@ export default function AdminGenres() {
   return <section className="admin-panel admin-genres" aria-label="Movie genres">
     <h2>Movie genres</h2>
     <p className="profile-help">Manage the genres available when adding or editing a movie. Deleting a genre keeps it on movies already using it.</p>
-    <Feedback error={error} notice={notice} />
+    <Feedback error={error} notice={notice} noticeTitle="Genres updated" onDismissNotice={() => setNotice('')} />
     {genres === null ? error
       ? <button type="button" className="btn btn-secondary btn-small" onClick={() => setAttempt(value => value + 1)}>Retry loading genres</button>
       : <p role="status">Loading genres…</p>

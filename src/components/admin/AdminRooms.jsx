@@ -11,7 +11,7 @@ import useAdminAction from './useAdminAction';
 const blankRoom = { name: '', rows: 8, seatsPerRow: 10, isActive: true };
 
 export default function AdminRooms() {
-  const { busy, busyAction, error, notice, setError, clear, run } = useAdminAction();
+  const { busy, busyAction, error, notice, setNotice, setError, clear, run } = useAdminAction();
   const [rooms, setRooms] = useState([]);
   const [draft, setDraft] = useState(blankRoom);
   const [removing, setRemoving] = useState(null);
@@ -82,7 +82,7 @@ export default function AdminRooms() {
       </ConfirmDialog>}
       <form className="admin-panel admin-form room-editor-form" onSubmit={save}>
         <h2>{draft._id ? 'Edit room' : 'Add room'}</h2>
-        <Feedback error={removing ? '' : error} notice={notice} />
+        <Feedback error={removing ? '' : error} notice={removing ? '' : notice} noticeTitle="Room updated" onDismissNotice={() => setNotice('')} />
         <label>Name<input required value={draft.name} onChange={edit('name')} /></label>
         <label>Rows (A to Z)<input required type="number" min="1" max="26" value={draft.rows} onChange={edit('rows')} /></label>
         <label>Seats per row<input required type="number" min="1" max="50" value={draft.seatsPerRow} onChange={edit('seatsPerRow')} /></label>

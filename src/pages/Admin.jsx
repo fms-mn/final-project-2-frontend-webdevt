@@ -85,7 +85,7 @@ export default function Admin() {
       <div className={`admin-page admin-workspace${tab === 'overview' ? ' admin-overview-page' : ''}${tab === 'movies' ? ' admin-movies-page' : ''}`}>
         <header className="admin-topbar">
           <div>
-            <h1 id="admin-page-title">{section.title}</h1>
+            <h1 id="admin-page-title" tabIndex={-1}>{section.title}</h1>
             <p>{section.subtitle}</p>
           </div>
           {user?.isDemo && <span className="admin-demo-badge">Demo preview</span>}

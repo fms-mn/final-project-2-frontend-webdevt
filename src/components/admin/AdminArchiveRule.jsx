@@ -10,7 +10,7 @@ import useAdminAction from './useAdminAction';
 // list does not fill up with "No showings" titles. The admin sets the number of days (or turns it
 // off), and can see which movies qualify right now before anything is archived.
 export default function AdminArchiveRule({ onChanged }) {
-  const { busy, busyAction, error, notice, setError, run } = useAdminAction();
+  const { busy, busyAction, error, notice, setNotice, setError, run } = useAdminAction();
   const [saved, setSaved] = useState(null); // the days in force; 0 = off
   const [on, setOn] = useState(true);
   const [days, setDays] = useState('30');
@@ -52,6 +52,7 @@ export default function AdminArchiveRule({ onChanged }) {
     }, '', 'now');
     if (done) {
       setRevision((value) => value + 1);
+      setNotice(`${count} ${count === 1 ? 'movie was' : 'movies were'} archived.`);
       onChanged?.(`${count} ${count === 1 ? 'movie was' : 'movies were'} archived.`);
     }
   };
@@ -59,7 +60,7 @@ export default function AdminArchiveRule({ onChanged }) {
   return (
     <section className="admin-panel" aria-label="Archive quiet movies">
       <h2>Archive quiet movies</h2>
-      <Feedback error={error} notice={notice} />
+      <Feedback error={error} notice={notice} noticeTitle="Auto-archive updated" onDismissNotice={() => setNotice('')} />
       <p className="profile-help">
         A movie that has been released but has had <b>no showings for a while</b> is archived by itself, so the list does not fill up with &quot;No showings&quot; titles.
         Customers stop seeing it. A movie with a showing still to come is never archived, and editing a movie or publishing it again restarts its clock.

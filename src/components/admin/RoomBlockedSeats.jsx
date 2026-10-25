@@ -71,7 +71,7 @@ export default function RoomBlockedSeats({ roomId, disabled, onDirtyChange, onSa
 
   return <section className="blocked-editor room-blocked-editor" aria-label="Auditorium-wide blocked seats">
     <div><h3>Blocked seats{auditorium ? ` · ${auditorium.name}` : ''}</h3><p className="profile-help">Block seats across all showings in this auditorium. Changes take effect only when saved.</p></div>
-    <Feedback error={error} notice={notice} />
+    <Feedback error={error} notice={notice} noticeTitle="Blocked seats saved" onDismissNotice={() => setNotice('')} />
     {loading ? <p role="status">Loading auditorium seats…</p> : !auditorium ? <button type="button" className="btn btn-secondary btn-small" onClick={() => setAttempt(value => value + 1)}>Try again</button> : <>
       {newlyProtected.length > 0 && <div className="room-seat-conflict" role="status"><p>{newlyProtected.join(', ')} {newlyProtected.length === 1 ? 'is now protected and cannot' : 'are now protected and cannot'} be blocked. Your other changes are still pending.</p><button type="button" className="btn btn-secondary btn-small" disabled={saving || disabled} onClick={() => { setPending(current => current.filter(label => !newlyProtected.includes(label))); setError(''); }}>Remove protected seats from changes</button></div>}
       <p id={helperId} className="room-seat-help">Protected seats have a booking or active payment hold at an upcoming showing and cannot be changed here. Bookings and holds are checked again when you save.</p>

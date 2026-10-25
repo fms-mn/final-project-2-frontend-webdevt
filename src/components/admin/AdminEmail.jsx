@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { FiCheckCircle, FiMail, FiSend } from 'react-icons/fi';
+import { FiMail, FiSend } from 'react-icons/fi';
 import { api } from '../../api';
 import ActionPending from '../ActionPending';
 import { describeError } from '../../utils/adminTools';
 import Feedback from './Feedback';
+import ActionNotice from './ActionNotice';
 import useAdminAction from './useAdminAction';
 
 const WHAT_CUSTOMERS_GET = [
@@ -29,9 +30,16 @@ export default function AdminEmail() {
     return () => controller.abort();
   }, [setError]);
 
-  const sendTest = () => {
+  const sendTest = async () => {
     setResult(null);
-    run(async () => { setResult(await api('/admin/settings/mail/test', { method: 'POST', body: {} })); }, '', 'test');
+    setError('');
+    await run(async () => {
+      try {
+        setResult(await api('/admin/settings/mail/test', { method: 'POST', body: {} }));
+      } catch (reason) {
+        setResult({ ok: false, error: describeError(reason) });
+      }
+    }, '', 'test');
   };
 
   return (
@@ -59,13 +67,15 @@ export default function AdminEmail() {
             </button>
             <span className="profile-help">Goes to your own address only.</span>
           </div>
-          {result && (
-            result.ok
-              ? <p className="admin-notice" role="status"><FiCheckCircle aria-hidden="true" /> {result.simulated
-                ? `Nothing was sent, because no email service is connected. The email was only prepared for ${result.to}.`
-                : `Sent to ${result.to}. It should arrive in a minute; check the spam folder if it does not.`}</p>
-              : <p className="error-message" role="alert">The test email failed: {result.error}</p>
-          )}
+          {result && <ActionNotice
+            title={result.ok ? result.simulated ? 'Test email prepared' : 'Test email sent' : 'Test email failed'}
+            tone={result.ok ? result.simulated ? 'info' : 'success' : 'error'}
+            message={result.ok ? result.simulated
+              ? `Nothing was sent, because no email service is connected. The email was only prepared for ${result.to}.`
+              : `Sent to ${result.to}. It should arrive in a minute; check the spam folder if it does not.`
+              : `The test email failed: ${result.error}`}
+            onClose={() => setResult(null)}
+          />}
 
           <h3 className="admin-email-subhead">What customers receive</h3>
           <ul className="admin-email-list">

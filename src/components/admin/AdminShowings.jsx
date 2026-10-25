@@ -378,7 +378,7 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, onSch
         </section>
       )}
 
-      <Feedback error={panelOpen ? '' : error} notice={notice} />
+      <Feedback error={panelOpen ? '' : error} notice={notice} noticeTitle="Movie published" onDismissNotice={() => setNotice('')} />
 
       {moviesThisWeek.length > 1 && (
         <div className="status-chips" role="group" aria-label="Show one movie">
@@ -615,7 +615,7 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, onSch
         gapMinutes={gapMinutes}
         onModeChange={(mode) => setBulk((current) => ({ ...current, mode }))}
         onClose={() => setBulk((current) => ({ ...current, open: false }))}
-        onDone={(message, movieId, day, result) => { setBulk((current) => ({ ...current, open: false })); setScheduleResult(result); setNotice(message); if (day) setDate(day); afterChange(); }}
+        onDone={(message, movieId, day, result) => { setBulk((current) => ({ ...current, open: false })); setScheduleResult(result); if (day) setDate(day); afterChange(); }}
       />}
       {actionResult && <ShowingActionSuccess result={actionResult} onClose={() => setActionResult(null)} returnFocus={scheduleHeading} />}
       {scheduleResult && <ScheduleSuccess result={scheduleResult} movies={movies} rooms={rooms}
