@@ -13,6 +13,7 @@ import AdminBulk from './AdminBulk';
 import ScheduleSuccess from './ScheduleSuccess';
 import ShowingActionSuccess from './ShowingActionSuccess';
 import Drawer from './Drawer';
+import ConfirmDialog from './ConfirmDialog';
 import WhenPicker from './WhenPicker';
 import Feedback from './Feedback';
 import SeatGrid from './SeatGrid';
@@ -52,6 +53,7 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, onSch
   const [selectedId, setSelectedId] = useState('');
   const [draft, setDraft] = useState(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [actionResult, setActionResult] = useState(null);
   const [revision, setRevision] = useState(0);
   const [move, setMove] = useState({ startTime: '', auditorium: '' });
@@ -154,11 +156,12 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, onSch
   const startedOrCancelled = selected && (selected.status !== 'scheduled' || new Date(selected.startTime) <= new Date());
   const locked = Boolean(selected && (startedOrCancelled || seatsSold(selected) > 0));
 
-  const closePanel = () => { setSelectedId(''); setDraft(null); setConfirmCancel(false); setActiveAction(''); clear(); };
+  const closePanel = () => { setSelectedId(''); setDraft(null); setConfirmCancel(false); setConfirmDelete(false); setActiveAction(''); clear(); };
 
   const choose = (showing) => {
     setSelectedId(showing._id);
     setConfirmCancel(false);
+    setConfirmDelete(false);
     setActiveAction('');
     clear();
     setDraft({
@@ -214,6 +217,17 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, onSch
     if (done) {
       setActionResult({ title: 'Showing cancelled', message: seatsSold(selected) > 0 ? 'This showing is no longer available. Its bookings have been cancelled and refunded.' : 'This showing is no longer available to book. There were no bookings to cancel.', showing: selected });
       setConfirmCancel(false); setSelectedId(''); setDraft(null); setRevision((value) => value + 1);
+    }
+  };
+
+  const deleteShowing = async () => {
+    const showing = selected;
+    const done = await run(() => api(`/showtimes/${showing._id}`, { method: 'DELETE' }), '', 'delete');
+    if (done) {
+      setActionResult({ title: 'Showing deleted', message: 'This showing has been permanently deleted from the schedule.', showing });
+      closePanel();
+      setByDay((current) => Object.fromEntries(Object.entries(current).map(([day, rows]) => [day, rows.filter((row) => row._id !== showing._id)])));
+      setRevision((value) => value + 1);
     }
   };
 
@@ -475,7 +489,7 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, onSch
           </dl>
           <Feedback error={error} notice="" />
           {selectedState === 'cancelled' && <p className="admin-warning" role="status">This showing was cancelled. Its bookings were cancelled and the seats freed.</p>}
-          {selectedState === 'started' && <p className="admin-warning" role="status">This showing has started, so it can no longer be changed.</p>}
+          {selectedState === 'started' && <p className="admin-warning" role="status">This showing has started, so its details can no longer be changed. It can only be deleted if it has no booking history.</p>}
           {selectedMovieStatus === 'draft' && selectedState !== 'cancelled' && selectedState !== 'started' && <p className="admin-warning" role="status">{selected.movie?.title} is still a draft, so customers can&apos;t see this showing yet. Publish the movie to put it on sale.</p>}
 
           {canManage && (
@@ -550,7 +564,22 @@ export default function AdminShowings({ movies, scheduleFor, focusShowing, onSch
               )}
             </div>
           )}
+          <ActionRow
+            tone="danger"
+            title="Delete showing"
+            hint="Permanently removes an unused showing. Booking history is protected"
+            disabled={busy}
+            onClick={() => { clear(); setActiveAction(''); setConfirmCancel(false); setConfirmDelete(true); }}
+          />
         </section>
+      )}
+
+      {confirmDelete && selected && (
+        <ConfirmDialog title="Delete this showing?" tone="danger" confirmLabel="Delete showing" cancelLabel="Keep showing"
+          busy={busy} error={error} onConfirm={deleteShowing} onClose={() => { setConfirmDelete(false); clear(); }}>
+          <p><b>{selected.movie?.title}</b> on {dayHeading(manilaDay(selected.startTime))} at {displayClock(manilaClock(selected.startTime))} in {selected.auditorium?.name} will be permanently deleted. This cannot be undone.</p>
+          <p>Only showings with no booking history can be deleted. If anyone has booked, cancel the showing instead to preserve their ticket history.</p>
+        </ConfirmDialog>
       )}
 
       {showings.length > 0 && (
