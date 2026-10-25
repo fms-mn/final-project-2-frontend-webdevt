@@ -12,7 +12,7 @@ test('overlapping panels restore page scrolling in either close order', () => {
     globalThis.document = { body, documentElement };
     const release = [lockPageScroll(), lockPageScroll()];
     release[order[0]]();
-    assert.equal(body.style.overflow, 'hidden');
+    assert.equal(body.style.overflow, 'clip', 'the body must not become a scroll container for sticky elements');
     assert.equal(documentElement.style.overflow, 'hidden');
     release[order[1]]();
     assert.equal(body.style.overflow, '');

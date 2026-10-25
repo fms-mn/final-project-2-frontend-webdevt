@@ -21,7 +21,8 @@ function hold(target, property, value) {
 }
 
 export function lockPageScroll({ inertRoot = null } = {}) {
-  const release = [hold(document.body.style, 'overflow', 'hidden'), hold(document.documentElement.style, 'overflow', 'hidden')];
+  // A hidden body becomes a scroll container and makes sticky sidebars jump when the root locks.
+  const release = [hold(document.body.style, 'overflow', 'clip'), hold(document.documentElement.style, 'overflow', 'hidden')];
   if (inertRoot) release.push(hold(inertRoot, 'inert', true));
   return () => release.forEach(unlock => unlock());
 }
