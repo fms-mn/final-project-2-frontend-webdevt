@@ -15,6 +15,8 @@
 .movie-button-outline:hover { border-color:var(--a-coral); color:var(--a-coral); }
 .movie-button:disabled { opacity:.6; cursor:wait; }
 .movie-button:focus-visible,.movie-manager input:focus-visible,.movie-manager select:focus-visible,.movie-manager textarea:focus-visible,.movie-menu a:focus-visible,.movie-menu button:focus-visible,.movie-icon-button:focus-visible { outline:3px solid var(--a-coral); outline-offset:2px; }
+.movie-search:focus-within { border-color:var(--a-coral); box-shadow:0 0 0 1px var(--a-coral); }
+.movie-manager .movie-search input:focus-visible { outline:none; }
 .movie-add { min-width:126px; min-height:44px; font-size:13px; }
 .movie-table-shell { background:var(--m-paper); border:1px solid var(--m-line); border-top:0; border-radius:0 0 10px 10px; overflow:visible; }
 .movie-table { width:100%; border-collapse:collapse; table-layout:fixed; font:500 15px 'Instrument Sans Variable',sans-serif; }
